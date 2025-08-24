@@ -1,0 +1,16 @@
+# Node dependencies
+client/node_modules/
+
+# React build output
+client/build/
+
+# Logs
+*.log
+
+# Go binaries
+server/bin/
+server/*.exe
+server/*.out
+
+# OS files
+.DS_Store
