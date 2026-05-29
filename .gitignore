@@ -16,12 +16,15 @@
 # next.js
 /.next/
 /out/
+.swc
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
 
 # debug
@@ -29,6 +32,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
 # env files — keep .env.example commit-visible (AR28 / AC11)
 .env
@@ -41,6 +45,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# tooling caches
+.eslintcache
+.turbo
+
+# IDE (keep .cursor/rules/ tracked for project conventions)
+.idea/
+.vscode/
+
+# BMad user overrides (machine-local customizations)
+*.user.toml
 
 # large generated artifacts (Story 8.1)
 public/offline-pack.json
