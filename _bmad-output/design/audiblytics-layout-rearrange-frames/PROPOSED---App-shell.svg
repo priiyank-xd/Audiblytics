@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" fill="none">
+<defs>
+    <style>
+      .label { font: 600 11px Inter, system-ui, sans-serif; fill: #4a4a4a; letter-spacing: 0.06em; text-transform: uppercase; }
+      .title { font: 400 28px Georgia, serif; fill: #1a1a1a; }
+      .subtitle { font: 400 14px Georgia, serif; fill: #4a4a4a; }
+      .body { font: 400 13px Georgia, serif; fill: #1a1a1a; }
+      .ui { font: 500 13px Inter, system-ui, sans-serif; fill: #1a1a1a; }
+      .mono { font: 500 12px ui-monospace, monospace; fill: #1a1a1a; }
+      .caption { font: 400 11px Inter, system-ui, sans-serif; fill: #5c5751; }
+      .frame-title { font: 700 16px Inter, system-ui, sans-serif; fill: #1a1a1a; }
+      .chip { font: 500 11px Inter, system-ui, sans-serif; fill: #f5f0e6; }
+      .note { font: 400 11px Inter, system-ui, sans-serif; fill: #8b2929; }
+      .comp-tag { font: 500 10px ui-monospace, monospace; fill: #2d5b3a; }
+    </style>
+  </defs>
+<g id="PROPOSED - App shell" transform="translate(4540, 100)">
+    <rect width="1440" height="960" rx="8" fill="#f5f0e6" stroke="#2d5b3a" stroke-width="3"/>
+    <text class="frame-title" x="24" y="32">PROPOSED - App shell (rearrange)</text>
+    <text class="comp-tag" x="24" y="50">Mount DayRail + StatRail in layout.tsx</text>
+    <text class="ui" x="600" y="94">Today</text>
+    <text class="ui" x="680" y="94">Review</text>
+    <text class="ui" x="770" y="94">Collection</text>
+    <text class="ui" x="880" y="94">Calendar</text>
+    <text class="ui" x="1380" y="94" text-anchor="end" font-weight="600">Settings</text>
+    <text class="note" x="24" y="94">TopNav: same routes, more links</text>
+    <rect x="24" y="120" width="80" height="760" stroke="#d9d2c5"/>
+    <text class="comp-tag" x="32" y="500" transform="rotate(-90 32 500)">DayRail</text>
+    <rect x="120" y="120" width="920" height="760" stroke="#d9d2c5" stroke-dasharray="6 4"/>
+    <text class="label" x="132" y="144">MainContentShell</text>
+    <rect x="1056" y="120" width="288" height="760" stroke="#d9d2c5"/>
+    <text class="label" x="1068" y="144">StatRail</text>
+    <rect x="1068" y="160" width="260" height="72" rx="4" stroke="#d9d2c5"/>
+    <text class="label" x="1080" y="178">STREAK</text>
+    <text class="mono" x="1080" y="208">StreakStatCard</text>
+    <rect x="1068" y="248" width="260" height="72" rx="4" stroke="#d9d2c5" stroke-dasharray="5 4"/>
+    <text class="label" x="1080" y="266">WORDS (from collection count)</text>
+    <rect x="1068" y="336" width="260" height="72" rx="4" stroke="#d9d2c5" stroke-dasharray="5 4"/>
+    <text class="label" x="1080" y="354">RECORDINGS</text>
+    <rect x="1068" y="424" width="260" height="72" rx="4" stroke="#d9d2c5" stroke-dasharray="5 4"/>
+    <text class="label" x="1080" y="442">DAY OF 30</text>
+    <rect x="24" y="888" width="1392" height="48" stroke="#d9d2c5"/>
+    <text class="mono" x="720" y="918" text-anchor="middle">HonestyFooter</text>
+  </g>
+</svg>

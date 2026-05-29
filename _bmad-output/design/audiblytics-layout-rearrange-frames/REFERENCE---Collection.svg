@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="400" viewBox="0 0 700 400" fill="none">
+<defs>
+    <style>
+      .label { font: 600 11px Inter, system-ui, sans-serif; fill: #4a4a4a; letter-spacing: 0.06em; text-transform: uppercase; }
+      .title { font: 400 28px Georgia, serif; fill: #1a1a1a; }
+      .subtitle { font: 400 14px Georgia, serif; fill: #4a4a4a; }
+      .body { font: 400 13px Georgia, serif; fill: #1a1a1a; }
+      .ui { font: 500 13px Inter, system-ui, sans-serif; fill: #1a1a1a; }
+      .mono { font: 500 12px ui-monospace, monospace; fill: #1a1a1a; }
+      .caption { font: 400 11px Inter, system-ui, sans-serif; fill: #5c5751; }
+      .frame-title { font: 700 16px Inter, system-ui, sans-serif; fill: #1a1a1a; }
+      .chip { font: 500 11px Inter, system-ui, sans-serif; fill: #f5f0e6; }
+      .note { font: 400 11px Inter, system-ui, sans-serif; fill: #8b2929; }
+      .comp-tag { font: 500 10px ui-monospace, monospace; fill: #2d5b3a; }
+    </style>
+  </defs>
+<g id="REFERENCE - Collection" transform="translate(780, 1100)">
+    <rect width="700" height="400" rx="8" fill="#f5f0e6" stroke="#d9d2c5"/>
+    <text class="frame-title" x="24" y="32">REFERENCE - Collection (/collection)</text>
+    <text class="comp-tag" x="24" y="50">CollectionRow list</text>
+    <rect x="24" y="80" width="652" height="280" stroke="#d9d2c5"/>
+    <text class="title" x="48" y="120">Collection</text>
+    <text class="caption" x="48" y="200">CollectionRow x N</text>
+  </g>
+</svg>

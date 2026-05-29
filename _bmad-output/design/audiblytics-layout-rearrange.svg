@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="9200" height="1520" viewBox="0 0 9200 1520" fill="none">
+  <title>Audiblytics - current vs rearrange-only layout (import to Figma)</title>
+  <desc>Wireframes for rearranging existing components. No new features. See FIGMA-IMPORT.md</desc>
+
+  <defs>
+    <style>
+      .label { font: 600 11px Inter, system-ui, sans-serif; fill: #4a4a4a; letter-spacing: 0.06em; text-transform: uppercase; }
+      .title { font: 400 28px Georgia, serif; fill: #1a1a1a; }
+      .subtitle { font: 400 14px Georgia, serif; fill: #4a4a4a; }
+      .body { font: 400 13px Georgia, serif; fill: #1a1a1a; }
+      .ui { font: 500 13px Inter, system-ui, sans-serif; fill: #1a1a1a; }
+      .mono { font: 500 12px ui-monospace, monospace; fill: #1a1a1a; }
+      .caption { font: 400 11px Inter, system-ui, sans-serif; fill: #5c5751; }
+      .frame-title { font: 700 16px Inter, system-ui, sans-serif; fill: #1a1a1a; }
+      .chip { font: 500 11px Inter, system-ui, sans-serif; fill: #f5f0e6; }
+      .note { font: 400 11px Inter, system-ui, sans-serif; fill: #8b2929; }
+      .comp-tag { font: 500 10px ui-monospace, monospace; fill: #2d5b3a; }
+    </style>
+  </defs>
+
+  <g id="LEGEND" transform="translate(40, 24)">
+    <text class="frame-title" x="0" y="0">Audiblytics layout wireframes - rearrange only</text>
+    <text class="caption" x="0" y="22">Figma: File - Import this SVG. Select each artboard group - Frame selection. See FIGMA-IMPORT.md</text>
+    <text class="note" x="0" y="44">Red text = layout intent only. Dashed boxes = existing metrics moved, not new features.</text>
+  </g>
+
+  <g id="CURRENT - App chrome" transform="translate(40, 100)">
+    <rect width="1440" height="960" rx="8" fill="#f5f0e6" stroke="#d9d2c5" stroke-width="2"/>
+    <text class="frame-title" x="24" y="32">CURRENT - App chrome</text>
+    <text class="comp-tag" x="24" y="50">layout.tsx / TopNav / MainContentShell / HonestyFooter</text>
+    <rect x="24" y="64" width="1392" height="48" fill="#ebe5d6" opacity="0.5"/>
+    <text class="ui" x="1280" y="94">Home</text>
+    <text class="ui" x="1380" y="94" text-anchor="end" font-weight="600">Settings</text>
+    <text class="comp-tag" x="24" y="94">TopNav (2 links only)</text>
+    <rect x="24" y="120" width="1392" height="760" fill="#f5f0e6" stroke="#d9d2c5"/>
+    <text class="label" x="40" y="148">MainContentShell</text>
+    <text class="body" x="40" y="172">{route children}</text>
+    <text class="note" x="40" y="196">DayRail + StatRail exist in code but are NOT in layout</text>
+    <rect x="24" y="888" width="1392" height="48" stroke="#d9d2c5"/>
+    <text class="mono" x="720" y="918" text-anchor="middle">HonestyFooter</text>
+  </g>
+
+  <g id="CURRENT - Home" transform="translate(1540, 100)">
+    <rect width="1440" height="960" rx="8" fill="#f5f0e6" stroke="#d9d2c5" stroke-width="2"/>
+    <text class="frame-title" x="24" y="32">CURRENT - Home (/)</text>
+    <text class="comp-tag" x="24" y="50">HomeDashboard</text>
+    <g transform="translate(24, 80)">
+      <text class="title" x="400" y="60" text-anchor="middle">Review</text>
+      <rect x="300" y="80" width="200" height="44" rx="4" fill="#2d5b3a"/>
+      <text class="chip" x="400" y="108" text-anchor="middle">Start review</text>
+      <text class="title" x="400" y="220" text-anchor="middle">Today&apos;s paragraph</text>
+      <rect x="300" y="240" width="200" height="44" rx="4" fill="none" stroke="#2d5b3a" stroke-width="2"/>
+      <text class="ui" x="400" y="268" text-anchor="middle" fill="#2d5b3a">Open Today</text>
+      <text class="note" x="400" y="310" text-anchor="middle">Equal weight - extra click to daily ritual</text>
+      <rect x="900" y="0" width="440" height="720" stroke="#d9d2c5"/>
+      <text class="label" x="920" y="24">CalendarDayCell grid</text>
+      <text class="label" x="920" y="400">Collection link + count</text>
+    </g>
+  </g>
+
+  <g id="CURRENT - Today" transform="translate(3040, 100)">
+    <rect width="1440" height="960" rx="8" fill="#f5f0e6" stroke="#d9d2c5" stroke-width="2"/>
+    <text class="frame-title" x="24" y="32">CURRENT - Today (/today)</text>
+    <text class="comp-tag" x="24" y="50">TodayApp / ParagraphHero / RecordPanel / HardWordsList</text>
+    <g transform="translate(120, 80)">
+      <text class="title" x="0" y="0">Today</text>
+      <text class="subtitle" x="0" y="28">Day N / Theme / Persona</text>
+      <rect x="0" y="44" width="120" height="32" rx="4" fill="none" stroke="#d9d2c5"/>
+      <text class="ui" x="12" y="64">Warm-Up</text>
+      <rect x="0" y="90" width="1000" height="36" fill="#ebe5d6" opacity="0.5"/>
+      <text class="caption" x="8" y="112">TodayParagraphControls</text>
+      <rect x="0" y="150" width="600" height="300" stroke="#d9d2c5"/>
+      <text class="label" x="8" y="170">ParagraphHero (paragraph)</text>
+      <rect x="640" y="150" width="360" height="300" fill="#ebe5d6" stroke="#d9d2c5"/>
+      <text class="label" x="648" y="170">RecordPanel rail</text>
+      <circle cx="820" cy="240" r="36" fill="#2d5b3a"/>
+      <text class="chip" x="820" y="246" text-anchor="middle">REC</text>
+      <text class="label" x="648" y="290">HardWordsList</text>
+      <text class="caption" x="500" y="480" text-anchor="middle">I read it</text>
+    </g>
+  </g>
+
+  <g id="PROPOSED - App shell" transform="translate(4540, 100)">
+    <rect width="1440" height="960" rx="8" fill="#f5f0e6" stroke="#2d5b3a" stroke-width="3"/>
+    <text class="frame-title" x="24" y="32">PROPOSED - App shell (rearrange)</text>
+    <text class="comp-tag" x="24" y="50">Mount DayRail + StatRail in layout.tsx</text>
+    <text class="ui" x="600" y="94">Today</text>
+    <text class="ui" x="680" y="94">Review</text>
+    <text class="ui" x="770" y="94">Collection</text>
+    <text class="ui" x="880" y="94">Calendar</text>
+    <text class="ui" x="1380" y="94" text-anchor="end" font-weight="600">Settings</text>
+    <text class="note" x="24" y="94">TopNav: same routes, more links</text>
+    <rect x="24" y="120" width="80" height="760" stroke="#d9d2c5"/>
+    <text class="comp-tag" x="32" y="500" transform="rotate(-90 32 500)">DayRail</text>
+    <rect x="120" y="120" width="920" height="760" stroke="#d9d2c5" stroke-dasharray="6 4"/>
+    <text class="label" x="132" y="144">MainContentShell</text>
+    <rect x="1056" y="120" width="288" height="760" stroke="#d9d2c5"/>
+    <text class="label" x="1068" y="144">StatRail</text>
+    <rect x="1068" y="160" width="260" height="72" rx="4" stroke="#d9d2c5"/>
+    <text class="label" x="1080" y="178">STREAK</text>
+    <text class="mono" x="1080" y="208">StreakStatCard</text>
+    <rect x="1068" y="248" width="260" height="72" rx="4" stroke="#d9d2c5" stroke-dasharray="5 4"/>
+    <text class="label" x="1080" y="266">WORDS (from collection count)</text>
+    <rect x="1068" y="336" width="260" height="72" rx="4" stroke="#d9d2c5" stroke-dasharray="5 4"/>
+    <text class="label" x="1080" y="354">RECORDINGS</text>
+    <rect x="1068" y="424" width="260" height="72" rx="4" stroke="#d9d2c5" stroke-dasharray="5 4"/>
+    <text class="label" x="1080" y="442">DAY OF 30</text>
+    <rect x="24" y="888" width="1392" height="48" stroke="#d9d2c5"/>
+    <text class="mono" x="720" y="918" text-anchor="middle">HonestyFooter</text>
+  </g>
+
+  <g id="PROPOSED - Today" transform="translate(6040, 100)">
+    <rect width="1440" height="960" rx="8" fill="#f5f0e6" stroke="#2d5b3a" stroke-width="3"/>
+    <text class="frame-title" x="24" y="32">PROPOSED - Today (same blocks)</text>
+    <rect x="24" y="56" width="80" height="832" fill="#ebe5d6" opacity="0.35"/>
+    <rect x="1128" y="56" width="288" height="832" fill="#ebe5d6" opacity="0.35"/>
+    <g transform="translate(120, 80)">
+      <rect x="0" y="0" width="880" height="40" rx="4" fill="#2d5b3a"/>
+      <text class="chip" x="16" y="26">Day 14 of 30 / Horror / GRE</text>
+      <text class="note" x="0" y="58">Restyle existing header - no new data</text>
+      <rect x="0" y="72" width="520" height="340" stroke="#d9d2c5"/>
+      <text class="label" x="8" y="92">ParagraphHero (~42rem)</text>
+      <rect x="560" y="72" width="320" height="340" fill="#ebe5d6" stroke="#d9d2c5"/>
+      <text class="label" x="568" y="92">RecordPanel + HardWordsList</text>
+      <circle cx="720" cy="180" r="40" fill="#2d5b3a"/>
+      <text class="chip" x="720" y="186" text-anchor="middle">REC</text>
+    </g>
+  </g>
+
+  <g id="PROPOSED - Home" transform="translate(7540, 100)">
+    <rect width="1440" height="960" rx="8" fill="#f5f0e6" stroke="#2d5b3a" stroke-width="3"/>
+    <text class="frame-title" x="24" y="32">PROPOSED - Home (re-prioritize)</text>
+    <rect x="24" y="56" width="80" height="832" fill="#ebe5d6" opacity="0.25"/>
+    <rect x="1128" y="56" width="288" height="832" fill="#ebe5d6" opacity="0.25"/>
+    <g transform="translate(120, 100)">
+      <text class="title" x="400" y="0" text-anchor="middle">Today&apos;s paragraph</text>
+      <rect x="300" y="20" width="200" height="48" rx="4" fill="#2d5b3a"/>
+      <text class="chip" x="400" y="50" text-anchor="middle">Open Today</text>
+      <text class="title" x="400" y="140" text-anchor="middle" fill="#4a4a4a">Review (secondary)</text>
+      <rect x="720" y="0" width="400" height="380" stroke="#d9d2c5"/>
+      <text class="label" x="728" y="24">Calendar + Collection unchanged</text>
+      <text class="note" x="400" y="280" text-anchor="middle">Remove Home entrance animations</text>
+    </g>
+  </g>
+
+  <g id="REFERENCE - Review" transform="translate(40, 1100)">
+    <rect width="700" height="400" rx="8" fill="#f5f0e6" stroke="#d9d2c5"/>
+    <text class="frame-title" x="24" y="32">REFERENCE - Review (/review)</text>
+    <text class="comp-tag" x="24" y="50">Flashcard - unchanged placement in main column</text>
+    <rect x="24" y="80" width="652" height="280" stroke="#d9d2c5"/>
+    <text class="title" x="48" y="120">Review</text>
+    <text class="caption" x="48" y="148">Card N of M</text>
+    <rect x="48" y="180" width="600" height="160" fill="#ebe5d6"/>
+    <text class="label" x="60" y="200">Flashcard</text>
+  </g>
+
+  <g id="REFERENCE - Collection" transform="translate(780, 1100)">
+    <rect width="700" height="400" rx="8" fill="#f5f0e6" stroke="#d9d2c5"/>
+    <text class="frame-title" x="24" y="32">REFERENCE - Collection (/collection)</text>
+    <text class="comp-tag" x="24" y="50">CollectionRow list</text>
+    <rect x="24" y="80" width="652" height="280" stroke="#d9d2c5"/>
+    <text class="title" x="48" y="120">Collection</text>
+    <text class="caption" x="48" y="200">CollectionRow x N</text>
+  </g>
+
+</svg>

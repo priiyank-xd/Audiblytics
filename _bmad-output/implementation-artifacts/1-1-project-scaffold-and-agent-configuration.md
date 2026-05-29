@@ -1,0 +1,301 @@
+# Story 1.1: Project Scaffold and Agent Configuration
+
+Status: ready-for-dev
+
+<!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
+
+## Story
+
+As Priyank,
+I want a working Next.js 16 + Tailwind 4 + TypeScript project initialized with the exact dependencies required by Audiblytics' architecture (and zero banned ones),
+so that all subsequent stories build on a consistent, agent-friendly foundation that respects the dependency-parsimony NFR (NFR26) and the locked stack chosen in `architecture.md`.
+
+## Acceptance Criteria
+
+> Sourced verbatim from `epics.md § Story 1.1` (lines 410–434). Re-formatted as numbered AC for traceability.
+
+1. **AC1 — create-next-app scaffold:** Running `pnpm create next-app@latest audiblytics --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --turbopack --use-pnpm` produces a project where TypeScript, Tailwind 4, ESLint, the App Router, the `src/` layout, the `@/*` import alias, Turbopack, and pnpm are all enabled, matching `architecture.md § Selected Starter` and AR1.
+2. **AC2 — shadcn primitives installed:** Running `pnpm dlx shadcn@latest init` followed by `pnpm dlx shadcn@latest add button input select label dialog card tooltip` produces exactly the 7 shadcn primitives listed by AR2 / UX-DR28 under `src/components/ui/`. **No other shadcn primitives may be added** in this story (see Banned Deps below).
+3. **AC3 — runtime deps installed (per AR3):** `package.json` `dependencies` contains `ai`, `@ai-sdk/google`, `@ai-sdk/openai`, `@ai-sdk/anthropic`, `@openrouter/ai-sdk-provider`, `ollama-ai-provider-v2`, `dexie@^4.4`, `dexie-react-hooks@^4.2`, and `zod`.
+4. **AC4 — dev deps installed (per AR3):** `package.json` `devDependencies` contains `@next/bundle-analyzer` and `tsx`.
+5. **AC5 — banned deps absent:** `package.json` does **not** contain Redux, Zustand, Jotai, MobX, Recoil, Valtio, framer-motion, react-spring, lottie-react, react-toastify, sonner, react-hot-toast, vitest, jest, @testing-library/*, cypress, playwright, or any animation/toast/state-management/test-framework library (per NFR26 + AR3 + UX-DR28).
+6. **AC6 — directory tree matches `architecture.md § Complete Project Tree`:** `src/app`, `src/components/ui`, `src/components/audiblytics`, `src/features`, `src/lib`, `src/types`, `scripts`, and `public` exist (top-level). Inner subfolders/files are created **only as empty placeholders for this story** (no implementation logic — that's later stories' work).
+7. **AC7 — `pnpm dev` boots cleanly:** `pnpm dev` starts a Turbopack dev server on `http://localhost:3000`, the create-next-app default landing page renders without console errors, and HMR works on a trivial edit.
+8. **AC8 — `pnpm build` succeeds:** `pnpm build` completes with zero errors. The resulting `.next/` artifact serves `/` successfully via `pnpm start` (manual smoke check is fine; no automated test required).
+9. **AC9 — agent-config files point at architecture.md:** `AGENTS.md`, `CLAUDE.md`, and `.cursor/rules/architecture.mdc` are edited (or created if absent) to point coding agents at `architecture.md § Implementation Patterns` as the source of truth for naming, folder, error-handling, and styling conventions, satisfying AR26.
+10. **AC10 — README PERSONAL-USE banner:** Top of `README.md` carries a clearly visible PERSONAL-USE banner so future contributors see the n=1 scope before any other content (AR15 part 3).
+11. **AC11 — `.env.example` documents script env var:** `.env.example` exists at repo root and documents `OFFLINE_PACK_PROVIDER_KEY` for the offline-pack script (AR28). `.env.local` is in `.gitignore`.
+12. **AC12 — no git repo init pollution:** This story does **not** require a git commit, push, or remote. The workspace is pre-configured outside source control per the user's project setup.
+
+### BDD format (verbatim mirror of epics.md § Story 1.1)
+
+**Given** an empty workspace
+**When** the developer runs `pnpm create next-app@latest audiblytics --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --turbopack --use-pnpm` followed by `pnpm dlx shadcn@latest init` and `pnpm dlx shadcn@latest add button input select label dialog card tooltip`
+**Then** the project tree matches `architecture.md § Complete Project Tree` (`src/app`, `src/components/ui`, `src/components/audiblytics`, `src/features`, `src/lib`, `src/types`, `scripts`, `public`)
+**And** `pnpm dev` boots a Turbopack dev server with HMR working
+**And** runtime deps `ai`, `@ai-sdk/google`, `@ai-sdk/openai`, `@ai-sdk/anthropic`, `@openrouter/ai-sdk-provider`, `ollama-ai-provider-v2`, `dexie@^4.4`, `dexie-react-hooks@^4.2`, `zod` are installed (per AR3)
+**And** dev deps `@next/bundle-analyzer` and `tsx` are installed
+**And** no banned deps (Redux, Zustand, animation libs, toast libs, test framework) appear in `package.json`
+
+**Given** a coding agent reads repo guidance
+**When** it opens `AGENTS.md` and `CLAUDE.md` (auto-generated by create-next-app)
+**Then** both files are edited to point at `architecture.md § Implementation Patterns` as source of truth for naming/folder/error/styling conventions (per AR26)
+**And** `.cursor/rules/architecture.mdc` mirrors the same guidance
+
+**Given** the developer runs `pnpm build`
+**When** the build completes
+**Then** no errors are emitted and the resulting `.next/` artifact loads `/` successfully
+
+## Tasks / Subtasks
+
+- [ ] **Task 1 — Run starter scaffold** (AC: 1)
+  - [ ] 1.1 Confirm `pnpm` is available (`pnpm --version`); install via corepack if missing.
+  - [ ] 1.2 From the workspace **parent** of `/Users/priyankpatel/Personal/Audiblytics`, run the exact AR1 command. **Note:** if Audiblytics directory already contains files (it does — `_bmad-output/`, `.agents/`, etc.), run `create-next-app` into a temporary directory and merge top-level files in (or pass `audiblytics` as the project name and accept the existing-dir prompt) — see Dev Notes § Existing Workspace Handling.
+  - [ ] 1.3 Verify the scaffold created: `package.json` (with `next`, `react`, `react-dom`, `typescript`, `tailwindcss@^4`, `eslint`, `eslint-config-next`), `tsconfig.json` (strict, `paths: { "@/*": ["./src/*"] }`), `next.config.ts`, `postcss.config.mjs`, `eslint.config.mjs`, `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/globals.css`.
+  - [ ] 1.4 Verify `next.config.ts` and not `next.config.js` (Next.js 16 ts default).
+- [ ] **Task 2 — Install shadcn primitives** (AC: 2)
+  - [ ] 2.1 `cd audiblytics && pnpm dlx shadcn@latest init` — accept defaults; ensure `components.json` lands at root and `src/components/ui/` is the target.
+  - [ ] 2.2 `pnpm dlx shadcn@latest add button input select label dialog card tooltip` — generates 7 files under `src/components/ui/`.
+  - [ ] 2.3 Verify exactly 7 shadcn files exist (`button.tsx`, `input.tsx`, `select.tsx`, `label.tsx`, `dialog.tsx`, `card.tsx`, `tooltip.tsx`). **Do not** run `shadcn add` for any other primitive — UX-DR28 banlist includes `Toast`, `Sonner`, `Sheet`, `Drawer`, `Popover`, `Command`, `Tabs`, `Badge`, `Avatar`, `Menubar`, etc.
+- [ ] **Task 3 — Install runtime dependencies** (AC: 3)
+  - [ ] 3.1 Run: `pnpm add ai @ai-sdk/google @ai-sdk/openai @ai-sdk/anthropic @openrouter/ai-sdk-provider ollama-ai-provider-v2 zod`
+  - [ ] 3.2 Run: `pnpm add dexie@^4.4 dexie-react-hooks@^4.2` (use exact caret ranges per AR3 — pinning major.minor floor; do not let Dexie auto-bump to v5 if released).
+  - [ ] 3.3 Verify `package.json#dependencies` contains all 9 packages.
+- [ ] **Task 4 — Install dev dependencies** (AC: 4)
+  - [ ] 4.1 Run: `pnpm add -D @next/bundle-analyzer tsx`
+  - [ ] 4.2 Verify `package.json#devDependencies` contains both.
+- [ ] **Task 5 — Verify no banned deps** (AC: 5)
+  - [ ] 5.1 Inspect final `package.json` carefully. Confirm absence of:
+    - State libs: `redux`, `@reduxjs/toolkit`, `react-redux`, `zustand`, `jotai`, `mobx`, `recoil`, `valtio`
+    - Animation libs: `framer-motion`, `react-spring`, `lottie-react`, `motion`, `auto-animate`
+    - Toast libs: `react-toastify`, `sonner`, `react-hot-toast`, `notistack`
+    - Test frameworks: `vitest`, `jest`, `@testing-library/*`, `cypress`, `playwright`, `mocha`, `jasmine`
+    - UI frameworks beyond shadcn: `antd`, `@mui/*`, `@chakra-ui/*`, `react-bootstrap`
+  - [ ] 5.2 If any banned dep was pulled in transitively as a `dependencies` (not `devDependencies` of a transitive), document and surface — none expected from the AR3 list.
+- [ ] **Task 6 — Create capability-area folder skeleton** (AC: 6)
+  - [ ] 6.1 Create empty placeholder folders so capability-area boundaries are visible from day 1 (NFR28 + architecture.md § Complete Project Tree). For each folder, add a `.gitkeep` if empty (acceptable since git is not strictly required this story but folder visibility matters for IDE navigation):
+    - `src/components/audiblytics/`
+    - `src/features/{paragraph,settings,collection,voice-journal,warm-up,review,day14,onboarding,calendar,offline-pack}/`
+    - `src/lib/{llm,storage,schemas,audio,day-counter,result,hooks,llm/errors,llm/prompts,llm/schemas}/`
+    - `src/types/`
+    - `scripts/`
+  - [ ] 6.2 **Do not** create implementation files. The folder shape is the deliverable — actual code lives in stories 1.2 onward.
+  - [ ] 6.3 Verify the directory tree against `architecture.md § Complete Project Tree` lines 957–1124. Missing top-level dirs are AC failures; missing leaf files are not (they're future-story work).
+- [ ] **Task 7 — Boot dev server smoke check** (AC: 7)
+  - [ ] 7.1 Run `pnpm dev` from `audiblytics/` root. Confirm Turbopack is the engine (`▲ Next.js 16.x.x (Turbopack)` in stdout).
+  - [ ] 7.2 Open `http://localhost:3000` — default create-next-app landing page renders.
+  - [ ] 7.3 Touch `src/app/page.tsx` (e.g., add a single space and remove it) to confirm HMR fires and the page reloads.
+  - [ ] 7.4 Browser console must be free of errors (warnings are tolerable for this story; future stories tighten this further).
+- [ ] **Task 8 — Production build smoke check** (AC: 8)
+  - [ ] 8.1 Stop the dev server. Run `pnpm build`. Expect exit code 0 and a `.next/` directory.
+  - [ ] 8.2 Run `pnpm start`. Browse to `http://localhost:3000`. Confirm the production-mode landing page loads.
+  - [ ] 8.3 Note any deprecation warnings or bundle-size warnings in the build log; not blocking for AC8 but record in Dev Agent Record § Completion Notes.
+- [ ] **Task 9 — Edit AGENTS.md / CLAUDE.md / cursor rule** (AC: 9)
+  - [ ] 9.1 Open `AGENTS.md` (auto-generated by create-next-app). Replace its body with a short pointer that names `architecture.md § Implementation Patterns` (and lines 571–873 for precision) as the source of truth for: naming conventions, folder placement (capability-area colocation per NFR28), error handling (`Result<T,E>` discriminated unions, no throws for app errors), styling (semantic tokens only, no arbitrary Tailwind values), state management (decision tree from § Communication Patterns), and pattern enforcement (§ Enforcement Guidelines).
+  - [ ] 9.2 Mirror the same content into `CLAUDE.md` (Claude Code mirror per AR26 + architecture.md § Naming Patterns paragraph 3).
+  - [ ] 9.3 Create `.cursor/rules/architecture.mdc` carrying the same pointer in Cursor's `.mdc` rule format. Use `description` frontmatter and `globs: ["src/**/*.{ts,tsx}"]` so Cursor surfaces the rule in-editor.
+  - [ ] 9.4 Each of the three files must list at minimum: (a) repo identity (Audiblytics, n=1 personal-use), (b) "Read `architecture.md § Implementation Patterns` before writing code" as the first numbered rule (per architecture.md line 853), (c) the 10 enforcement rules from architecture.md § Enforcement Guidelines (lines 853–864), and (d) link/path to the architecture file: `_bmad-output/planning-artifacts/architecture.md`.
+- [ ] **Task 10 — README PERSONAL-USE banner** (AC: 10)
+  - [ ] 10.1 Replace (or prepend to) the auto-generated `README.md` so the **first** rendered block is a PERSONAL-USE banner. Suggested copy: a fenced quote block with the headline `**PERSONAL USE ONLY — n=1.** API keys live in browser localStorage; deploying this app publicly is forbidden until a backend proxy is introduced. See `architecture.md § Hard-Scope-Boundary` (AR15).`
+  - [ ] 10.2 Below the banner, add a short Development section restating: scaffold command, `pnpm dev` / `pnpm build` / `pnpm start`, folder decision tree pointer (architecture.md lines 641–656), and link to `architecture.md`.
+- [ ] **Task 11 — Environment configuration files** (AC: 11)
+  - [ ] 11.1 Create `.env.example` at repo root with `OFFLINE_PACK_PROVIDER_KEY=` (empty value) and a one-line comment: `# Used by scripts/generate-offline-pack.ts only. Not read by the app at runtime (AR28).`
+  - [ ] 11.2 Confirm `.gitignore` contains `.env*.local` (create-next-app default already does — verify, do not duplicate).
+  - [ ] 11.3 Do **not** create `.env.local` in this story — it's user-provided when the offline-pack script runs (Story 8.1).
+- [ ] **Task 12 — Final verification pass**
+  - [ ] 12.1 Re-run `pnpm install` once to ensure lockfile is clean and reproducible.
+  - [ ] 12.2 Re-run `pnpm dev` and `pnpm build` end-to-end as a final smoke check.
+  - [ ] 12.3 Append a checklist into the Dev Agent Record (§ Completion Notes) confirming each AC1–AC11.
+
+## Dev Notes
+
+### Critical Architectural Constraints (read before writing any code)
+
+> **Mandatory pre-read:** `architecture.md` lines 571–873 (§ Implementation Patterns + § Enforcement Guidelines) — the entire layered-import direction, error-handling philosophy, and naming convention set. Any deviation in this story would poison every subsequent story.
+
+**Hard-scope-boundary (AR15 / NFR14) — three structural guards.** Story 1.1 establishes guards #2 and #3 of the three (the runtime guard inside `lib/llm/client.ts` ships in Story 1.6):
+
+1. (Future, Story 1.6) Runtime guard in `lib/llm/client.ts` hard-fails if `typeof window === 'undefined'`.
+2. **(THIS STORY)** README PERSONAL-USE banner at top of file (Task 10).
+3. **(THIS STORY)** Pointer-comment in `AGENTS.md`/`CLAUDE.md`/`.cursor/rules/architecture.mdc` referencing the n=1 boundary (Task 9).
+
+A future contributor must consciously edit at least three files to remove the boundary. **Do not** weaken the banner copy to be more "professional" — bluntness is the security feature.
+
+**Stack lock (AR1, AR3, NFR26).** The stack is non-negotiable:
+
+- Next.js 16 + React 19 + TypeScript strict + Tailwind 4 + Turbopack
+- 7 shadcn primitives only (UX-DR28 whitelist)
+- 9 runtime deps + 2 dev deps (AR3) — full list in AC3 / AC4
+- **Banned categorically:** state libs, animation libs, toast/sonner libs, test framework, any UI framework beyond shadcn
+- **Banned by omission:** Prettier (NFR26 permits it but PRD § Implementation Considerations notes "no Prettier in starter — add manually if desired" — defer to Priyank's preference; if added later, must not pull plugin chains)
+
+**PRD-divergence reminder (architecture.md lines 250–258):** PRD says "Next.js 15"; we ship **Next.js 16** because (a) PRD wording predated 16's release, (b) App Router stable across 15→16, (c) Tailwind 4 + AGENTS.md defaults reduce setup steps. **Do not** "correct" this back to Next.js 15 — it's a deliberate, documented divergence.
+
+### Existing Workspace Handling (CRITICAL — read before Task 1)
+
+The project root `/Users/priyankpatel/Personal/Audiblytics` is **not empty** — it currently contains:
+
+- `_bmad-output/` (planning + implementation artifacts — keep)
+- `.agents/` (BMad skill installations — keep)
+- `_bmad/` (BMad config + scripts — keep)
+- `.claude/` (claude project config — keep)
+- `.cursor/` (cursor project config — keep, may be augmented in Task 9)
+- Possibly a few BMad-generated stub files
+
+**Integration strategy** (pick the cleaner option, but document which you chose):
+
+- **Option A (recommended):** Run `pnpm create next-app@latest audiblytics ...` from `/Users/priyankpatel/Personal/`. The interactive prompt will detect the existing directory and ask whether to proceed — it will only **overwrite/create** Next.js-owned files (`package.json`, `tsconfig.json`, `next.config.ts`, `src/`, `public/`, `node_modules/`, `eslint.config.mjs`, `postcss.config.mjs`, `.gitignore`, `README.md`, `AGENTS.md`, `CLAUDE.md`). The pre-existing `_bmad-output/`, `.agents/`, `_bmad/`, `.claude/`, `.cursor/` (its top-level pre-existing files) directories will be left untouched. Verify each is intact afterward.
+- **Option B (fallback if Option A refuses to proceed):** Scaffold into a sibling temp dir (`/Users/priyankpatel/Personal/audiblytics-tmp`), then merge the Next.js-generated files into the existing project root, taking care **not** to overwrite `.cursor/rules/` (your edits go in there in Task 9 — the `architecture.mdc` you create can co-exist with any existing `.mdc` rules from BMad), `.gitignore` (merge entries, do not blanket-replace), or `README.md` (you'll author this fresh in Task 10 anyway).
+
+**Do not** delete `_bmad-output/`, `.agents/`, `_bmad/`, `.claude/` under any circumstance — they're the planning system this story is being created from.
+
+### Folder Tree — What This Story Creates vs Defers
+
+This story produces the **shape** of the project tree. Files inside leaf folders are the work of stories 1.2 onward.
+
+| Path | This story | Future story |
+|---|---|---|
+| `src/app/layout.tsx` (server component) | scaffolded by `create-next-app` (with default content — leave alone except for any `next/font` imports added in Story 1.2) | Story 1.2 (next/font), Story 1.3 (layout shell), Story 7.2 (Day14Gate mount) |
+| `src/app/page.tsx` | scaffolded default landing page | Story 1.10 replaces with Today route |
+| `src/app/globals.css` | scaffolded with Tailwind 4 directives | Story 1.2 adds the token system |
+| `src/app/{settings,collection,review,calendar,_dev/components,_internal}/` | **NOT created this story** (Next.js requires a `page.tsx` to consider them routes; empty folders cause build issues) | Stories 1.9, 2.2, 6.x, 4.4, 1.x respectively |
+| `src/components/ui/` | populated with 7 shadcn primitives (Task 2) | shadcn Button extended with forest/brick/outline/ghost/ghost-continue variants in Story 1.2 |
+| `src/components/audiblytics/` | empty folder + `.gitkeep` | 18 custom composites, one per Story 1.3+ |
+| `src/features/<each>/` | empty folder + `.gitkeep` per capability | Specific hooks/state machines per capability story |
+| `src/lib/{llm,storage,schemas,audio,day-counter,result,hooks}/` | empty folders + `.gitkeep` each | Stories 1.4–1.7 implement contents |
+| `src/lib/llm/{errors,prompts,schemas}/` | empty subfolders + `.gitkeep` | Story 1.5 |
+| `src/types/globals.d.ts` | **NOT created this story** | Created when first ambient type is needed |
+| `scripts/` | empty folder + `.gitkeep` | Story 8.1 adds `generate-offline-pack.ts` |
+| `public/` | scaffolded by create-next-app (favicon + svgs) | Optionally pruned later |
+| `next.config.ts` | scaffolded default | Story 1.6 adds hard-scope-boundary build-time guard |
+
+**Why empty `.gitkeep` folders matter:** Stories 1.2–1.12 will reference these paths in their import statements and folder-decision-tree lookups. If the folders don't exist, the dev agent has nowhere to put new code and will improvise placement, which will violate NFR28 capability-area colocation. The empty shape is the contract.
+
+### shadcn primitive whitelist enforcement
+
+UX-DR28 / AR2 fix the shadcn install list at exactly **7 primitives**: `button`, `input`, `select`, `label`, `dialog`, `card`, `tooltip`.
+
+Banned (do **not** run `shadcn add` for these): `Toast`, `Sonner`, `Sheet`, `Drawer`, `Popover`, `Command`, `Tabs`, `Badge`, `Avatar`, `Menubar`. The reasoning is product-shape, not stylistic — Toast/Sonner violate UX-DR30 (state-flip = success, no toast feedback); Sheet/Drawer/Popover/Menubar violate UX-DR33 (single Dialog usage for Day14Takeover only); Command/Tabs/Badge/Avatar are not present in any of the 19 custom composites.
+
+If you find yourself wanting one of these, **stop**: the design intent is to compose with `dialog`, `card`, and `button` instead, or with a custom composite under `src/components/audiblytics/`.
+
+### Dependency notes (pin reasoning)
+
+| Package | Version constraint | Why |
+|---|---|---|
+| `dexie` | `^4.4` | Architecture explicitly pins v4.4 (single-version schema, forward-only migrations — see AR10). v5 (if released) requires migration policy review. |
+| `dexie-react-hooks` | `^4.2` | Matches Dexie 4.x API; v5 of the hooks lib would mean different Dexie major. |
+| `ai` | latest (no pin) | AI SDK 6 (Dec 2025+) is required for `generateText({ output: Output.object({ schema }) })` API per AR4. Older `ai` versions rely on deprecated `generateObject` which AR4 forbids. |
+| `@ai-sdk/google` / `@ai-sdk/openai` / `@ai-sdk/anthropic` | latest | Must match `ai@^6` peer-dep range. Latest at install time is safe. |
+| `@openrouter/ai-sdk-provider` | latest | Community provider for OpenRouter, AI SDK 6 compatible. |
+| `ollama-ai-provider-v2` | latest | Note the `-v2` suffix — the `ollama-ai-provider` (no suffix) is community-maintained but has lagged AI SDK 6 compatibility. AR3 explicitly names `-v2`. |
+| `zod` | latest | Zod 3.x is stable; pin not needed. Used everywhere as the schema source-of-truth (AR16). |
+| `@next/bundle-analyzer` | latest | Dev-only; opt-in via `pnpm dlx`. Optional but listed in AR3. |
+| `tsx` | latest | Used to run `scripts/generate-offline-pack.ts` outside Next.js (AR24). |
+
+If any `pnpm add` fails due to peer-dep mismatches, the most likely cause is `ai` not being v6 — re-run `pnpm add ai@latest` first, then re-add the provider packages.
+
+### Where capability code goes (NFR28 quick reference)
+
+Folder decision tree from `architecture.md § Structure Patterns` lines 641–656 — pin this to your mental model before placing **any** file in this story (and every later story):
+
+| New file is... | Goes in... |
+|---|---|
+| Generic React UI primitive (Button, Input, Dialog) — already shadcn-supplied | `src/components/ui/` (shadcn-managed) |
+| UX-spec custom composite (Day14Takeover, RecordPanel, etc.) | `src/components/audiblytics/` |
+| Capability logic (paragraph generation, voice journal recording, calendar streak) | `src/features/<capability>/` |
+| Cross-cutting infra (LLM client, storage, schemas, errors, day-counter, audio wrappers) | `src/lib/<concern>/` |
+| Hook used by ≥2 capabilities | `src/lib/hooks/` |
+| Hook used by exactly one capability | `src/features/<capability>/hooks/` |
+| Zod schema for a persisted record | `src/lib/schemas/<entity>.schema.ts` |
+| Zod schema for an LLM response | `src/lib/llm/schemas/<thing>.schema.ts` |
+| Per-provider error parser | `src/lib/llm/errors/<provider>.ts` |
+| Route page | `src/app/<route>/page.tsx` |
+| Dev-only experiment / component gallery | `src/app/_dev/<thing>/page.tsx` (gated by build-time flag) |
+| One-shot script (offline pack gen, etc.) | `scripts/<task>.ts` (NOT inside `src/`) |
+
+### Layered import direction (architecture.md lines 1126–1148)
+
+```
+app/         (routes)         ──can import──>  components/, features/, lib/
+features/    (capability)     ──can import──>  components/, lib/
+components/  (UI atoms)       ──can import──>  lib/, components/
+lib/         (infra)          ──can import──>  lib/ only
+```
+
+- `lib/` MUST NOT import from outside `lib/`
+- `components/` MUST NOT import from `features/` or `app/`
+- `features/<X>` MUST NOT import other `features/<Y>`
+
+This is irrelevant for Story 1.1 (no implementation files), but the **folder shape** must support it on day 1 — that's why we create empty placeholders rather than letting later stories invent paths.
+
+### Configuration files — what create-next-app produces vs what you keep
+
+`create-next-app` produces (Next.js 16):
+
+- `package.json` ✅ keep (you'll add deps to it)
+- `pnpm-lock.yaml` ✅ keep
+- `tsconfig.json` ✅ keep (verify strict mode + `paths: { "@/*": ["./src/*"] }`)
+- `next.config.ts` ✅ keep (Story 1.6 adds the build-time guard later)
+- `postcss.config.mjs` ✅ keep
+- `eslint.config.mjs` ✅ keep
+- `.gitignore` ✅ keep / merge (verify `.env*.local` line present)
+- `.eslintrc.*` — n/a in Next.js 16 (uses `eslint.config.mjs` flat config)
+- `tailwind.config.*` — **n/a in Tailwind 4** — config is CSS-in-CSS via `@theme` in `globals.css` (Story 1.2)
+- `README.md` ✅ overwrite per Task 10
+- `AGENTS.md` ✅ overwrite per Task 9
+- `CLAUDE.md` ✅ overwrite per Task 9 (created in newer Next.js 16 templates; if absent, create it fresh)
+
+### Known potential pitfalls (preempt these)
+
+1. **Next.js 16 Turbopack first-build slowness on macOS.** First `pnpm dev` cold start can take 10–30s — this is normal; HMR after that is sub-second. Don't mistake initial latency for a misconfiguration.
+2. **shadcn `init` may prompt for style + base color.** Accept defaults: `New York` style, `Neutral` base color, `CSS variables` enabled, `src/components/ui/` directory. Story 1.2 will replace the colors with the Audiblytics token system anyway.
+3. **`shadcn add dialog`** in Next.js 16 + React 19 may emit a peer-dep warning about `@radix-ui/react-dialog` — install proceeds; warning is benign.
+4. **`@ai-sdk/google` major.** Confirm v2.x.x of the provider packages is what `pnpm add` resolves to (v1.x.x of the provider packages targets `ai@5`, deprecated by AR4). If `pnpm` resolves to v1.x.x, force latest with `pnpm add @ai-sdk/google@latest @ai-sdk/openai@latest @ai-sdk/anthropic@latest`.
+5. **`ollama-ai-provider-v2` is the correct package name.** The non-suffixed `ollama-ai-provider` is older/abandoned; AR3 specifically lists `-v2`.
+6. **`@openrouter/ai-sdk-provider`** uses a scoped name. `pnpm add @openrouter/ai-sdk-provider` (single package) is correct — do not look for an unscoped variant.
+7. **`pnpm build` warnings on Tailwind 4.** Tailwind 4 with empty `globals.css` (just the create-next-app default) builds cleanly. If you see a warning about missing utilities, ignore — Story 1.2 fills the token layer in.
+8. **No git operations in this story.** Per the explicit instruction in the parent prompt: do not `git init`, do not commit, do not push. The user manages source control externally.
+
+### Project Structure Notes
+
+**Alignment with architecture.md § Complete Project Tree:** The folder shape Task 6 creates is identical to `architecture.md` lines 957–1124. Verbatim verification — no shortcuts.
+
+**Detected conflicts or variances:**
+
+- The architecture tree shows `src/app/_internal/Day14Gate.tsx` and `src/app/_internal/README.md`. **Task 6 deliberately defers** the `_internal/` folder to its dependent story (Day-14 gate work). Same for `_dev/components/`. Empty Next.js route folders cause build warnings. This deferral is the safer choice and aligns with "files in leaf folders are future-story work" (Dev Notes § Folder Tree).
+- The architecture tree shows `lib/utils.ts` (the `cn()` helper). shadcn `init` (Task 2.1) **creates this file automatically** at `src/lib/utils.ts`. Verify it lands there — no manual creation needed.
+- The architecture tree shows `lib/llm/{client,generate,models,with-retry,types}.ts` files. **Task 6 creates only the `lib/llm/` empty folder + `.gitkeep`**, not these files. Story 1.5 fills them in.
+
+### References
+
+- [Source: `_bmad-output/planning-artifacts/epics.md` § Story 1.1 (lines 410–434)] — verbatim acceptance criteria source
+- [Source: `_bmad-output/planning-artifacts/architecture.md` § Selected Starter (lines 113–148)] — exact scaffold command + post-scaffold install steps
+- [Source: `_bmad-output/planning-artifacts/architecture.md` § Implementation Patterns (lines 571–873)] — naming, structure, format, communication, process, styling, logging, comment patterns + § Enforcement Guidelines (lines 851–873)
+- [Source: `_bmad-output/planning-artifacts/architecture.md` § Complete Project Tree (lines 955–1124)] — the canonical folder tree this story produces
+- [Source: `_bmad-output/planning-artifacts/architecture.md` § Architectural Boundaries (lines 1126–1162)] — layered import direction + data boundaries
+- [Source: `_bmad-output/planning-artifacts/architecture.md` § Decision Impact Analysis — Implementation sequence (lines 540–558)] — confirms Story 1.1 = step 1 in the dependency order
+- [Source: `_bmad-output/planning-artifacts/epics.md` § Additional Requirements AR1–AR3, AR15, AR26, AR28] — additional story-relevant architectural rules
+- [Source: `_bmad-output/planning-artifacts/epics.md` § UX Design Requirements UX-DR28] — shadcn whitelist + bans
+- [Source: `_bmad-output/planning-artifacts/prd.md` § NFR26 (Maintainability)] — dependency parsimony + excluded categories
+- [Source: `_bmad-output/planning-artifacts/prd.md` § NFR14] — public-deployment forbidden until backend proxy
+- [Source: `_bmad-output/planning-artifacts/prd.md` § Implementation Considerations (lines 560–572)] — high-level summary
+
+## Dev Agent Record
+
+### Context Reference
+
+- This story spec is self-contained. The dev agent should read this file plus the four planning artifacts referenced in the References section (epics.md, architecture.md, prd.md, ux-design-specification.md) — the latter is sourced for UX-DR28 alignment only.
+- No previous story exists (Story 1.1 is the first story in the epic and the project).
+- No git history exists; no prior code patterns to inherit.
+- No `project-context.md` files were found in the workspace at story-creation time — once a `project-context.md` is generated by `bmad-generate-project-context`, future stories should consult it.
+
+### Agent Model Used
+
+(to be filled in by dev agent on implementation)
+
+### Debug Log References
+
+### Completion Notes List
+
+### File List

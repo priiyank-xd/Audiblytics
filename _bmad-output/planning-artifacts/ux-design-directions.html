@@ -1,0 +1,1803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Audiblytics — Design Directions</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   AUDIBLYTICS — DESIGN TOKENS (locked from Step 6 + Step 8)
+   ============================================================ */
+:root {
+  /* Surface */
+  --cream: #f5f0e6;
+  --cream-dim: #ebe5d6;
+  --border: #d9d2c5;
+
+  /* Ink */
+  --ink: #1a1a1a;
+  --ink-soft: #4a4a4a;
+  --ink-faint: #8a8580;
+
+  /* Primary — forest */
+  --forest: #2d5b3a;
+  --forest-deep: #1f4029;
+  --forest-light: #6b9b7b;
+  --forest-faint: #d4e0d8;
+
+  /* Danger — brick (restraint-locked) */
+  --brick: #8b2929;
+  --brick-deep: #6e1f1f;
+
+  /* Disabled / not-chosen */
+  --sage-dim: #91a89a;
+  --rose-dim: #b89090;
+
+  /* Inverse */
+  --on-forest: #f5f0e6;
+  --on-brick: #f5f0e6;
+
+  /* Type */
+  --font-serif: "EB Garamond", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+
+/* ============================================================
+   GLOBAL RESET + CHROME (this gallery file only — not the app)
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-feature-settings: "calt" 0; }
+body {
+  font-family: var(--font-sans);
+  background: #efe9dc;
+  color: var(--ink);
+  line-height: 1.5;
+  padding: 48px 24px 96px;
+}
+.gallery-header {
+  max-width: 1100px;
+  margin: 0 auto 64px;
+  text-align: center;
+}
+.gallery-header h1 {
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.gallery-header p {
+  font-size: 1.0625rem;
+  color: var(--ink-soft);
+  max-width: 640px;
+  margin: 0 auto 24px;
+}
+.gallery-header .meta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.toc {
+  max-width: 1100px;
+  margin: 0 auto 64px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.toc a {
+  display: block;
+  padding: 16px 20px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: background 0.1s;
+}
+.toc a:hover { background: var(--cream-dim); }
+.toc .toc-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--forest);
+  margin-bottom: 6px;
+}
+.toc .toc-name {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 400;
+  margin-bottom: 4px;
+}
+.toc .toc-desc {
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+
+.direction {
+  max-width: 1100px;
+  margin: 0 auto 96px;
+}
+.direction-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.direction-header .label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--forest);
+  margin-bottom: 8px;
+}
+.direction-header h2 {
+  font-family: var(--font-serif);
+  font-size: 2.25rem;
+  font-weight: 400;
+  margin-bottom: 12px;
+}
+.direction-header p {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+  max-width: 640px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* Mockup canvas — looks like a browser viewport */
+.mockup {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.mockup-chrome {
+  background: var(--cream-dim);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+.mockup-chrome .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ink-faint); opacity: 0.4; }
+.mockup-chrome .url { margin-left: 12px; opacity: 0.7; }
+.mockup-body { background: var(--cream); padding: 0; }
+
+/* ============================================================
+   SHARED COMPONENT STYLES (ai-2027 lineage)
+   ============================================================ */
+
+/* Top nav */
+.topnav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+}
+.topnav .brand {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.topnav .brand .dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--forest); margin-right: 8px; vertical-align: middle;
+}
+.topnav nav {
+  display: flex;
+  gap: 4px;
+}
+.topnav nav a {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+.topnav nav a.active { border: 1px solid var(--ink); }
+
+/* Day-rail */
+.day-rail {
+  width: 80px;
+  padding: 24px 0 24px 16px;
+  border-right: 1px solid var(--border);
+}
+.day-rail .rail-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  margin-bottom: 12px;
+  display: block;
+}
+.day-rail ol {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.day-rail ol li {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--ink-faint);
+  padding: 4px 8px 4px 12px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.day-rail ol li::before {
+  content: "";
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--border);
+}
+.day-rail ol li.completed { color: var(--forest); }
+.day-rail ol li.completed::before { background: var(--forest); border-color: var(--forest); }
+.day-rail ol li.today {
+  color: var(--forest);
+  font-weight: 600;
+  background: var(--forest-faint);
+  border-radius: 4px;
+}
+.day-rail ol li.today::before { background: var(--forest); border-color: var(--forest); width: 8px; height: 8px; }
+.day-rail ol li.missed::before { background: var(--cream-dim); border-color: var(--border); }
+
+/* Day-rail thin top variant (Direction C, D) */
+.day-rail-thin {
+  display: flex;
+  gap: 4px;
+  padding: 14px 32px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  align-items: center;
+}
+.day-rail-thin .rail-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  margin-right: 12px;
+  white-space: nowrap;
+}
+.day-rail-thin .day-cell {
+  width: 22px; height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.day-rail-thin .day-cell.completed { background: var(--forest); color: var(--cream); border-color: var(--forest); }
+.day-rail-thin .day-cell.today { border: 2px solid var(--forest); background: var(--forest-faint); color: var(--forest); font-weight: 700; }
+.day-rail-thin .day-cell.missed { background: var(--cream-dim); }
+
+/* Main content column */
+.content-col {
+  padding: 32px 48px;
+}
+.content-col .page-title {
+  font-family: var(--font-serif);
+  font-size: 1.875rem;
+  font-weight: 400;
+  margin-bottom: 4px;
+}
+.content-col .page-sub {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 32px;
+}
+.content-col .divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 24px 0 32px;
+}
+
+/* Paragraph hero */
+.paragraph-hero {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 1.7;
+  color: var(--ink);
+  max-width: 640px;
+}
+.paragraph-hero .recycled {
+  /* Q2 default: no visual indicator on recycled words. Kept for inspector view only. */
+}
+.paragraph-hero .new-word {
+  font-style: italic;
+}
+.paragraph-hero sup.fn {
+  font-size: 0.625rem;
+  color: var(--forest);
+  margin-left: 1px;
+}
+
+/* Inline meta-actions row */
+.meta-actions {
+  display: flex;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.meta-actions a { color: var(--ink-soft); text-decoration: none; }
+.meta-actions a:hover { color: var(--forest); }
+
+/* Hard-words list */
+.hard-words {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.hard-words h3 {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin-bottom: 16px;
+}
+.hard-word-row {
+  display: grid;
+  grid-template-columns: minmax(100px, auto) auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-serif);
+}
+.hard-word-row:last-child { border-bottom: none; }
+.hard-word-row .word {
+  font-size: 1.0625rem;
+}
+.hard-word-row .word.recycled { color: var(--ink); }
+.hard-word-row .word .recycled-tag {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--forest);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.hard-word-row .ipa {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.hard-word-row .meaning {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+.hard-word-row .actions {
+  display: flex;
+  gap: 6px;
+}
+.hard-word-row .actions button {
+  border: 1px solid var(--border);
+  background: var(--cream);
+  width: 28px; height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+}
+.hard-word-row .actions button:hover { border-color: var(--forest); color: var(--forest); }
+.hard-word-row .actions button.saved { background: var(--forest); color: var(--cream); border-color: var(--forest); }
+
+/* Record button + voice journal */
+.record-panel {
+  margin-top: 40px;
+  padding: 28px;
+  background: var(--cream-dim);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.record-panel-large {
+  padding: 36px 32px;
+}
+.record-btn {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--forest);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cream);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 transparent;
+}
+.record-btn-xl { width: 88px; height: 88px; }
+.record-btn:hover { background: var(--forest-deep); }
+.record-btn .mic-dot {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--cream);
+}
+.record-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+}
+.record-info .caption {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.record-info .timer {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+.record-info .helper {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+.recordings-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+.recording-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+.recording-row .play {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--forest);
+  color: var(--cream);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 10px;
+  padding-left: 2px;
+}
+
+/* "I read it" CTA */
+.iread-row {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.btn {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: 1px solid var(--ink);
+  background: var(--cream);
+  color: var(--ink);
+  cursor: pointer;
+}
+.btn-primary {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--cream);
+}
+.btn-primary:hover { background: var(--forest-deep); border-color: var(--forest-deep); }
+.btn-danger {
+  background: var(--brick);
+  border-color: var(--brick);
+  color: var(--cream);
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ink-soft);
+}
+
+/* Right rail */
+.right-rail {
+  width: 280px;
+  padding: 32px 24px 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-left: 1px solid var(--border);
+  padding-left: 24px;
+}
+.stat-card {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  position: relative;
+}
+.stat-card.dark {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: var(--cream);
+}
+.stat-card.dark .stat-label { color: var(--cream); opacity: 0.85; }
+.stat-card.dark .stat-value { color: var(--cream); }
+.stat-card.dark .stat-meta { color: var(--cream); opacity: 0.7; }
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin-bottom: 4px;
+}
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.stat-card.dark .stat-value { font-size: 2rem; }
+.stat-meta {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+.right-rail .provider-chip {
+  margin-top: 16px;
+  padding: 10px 12px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--ink-soft);
+}
+.right-rail .provider-chip .label { color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.5625rem; display: block; margin-bottom: 2px; }
+
+/* Footer */
+.honesty-footer {
+  border-top: 1px solid var(--border);
+  padding: 14px 32px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+/* ============================================================
+   DIRECTION A — Editorial Newspaper (3-column, paragraph hero)
+   ============================================================ */
+.dir-a .layout {
+  display: grid;
+  grid-template-columns: 80px 1fr 280px;
+}
+.dir-a .center {
+  padding: 32px 48px;
+}
+
+/* ============================================================
+   DIRECTION B — Recording-Forward (paragraph above, big record)
+   ============================================================ */
+.dir-b .layout {
+  display: grid;
+  grid-template-columns: 80px 1fr 280px;
+}
+.dir-b .center { padding: 32px 48px; }
+.dir-b .record-hero {
+  margin-top: 24px;
+  padding: 32px;
+  background: var(--forest);
+  color: var(--cream);
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 24px;
+  align-items: center;
+}
+.dir-b .record-hero .record-btn { background: var(--cream); }
+.dir-b .record-hero .record-btn .mic-dot { background: var(--forest); }
+.dir-b .record-hero .record-btn:hover { background: var(--cream-dim); }
+.dir-b .record-hero .label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+.dir-b .record-hero h3 {
+  font-family: var(--font-serif);
+  font-size: 1.375rem;
+  font-weight: 400;
+  line-height: 1.3;
+}
+.dir-b .record-hero .timer-display {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+.dir-b .stats-mini-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+.dir-b .stats-mini-row .mini-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dir-b .stats-mini-row .mini-stat .v {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.dir-b .stats-mini-row .mini-stat .l {
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+/* ============================================================
+   DIRECTION C — Stat-Dashboard First (KEY METRICS hero, then paragraph)
+   ============================================================ */
+.dir-c .center { padding: 32px 48px; }
+.dir-c .key-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 24px 0 40px;
+}
+.dir-c .key-metrics-grid .stat-card.dark { grid-column: span 2; }
+
+/* ============================================================
+   DIRECTION D — Single-Column Focus (no rails, iA-Writer-like)
+   ============================================================ */
+.dir-d .center {
+  padding: 48px 64px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+.dir-d .footer-stats {
+  margin-top: 48px;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 32px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+.dir-d .footer-stats .fs-item .l {
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  display: block;
+  margin-bottom: 2px;
+}
+.dir-d .footer-stats .fs-item .v {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ============================================================
+   DAY-14 TAKEOVER (rendered identically in all directions)
+   ============================================================ */
+.day14-takeover {
+  background: var(--cream);
+  padding: 96px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-height: 480px;
+  justify-content: center;
+}
+.day14-takeover .day-meta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
+}
+.day14-takeover h1 {
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 48px;
+  max-width: 640px;
+}
+.day14-takeover .player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 48px;
+  width: 100%;
+  max-width: 480px;
+}
+.day14-takeover .clip-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--cream-dim);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+.day14-takeover .clip-row .label {
+  font-weight: 600;
+  color: var(--ink);
+}
+.day14-takeover .clip-row .duration { color: var(--ink-faint); }
+.day14-takeover .play-comparison {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  background: var(--forest);
+  color: var(--cream);
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.day14-takeover .binary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+}
+.day14-takeover .binary button {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.day14-takeover .binary .yes {
+  background: var(--forest);
+  color: var(--cream);
+}
+.day14-takeover .binary .no {
+  background: var(--brick);
+  color: var(--cream);
+}
+.day14-takeover .binary .yes:hover { background: var(--forest-deep); }
+.day14-takeover .binary .no:hover { background: var(--brick-deep); }
+
+/* Notes panel under each direction */
+.notes-panel {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.notes-panel h4 {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--forest);
+  margin-bottom: 8px;
+}
+.notes-panel p, .notes-panel ul {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+.notes-panel ul { list-style: none; padding: 0; }
+.notes-panel ul li { margin-bottom: 4px; padding-left: 12px; position: relative; }
+.notes-panel ul li::before { content: "·"; position: absolute; left: 0; color: var(--forest); font-weight: 700; }
+
+.preview-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin-bottom: 12px;
+}
+
+/* Final comparison table */
+.comparison {
+  max-width: 1100px;
+  margin: 0 auto 64px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 32px;
+}
+.comparison h2 {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 400;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.comparison .sub {
+  text-align: center;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+  margin-bottom: 32px;
+}
+.comparison table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.comparison thead th {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--forest);
+  text-align: left;
+  padding: 12px 8px;
+  border-bottom: 2px solid var(--border);
+}
+.comparison tbody td {
+  padding: 14px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink-soft);
+  vertical-align: top;
+}
+.comparison tbody td:first-child {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--ink);
+  width: 22%;
+}
+</style>
+</head>
+<body>
+
+<header class="gallery-header">
+  <h1>Audiblytics — Design Directions</h1>
+  <p>Four layout variations within the locked <code style="font-family: var(--font-mono); font-size: 0.875rem;">ai-2027.com</code> visual lineage. Same palette, type, and component grammar — different hierarchies and density. Pick one as the base, or mix elements.</p>
+  <div class="meta">Step 9 · UX Design Spec · 2026-05-02</div>
+</header>
+
+<nav class="toc">
+  <a href="#dir-a">
+    <div class="toc-label">Direction A</div>
+    <div class="toc-name">Editorial Newspaper</div>
+    <div class="toc-desc">3-column, paragraph hero. Strictest fidelity to ai-2027.</div>
+  </a>
+  <a href="#dir-b">
+    <div class="toc-label">Direction B</div>
+    <div class="toc-name">Recording-Forward</div>
+    <div class="toc-desc">F6-first. Big record affordance as visual anchor.</div>
+  </a>
+  <a href="#dir-c">
+    <div class="toc-label">Direction C</div>
+    <div class="toc-name">Stat-Dashboard First</div>
+    <div class="toc-desc">KEY METRICS grid hero. Most data-forward.</div>
+  </a>
+  <a href="#dir-d">
+    <div class="toc-label">Direction D</div>
+    <div class="toc-name">Single-Column Focus</div>
+    <div class="toc-desc">No rails. iA-Writer-like reading focus.</div>
+  </a>
+</nav>
+
+<!-- ===================== DIRECTION A ===================== -->
+<section id="dir-a" class="direction dir-a">
+  <div class="direction-header">
+    <div class="label">Direction A</div>
+    <h2>Editorial Newspaper</h2>
+    <p>Strictest fidelity to <code style="font-family: var(--font-mono);">ai-2027.com</code>. Three-column desktop layout: sticky day-rail left, paragraph-as-hero center, persistent stat-card stack right. Most editorial-essay-like. The paragraph is unambiguously the hero; everything else is marginalia.</p>
+  </div>
+
+  <div class="preview-label">Today's paragraph screen — Day 7 of 30</div>
+  <div class="mockup">
+    <div class="mockup-chrome">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">localhost:3000 — Today</span>
+    </div>
+    <div class="mockup-body">
+
+      <header class="topnav">
+        <div class="brand"><span class="dot"></span>Audiblytics</div>
+        <nav>
+          <a href="#" class="active">Today</a>
+          <a href="#">Collection</a>
+          <a href="#">Review</a>
+          <a href="#">Settings</a>
+        </nav>
+      </header>
+
+      <div class="layout">
+
+        <aside class="day-rail">
+          <span class="rail-label">30-Day</span>
+          <ol>
+            <li class="completed">Day 1</li>
+            <li class="completed">Day 2</li>
+            <li class="completed">Day 3</li>
+            <li class="completed">Day 4</li>
+            <li class="missed">Day 5</li>
+            <li class="completed">Day 6</li>
+            <li class="today">Day 7</li>
+            <li>Day 8</li>
+            <li>Day 9</li>
+            <li>Day 10</li>
+            <li>Day 11</li>
+            <li>…</li>
+            <li>Day 30</li>
+          </ol>
+        </aside>
+
+        <div class="content-col center">
+          <div class="meta-actions">
+            <a href="#">▶ Play paragraph</a>
+            <a href="#">⏵ Warm-Up</a>
+            <a href="#">↻ Generate again</a>
+          </div>
+          <h1 class="page-title">Today</h1>
+          <div class="page-sub">Day 7 · Adventure · Storyteller persona</div>
+          <hr class="divider">
+
+          <p class="paragraph-hero">
+            The trail wound upward through <span class="recycled">crepuscular</span> mist, each step a deliberate negotiation with loose scree. Maren's pack hung <span class="recycled">vehement</span> against her shoulder blades, but she did not slow. Above the timberline the air thinned to a <span class="new-word">susurration<sup class="fn">1</sup></span> of cold wind, and the granite walls rose <span class="new-word">eldritch<sup class="fn">2</sup></span> against the pale blue. She had read about places like this in childhood, <span class="new-word">gibbous<sup class="fn">3</sup></span> moons hanging over silent peaks, but the books had not prepared her for the way her own breath would condense and vanish, the way her boots would announce themselves on every cracked stone, the way her thoughts would <span class="new-word">pall<sup class="fn">4</sup></span> into a single stubborn ascent.
+          </p>
+
+          <section class="hard-words">
+            <h3>Hard Words · 4 advanced · 2 recycled from your collection</h3>
+            <div class="hard-word-row">
+              <span class="word recycled">crepuscular <span class="recycled-tag">recycled</span></span>
+              <span class="ipa">/krɪˈpʌskjələr/</span>
+              <span class="meaning">resembling or relating to twilight.</span>
+              <span class="actions">
+                <button title="Play">▶</button>
+                <button title="Saved" class="saved">✓</button>
+              </span>
+            </div>
+            <div class="hard-word-row">
+              <span class="word recycled">vehement <span class="recycled-tag">recycled</span></span>
+              <span class="ipa">/ˈviː.ə.mənt/</span>
+              <span class="meaning">showing strong feeling; forceful, passionate, or intense.</span>
+              <span class="actions">
+                <button title="Play">▶</button>
+                <button title="Saved" class="saved">✓</button>
+              </span>
+            </div>
+            <div class="hard-word-row">
+              <span class="word">susurration</span>
+              <span class="ipa">/ˌsuːsəˈreɪʃən/</span>
+              <span class="meaning">a whispering, murmuring, or rustling sound.</span>
+              <span class="actions">
+                <button title="Play">▶</button>
+                <button title="Save">＋</button>
+              </span>
+            </div>
+            <div class="hard-word-row">
+              <span class="word">eldritch</span>
+              <span class="ipa">/ˈɛldrɪtʃ/</span>
+              <span class="meaning">weird and sinister or ghostly.</span>
+              <span class="actions">
+                <button title="Play">▶</button>
+                <button title="Save">＋</button>
+              </span>
+            </div>
+          </section>
+
+          <div class="record-panel">
+            <button class="record-btn" title="Tap to record"><span class="mic-dot"></span></button>
+            <div class="record-info">
+              <span class="caption">Tap to record this read</span>
+              <span class="timer">0:00</span>
+              <span class="helper">Press <kbd style="font-family: var(--font-mono); background: var(--cream); padding: 1px 6px; border: 1px solid var(--border); border-radius: 3px; font-size: 0.6875rem;">R</kbd> as a shortcut.</span>
+            </div>
+            <div class="recordings-list">
+              <div class="recording-row">
+                <button class="play">▶</button>
+                <span style="flex: 1;">today · 1:42pm</span>
+                <span style="color: var(--ink-faint);">0:42</span>
+              </div>
+              <div class="recording-row">
+                <button class="play">▶</button>
+                <span style="flex: 1;">today · 1:38pm</span>
+                <span style="color: var(--ink-faint);">0:38</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="iread-row">
+            <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em;">Done reading?</span>
+            <button class="btn btn-primary">I read it →</button>
+          </div>
+        </div>
+
+        <aside class="right-rail">
+          <div class="stat-card dark">
+            <div class="stat-label">Day of 30</div>
+            <div class="stat-value">7 / 30</div>
+            <div class="stat-meta">7 to first replay</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Streak</div>
+            <div class="stat-value">2 days</div>
+            <div class="stat-meta">last broke Day 5</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Words Saved</div>
+            <div class="stat-value">14</div>
+            <div class="stat-meta">+2 today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Recordings</div>
+            <div class="stat-value">9</div>
+            <div class="stat-meta">2 today</div>
+          </div>
+          <div class="provider-chip">
+            <span class="label">Provider</span>
+            gemini-2.5-flash · free
+          </div>
+        </aside>
+
+      </div>
+
+      <div class="honesty-footer">
+        ~5 min daily · $0 / mo · gemini-2.5-flash
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-label">Day-14 takeover (fires once on 14th distinct day of use)</div>
+  <div class="mockup">
+    <div class="mockup-chrome">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">localhost:3000 — Day 14</span>
+    </div>
+    <div class="mockup-body">
+      <div class="day14-takeover">
+        <div class="day-meta">Day 14 · 2026-05-15</div>
+        <h1>Listen to how far you've come.</h1>
+        <div class="player">
+          <div class="clip-row">
+            <span class="label">Day 1</span>
+            <span>"the trail wound upward through crepuscular mist…"</span>
+            <span class="duration">0:38</span>
+          </div>
+          <div class="clip-row">
+            <span class="label">Day 14</span>
+            <span>"the trail wound upward through crepuscular mist…"</span>
+            <span class="duration">0:42</span>
+          </div>
+          <button class="play-comparison">▶ Play comparison</button>
+        </div>
+        <div class="binary">
+          <button class="yes">Yes, I hear it</button>
+          <button class="no">No, not really</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes-panel">
+    <div>
+      <h4>Strengths</h4>
+      <ul>
+        <li>Highest fidelity to ai-2027 reference</li>
+        <li>Paragraph unambiguously the hero</li>
+        <li>Day-rail = ambient progress without nag</li>
+        <li>Stat stack on right = honest data, glanceable</li>
+        <li>Editorial register intact across every screen</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Trade-offs</h4>
+      <ul>
+        <li>Record button competes with paragraph for visual weight</li>
+        <li>Three columns demand ≥1024px; cramped on 13" laptop</li>
+        <li>Right rail can read as decorative if user never glances at it</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Best for</h4>
+      <p>Priyank's stated goal: honor the editorial reference, treat paragraph as hero, accept that recording is one of several actions on the page. Default recommendation if no other constraint dominates.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== DIRECTION B ===================== -->
+<section id="dir-b" class="direction dir-b">
+  <div class="direction-header">
+    <div class="label">Direction B</div>
+    <h2>Recording-Forward</h2>
+    <p>F6-first. Same palette, same type, same day-rail and stat-rail — but the record button is promoted to a forest-green hero panel directly below the paragraph. Honors the PRD's "F6 cannot drop / F6 IS MVP-defining" stance by giving recording the strongest visual signal on the screen.</p>
+  </div>
+
+  <div class="preview-label">Today's paragraph screen — record affordance as anchor</div>
+  <div class="mockup">
+    <div class="mockup-chrome">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">localhost:3000 — Today</span>
+    </div>
+    <div class="mockup-body">
+      <header class="topnav">
+        <div class="brand"><span class="dot"></span>Audiblytics</div>
+        <nav>
+          <a href="#" class="active">Today</a>
+          <a href="#">Collection</a>
+          <a href="#">Review</a>
+          <a href="#">Settings</a>
+        </nav>
+      </header>
+
+      <div class="layout">
+        <aside class="day-rail">
+          <span class="rail-label">30-Day</span>
+          <ol>
+            <li class="completed">Day 1</li>
+            <li class="completed">Day 2</li>
+            <li class="completed">Day 3</li>
+            <li class="completed">Day 4</li>
+            <li class="missed">Day 5</li>
+            <li class="completed">Day 6</li>
+            <li class="today">Day 7</li>
+            <li>Day 8</li>
+            <li>…</li>
+            <li>Day 30</li>
+          </ol>
+        </aside>
+
+        <div class="content-col center">
+          <div class="meta-actions">
+            <a href="#">▶ Play paragraph</a>
+            <a href="#">⏵ Warm-Up</a>
+            <a href="#">↻ Generate again</a>
+          </div>
+          <h1 class="page-title">Today</h1>
+          <div class="page-sub">Day 7 · Adventure · Storyteller persona</div>
+          <hr class="divider">
+
+          <p class="paragraph-hero">
+            The trail wound upward through crepuscular mist, each step a deliberate negotiation with loose scree. Maren's pack hung vehement against her shoulder blades, but she did not slow. Above the timberline the air thinned to a <span class="new-word">susurration<sup class="fn">1</sup></span> of cold wind, and the granite walls rose <span class="new-word">eldritch<sup class="fn">2</sup></span> against the pale blue.
+          </p>
+
+          <div class="record-hero">
+            <button class="record-btn record-btn-xl" title="Tap to record"><span class="mic-dot" style="width: 32px; height: 32px;"></span></button>
+            <div>
+              <div class="label">Tap to record this read</div>
+              <h3>Record yourself reading. Future-you wants to hear it.</h3>
+            </div>
+            <div class="timer-display">0:00</div>
+          </div>
+
+          <div class="recordings-list" style="border-top: none; padding-top: 16px; margin-top: 12px;">
+            <div class="recording-row">
+              <button class="play">▶</button>
+              <span style="flex: 1;">today · 1:42pm</span>
+              <span style="color: var(--ink-faint);">0:42</span>
+            </div>
+            <div class="recording-row">
+              <button class="play">▶</button>
+              <span style="flex: 1;">Day 6 · yesterday</span>
+              <span style="color: var(--ink-faint);">0:39</span>
+            </div>
+            <div class="recording-row">
+              <button class="play">▶</button>
+              <span style="flex: 1;">Day 4 · 4d ago</span>
+              <span style="color: var(--ink-faint);">0:35</span>
+            </div>
+          </div>
+
+          <section class="hard-words">
+            <h3>Hard Words · 4 advanced · 2 recycled</h3>
+            <div class="hard-word-row">
+              <span class="word recycled">crepuscular <span class="recycled-tag">recycled</span></span>
+              <span class="ipa">/krɪˈpʌskjələr/</span>
+              <span class="meaning">resembling or relating to twilight.</span>
+              <span class="actions">
+                <button>▶</button>
+                <button class="saved">✓</button>
+              </span>
+            </div>
+            <div class="hard-word-row">
+              <span class="word">susurration</span>
+              <span class="ipa">/ˌsuːsəˈreɪʃən/</span>
+              <span class="meaning">a whispering, murmuring, or rustling sound.</span>
+              <span class="actions">
+                <button>▶</button>
+                <button>＋</button>
+              </span>
+            </div>
+            <div class="hard-word-row">
+              <span class="word">eldritch</span>
+              <span class="ipa">/ˈɛldrɪtʃ/</span>
+              <span class="meaning">weird and sinister or ghostly.</span>
+              <span class="actions">
+                <button>▶</button>
+                <button>＋</button>
+              </span>
+            </div>
+          </section>
+
+          <div class="iread-row">
+            <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em;">Done reading?</span>
+            <button class="btn btn-primary">I read it →</button>
+          </div>
+        </div>
+
+        <aside class="right-rail">
+          <div class="stat-card dark">
+            <div class="stat-label">Day of 30</div>
+            <div class="stat-value">7 / 30</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Streak</div>
+            <div class="stat-value">2 days</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Words Saved</div>
+            <div class="stat-value">14</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Recordings</div>
+            <div class="stat-value">9</div>
+            <div class="stat-meta">2 today</div>
+          </div>
+          <div class="provider-chip">
+            <span class="label">Provider</span>
+            gemini-2.5-flash · free
+          </div>
+        </aside>
+      </div>
+
+      <div class="honesty-footer">~5 min daily · $0 / mo · gemini-2.5-flash</div>
+    </div>
+  </div>
+
+  <div class="notes-panel">
+    <div>
+      <h4>Strengths</h4>
+      <ul>
+        <li>Recording is unambiguously the most important affordance — matches PRD F6-defining stance</li>
+        <li>Visually engineers the user toward the core MVP success mechanic</li>
+        <li>Past recordings list inline = recording-as-history is constantly visible</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Trade-offs</h4>
+      <ul>
+        <li>Forest-green panel competes with the paragraph for hero status</li>
+        <li>Risks reading as "video meeting widget" — needs careful execution to stay editorial</li>
+        <li>Hard-words drop below the fold on 13" screens</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Best for</h4>
+      <p>If you've watched yourself never tap the record button in Direction A and want the UI to overcome that. Most aligned with the PRD's load-bearing logic. A bolder bet.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== DIRECTION C ===================== -->
+<section id="dir-c" class="direction dir-c">
+  <div class="direction-header">
+    <div class="label">Direction C</div>
+    <h2>Stat-Dashboard First</h2>
+    <p>The right rail collapses into the page. A 4-card "KEY METRICS" grid sits at the top of the center column — a direct visual quote of <code style="font-family: var(--font-mono);">ai-2027</code>'s "KEY METRICS 2026" pattern, applied to your daily ritual. The day-rail collapses to a thin top strip. Most data-forward; your progress is the lead, the paragraph is the next paragraph.</p>
+  </div>
+
+  <div class="preview-label">Today's paragraph screen — metrics promoted to hero</div>
+  <div class="mockup">
+    <div class="mockup-chrome">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">localhost:3000 — Today</span>
+    </div>
+    <div class="mockup-body">
+      <header class="topnav">
+        <div class="brand"><span class="dot"></span>Audiblytics</div>
+        <nav>
+          <a href="#" class="active">Today</a>
+          <a href="#">Collection</a>
+          <a href="#">Review</a>
+          <a href="#">Settings</a>
+        </nav>
+      </header>
+
+      <div class="day-rail-thin">
+        <span class="rail-label">30-Day</span>
+        <div class="day-cell completed">1</div>
+        <div class="day-cell completed">2</div>
+        <div class="day-cell completed">3</div>
+        <div class="day-cell completed">4</div>
+        <div class="day-cell missed">5</div>
+        <div class="day-cell completed">6</div>
+        <div class="day-cell today">7</div>
+        <div class="day-cell">8</div>
+        <div class="day-cell">9</div>
+        <div class="day-cell">10</div>
+        <div class="day-cell">11</div>
+        <div class="day-cell">12</div>
+        <div class="day-cell">13</div>
+        <div class="day-cell">14</div>
+        <div class="day-cell">15</div>
+        <div class="day-cell">16</div>
+        <div class="day-cell">17</div>
+        <div class="day-cell">18</div>
+        <div class="day-cell">19</div>
+        <div class="day-cell">20</div>
+        <div class="day-cell">21</div>
+        <div class="day-cell">22</div>
+        <div class="day-cell">23</div>
+        <div class="day-cell">24</div>
+        <div class="day-cell">25</div>
+        <div class="day-cell">26</div>
+        <div class="day-cell">27</div>
+        <div class="day-cell">28</div>
+        <div class="day-cell">29</div>
+        <div class="day-cell">30</div>
+      </div>
+
+      <div class="content-col center" style="max-width: 880px; margin: 0 auto;">
+        <h1 class="page-title">Today</h1>
+        <div class="page-sub">Day 7 · Adventure · Storyteller persona · gemini-2.5-flash</div>
+
+        <div class="key-metrics-grid">
+          <div class="stat-card dark">
+            <div class="stat-label">Day of 30</div>
+            <div class="stat-value" style="font-size: 2.25rem;">7 / 30</div>
+            <div class="stat-meta">7 recordings to first replay</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Streak</div>
+            <div class="stat-value">2 days</div>
+            <div class="stat-meta">last broke Day 5</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Words Saved</div>
+            <div class="stat-value">14</div>
+            <div class="stat-meta">+2 today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Recordings</div>
+            <div class="stat-value">9</div>
+            <div class="stat-meta">2 today</div>
+          </div>
+        </div>
+
+        <div class="meta-actions">
+          <a href="#">▶ Play paragraph</a>
+          <a href="#">⏵ Warm-Up</a>
+          <a href="#">↻ Generate again</a>
+        </div>
+
+        <p class="paragraph-hero">
+          The trail wound upward through crepuscular mist, each step a deliberate negotiation with loose scree. Maren's pack hung vehement against her shoulder blades, but she did not slow. Above the timberline the air thinned to a <span class="new-word">susurration<sup class="fn">1</sup></span> of cold wind, and the granite walls rose <span class="new-word">eldritch<sup class="fn">2</sup></span> against the pale blue.
+        </p>
+
+        <section class="hard-words">
+          <h3>Hard Words · 4 advanced · 2 recycled</h3>
+          <div class="hard-word-row">
+            <span class="word recycled">crepuscular <span class="recycled-tag">recycled</span></span>
+            <span class="ipa">/krɪˈpʌskjələr/</span>
+            <span class="meaning">resembling or relating to twilight.</span>
+            <span class="actions">
+              <button>▶</button>
+              <button class="saved">✓</button>
+            </span>
+          </div>
+          <div class="hard-word-row">
+            <span class="word">susurration</span>
+            <span class="ipa">/ˌsuːsəˈreɪʃən/</span>
+            <span class="meaning">a whispering, murmuring, or rustling sound.</span>
+            <span class="actions">
+              <button>▶</button>
+              <button>＋</button>
+            </span>
+          </div>
+          <div class="hard-word-row">
+            <span class="word">eldritch</span>
+            <span class="ipa">/ˈɛldrɪtʃ/</span>
+            <span class="meaning">weird and sinister or ghostly.</span>
+            <span class="actions">
+              <button>▶</button>
+              <button>＋</button>
+            </span>
+          </div>
+        </section>
+
+        <div class="record-panel">
+          <button class="record-btn"><span class="mic-dot"></span></button>
+          <div class="record-info">
+            <span class="caption">Tap to record this read</span>
+            <span class="timer">0:00</span>
+          </div>
+          <div class="recordings-list">
+            <div class="recording-row">
+              <button class="play">▶</button>
+              <span style="flex: 1;">today · 1:42pm</span>
+              <span style="color: var(--ink-faint);">0:42</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="iread-row">
+          <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em;">Done reading?</span>
+          <button class="btn btn-primary">I read it →</button>
+        </div>
+      </div>
+
+      <div class="honesty-footer">~5 min daily · $0 / mo · gemini-2.5-flash</div>
+    </div>
+  </div>
+
+  <div class="notes-panel">
+    <div>
+      <h4>Strengths</h4>
+      <ul>
+        <li>Strongest visual quote of ai-2027's KEY METRICS pattern</li>
+        <li>Progress is unmissable on every page open</li>
+        <li>Day-of-30 and "7 to first replay" copy build anticipation toward Day 14</li>
+        <li>Single-column-ish; works at narrower widths</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Trade-offs</h4>
+      <ul>
+        <li>Risks reading as "metrics dashboard" not "ritual app" — fights the calm-by-default principle</li>
+        <li>Paragraph is below the fold even on large screens</li>
+        <li>Daily user might tire of seeing the metrics every time before the content</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Best for</h4>
+      <p>If progress visibility matters more than reading focus. Most "ai-2027-quoting" of the four. Honest about the data-driven nature of the 30-day arc.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== DIRECTION D ===================== -->
+<section id="dir-d" class="direction dir-d">
+  <div class="direction-header">
+    <div class="label">Direction D</div>
+    <h2>Single-Column Focus</h2>
+    <p>Both rails removed. Day-rail compresses to a thin top strip. Everything in one centered column. Stats demoted to a thin footer row at the bottom of the page. Closest to <code style="font-family: var(--font-mono);">iA Writer</code> or a focused-reading app. Most distraction-free; least ai-2027-like in shape (though identical in palette/type).</p>
+  </div>
+
+  <div class="preview-label">Today's paragraph screen — minimal chrome, maximum focus</div>
+  <div class="mockup">
+    <div class="mockup-chrome">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">localhost:3000 — Today</span>
+    </div>
+    <div class="mockup-body">
+      <header class="topnav">
+        <div class="brand"><span class="dot"></span>Audiblytics</div>
+        <nav>
+          <a href="#" class="active">Today</a>
+          <a href="#">Collection</a>
+          <a href="#">Review</a>
+          <a href="#">Settings</a>
+        </nav>
+      </header>
+
+      <div class="day-rail-thin">
+        <span class="rail-label">30-Day</span>
+        <div class="day-cell completed">1</div>
+        <div class="day-cell completed">2</div>
+        <div class="day-cell completed">3</div>
+        <div class="day-cell completed">4</div>
+        <div class="day-cell missed">5</div>
+        <div class="day-cell completed">6</div>
+        <div class="day-cell today">7</div>
+        <div class="day-cell">8</div>
+        <div class="day-cell">9</div>
+        <div class="day-cell">10</div>
+        <div class="day-cell">11</div>
+        <div class="day-cell">12</div>
+        <div class="day-cell">13</div>
+        <div class="day-cell">14</div>
+        <div class="day-cell">15</div>
+        <div class="day-cell">16</div>
+        <div class="day-cell">17</div>
+        <div class="day-cell">18</div>
+        <div class="day-cell">19</div>
+        <div class="day-cell">20</div>
+        <div class="day-cell">21</div>
+        <div class="day-cell">22</div>
+        <div class="day-cell">23</div>
+        <div class="day-cell">24</div>
+        <div class="day-cell">25</div>
+        <div class="day-cell">26</div>
+        <div class="day-cell">27</div>
+        <div class="day-cell">28</div>
+        <div class="day-cell">29</div>
+        <div class="day-cell">30</div>
+      </div>
+
+      <div class="content-col center">
+        <div class="meta-actions">
+          <a href="#">▶ Play paragraph</a>
+          <a href="#">⏵ Warm-Up</a>
+          <a href="#">↻ Generate again</a>
+        </div>
+        <h1 class="page-title">Today</h1>
+        <div class="page-sub">Day 7 · Adventure · Storyteller persona</div>
+        <hr class="divider">
+
+        <p class="paragraph-hero">
+          The trail wound upward through crepuscular mist, each step a deliberate negotiation with loose scree. Maren's pack hung vehement against her shoulder blades, but she did not slow. Above the timberline the air thinned to a <span class="new-word">susurration<sup class="fn">1</sup></span> of cold wind, and the granite walls rose <span class="new-word">eldritch<sup class="fn">2</sup></span> against the pale blue. She had read about places like this in childhood, <span class="new-word">gibbous<sup class="fn">3</sup></span> moons hanging over silent peaks, but the books had not prepared her for the way her own breath would condense and vanish.
+        </p>
+
+        <section class="hard-words">
+          <h3>Hard Words · 3 new · 2 recycled (collapsed)</h3>
+          <div class="hard-word-row">
+            <span class="word">susurration</span>
+            <span class="ipa">/ˌsuːsəˈreɪʃən/</span>
+            <span class="meaning">a whispering, murmuring, or rustling sound.</span>
+            <span class="actions">
+              <button>▶</button>
+              <button>＋</button>
+            </span>
+          </div>
+          <div class="hard-word-row">
+            <span class="word">eldritch</span>
+            <span class="ipa">/ˈɛldrɪtʃ/</span>
+            <span class="meaning">weird and sinister or ghostly.</span>
+            <span class="actions">
+              <button>▶</button>
+              <button>＋</button>
+            </span>
+          </div>
+          <div class="hard-word-row">
+            <span class="word">gibbous</span>
+            <span class="ipa">/ˈɡɪbəs/</span>
+            <span class="meaning">(of the moon) more than half but not fully illuminated.</span>
+            <span class="actions">
+              <button>▶</button>
+              <button>＋</button>
+            </span>
+          </div>
+        </section>
+
+        <div class="record-panel">
+          <button class="record-btn"><span class="mic-dot"></span></button>
+          <div class="record-info">
+            <span class="caption">Tap to record this read</span>
+            <span class="timer">0:00</span>
+          </div>
+          <div class="recordings-list">
+            <div class="recording-row">
+              <button class="play">▶</button>
+              <span style="flex: 1;">today · 1:42pm</span>
+              <span style="color: var(--ink-faint);">0:42</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="iread-row">
+          <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em;">Done reading?</span>
+          <button class="btn btn-primary">I read it →</button>
+        </div>
+
+        <div class="footer-stats">
+          <div class="fs-item"><span class="l">Day</span><span class="v">7 / 30</span></div>
+          <div class="fs-item"><span class="l">Streak</span><span class="v">2</span></div>
+          <div class="fs-item"><span class="l">Words</span><span class="v">14</span></div>
+          <div class="fs-item"><span class="l">Recordings</span><span class="v">9</span></div>
+          <div class="fs-item" style="margin-left: auto;"><span class="l">Provider</span><span class="v" style="font-weight: 500;">gemini-2.5-flash</span></div>
+        </div>
+      </div>
+
+      <div class="honesty-footer">~5 min daily · $0 / mo</div>
+    </div>
+  </div>
+
+  <div class="notes-panel">
+    <div>
+      <h4>Strengths</h4>
+      <ul>
+        <li>Maximum reading focus — paragraph is uncontested center stage</li>
+        <li>Works equally well on 13" and 27" screens</li>
+        <li>Lightest cognitive load — least to scan past</li>
+        <li>Honors emotional principle "the mouth is the protagonist, the screen is the stage"</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Trade-offs</h4>
+      <ul>
+        <li>Loses the most distinctive ai-2027 visual signature (the rails)</li>
+        <li>Stats are easy to miss at the bottom — progress feels less ambient</li>
+        <li>Risks reading as "generic clean blog" rather than purpose-built tool</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Best for</h4>
+      <p>If reading focus dominates every other concern. Most respectful of the 5-min daily ritual. Furthest from ai-2027 in shape, despite identical tokens.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== COMPARISON ===================== -->
+<section class="comparison">
+  <h2>Side-by-Side Comparison</h2>
+  <div class="sub">Same tokens. Same components. Different hierarchies.</div>
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>A · Editorial</th>
+        <th>B · Recording-Forward</th>
+        <th>C · Stat-Dashboard</th>
+        <th>D · Single-Column</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Visual hero</td>
+        <td>Paragraph</td>
+        <td>Record button</td>
+        <td>KEY METRICS grid</td>
+        <td>Paragraph</td>
+      </tr>
+      <tr>
+        <td>Layout</td>
+        <td>3-column · 80/fluid/280</td>
+        <td>3-column · 80/fluid/280 + record-hero band</td>
+        <td>1-column wide + thin top day-strip</td>
+        <td>1-column · thin top day-strip · footer stats</td>
+      </tr>
+      <tr>
+        <td>Day-rail</td>
+        <td>Sticky left, vertical</td>
+        <td>Sticky left, vertical</td>
+        <td>Thin horizontal top strip</td>
+        <td>Thin horizontal top strip</td>
+      </tr>
+      <tr>
+        <td>Stats placement</td>
+        <td>Right rail (sticky)</td>
+        <td>Right rail (sticky)</td>
+        <td>Top of center column</td>
+        <td>Bottom footer strip</td>
+      </tr>
+      <tr>
+        <td>Record affordance</td>
+        <td>Standard 56px button in panel</td>
+        <td>88px button in forest hero band</td>
+        <td>Standard 56px button</td>
+        <td>Standard 56px button</td>
+      </tr>
+      <tr>
+        <td>Min viable width</td>
+        <td>~1280px comfortable, ≥1024px min</td>
+        <td>~1280px comfortable, ≥1024px min</td>
+        <td>~1024px comfortable, ≥900px min</td>
+        <td>~900px comfortable, ≥768px min</td>
+      </tr>
+      <tr>
+        <td>ai-2027 fidelity</td>
+        <td>★★★★★</td>
+        <td>★★★★ (3-col, but record band breaks pattern)</td>
+        <td>★★★★ (KEY METRICS pattern central)</td>
+        <td>★★ (palette/type only; no rails)</td>
+      </tr>
+      <tr>
+        <td>F6 visual priority</td>
+        <td>Equal-with-others</td>
+        <td>Dominant</td>
+        <td>Lower (below paragraph)</td>
+        <td>Equal-with-others</td>
+      </tr>
+      <tr>
+        <td>Calm-by-default</td>
+        <td>★★★★ Calm</td>
+        <td>★★★ Forest band adds visual weight</td>
+        <td>★★★ Metrics pull eye early</td>
+        <td>★★★★★ Most calm</td>
+      </tr>
+      <tr>
+        <td>Best fit if…</td>
+        <td>You trust the editorial reference and the user</td>
+        <td>You want UI to nudge user toward F6</td>
+        <td>Progress visibility matters most</td>
+        <td>Reading focus dominates everything</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+</body>
+</html>

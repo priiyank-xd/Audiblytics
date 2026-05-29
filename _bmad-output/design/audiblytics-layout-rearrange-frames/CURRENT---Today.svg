@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" fill="none">
+<defs>
+    <style>
+      .label { font: 600 11px Inter, system-ui, sans-serif; fill: #4a4a4a; letter-spacing: 0.06em; text-transform: uppercase; }
+      .title { font: 400 28px Georgia, serif; fill: #1a1a1a; }
+      .subtitle { font: 400 14px Georgia, serif; fill: #4a4a4a; }
+      .body { font: 400 13px Georgia, serif; fill: #1a1a1a; }
+      .ui { font: 500 13px Inter, system-ui, sans-serif; fill: #1a1a1a; }
+      .mono { font: 500 12px ui-monospace, monospace; fill: #1a1a1a; }
+      .caption { font: 400 11px Inter, system-ui, sans-serif; fill: #5c5751; }
+      .frame-title { font: 700 16px Inter, system-ui, sans-serif; fill: #1a1a1a; }
+      .chip { font: 500 11px Inter, system-ui, sans-serif; fill: #f5f0e6; }
+      .note { font: 400 11px Inter, system-ui, sans-serif; fill: #8b2929; }
+      .comp-tag { font: 500 10px ui-monospace, monospace; fill: #2d5b3a; }
+    </style>
+  </defs>
+<g id="CURRENT - Today" transform="translate(3040, 100)">
+    <rect width="1440" height="960" rx="8" fill="#f5f0e6" stroke="#d9d2c5" stroke-width="2"/>
+    <text class="frame-title" x="24" y="32">CURRENT - Today (/today)</text>
+    <text class="comp-tag" x="24" y="50">TodayApp / ParagraphHero / RecordPanel / HardWordsList</text>
+    <g transform="translate(120, 80)">
+      <text class="title" x="0" y="0">Today</text>
+      <text class="subtitle" x="0" y="28">Day N / Theme / Persona</text>
+      <rect x="0" y="44" width="120" height="32" rx="4" fill="none" stroke="#d9d2c5"/>
+      <text class="ui" x="12" y="64">Warm-Up</text>
+      <rect x="0" y="90" width="1000" height="36" fill="#ebe5d6" opacity="0.5"/>
+      <text class="caption" x="8" y="112">TodayParagraphControls</text>
+      <rect x="0" y="150" width="600" height="300" stroke="#d9d2c5"/>
+      <text class="label" x="8" y="170">ParagraphHero (paragraph)</text>
+      <rect x="640" y="150" width="360" height="300" fill="#ebe5d6" stroke="#d9d2c5"/>
+      <text class="label" x="648" y="170">RecordPanel rail</text>
+      <circle cx="820" cy="240" r="36" fill="#2d5b3a"/>
+      <text class="chip" x="820" y="246" text-anchor="middle">REC</text>
+      <text class="label" x="648" y="290">HardWordsList</text>
+      <text class="caption" x="500" y="480" text-anchor="middle">I read it</text>
+    </g>
+  </g>
+</svg>

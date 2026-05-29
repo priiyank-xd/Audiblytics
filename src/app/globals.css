@@ -1,0 +1,344 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Raw + semantic tokens (UX-DR1 / Color System); shadcn bridge aliases */
+:root {
+  /* Surface */
+  --cream: #f5f0e6;
+  --cream-dim: #ebe5d6;
+  --border: #d9d2c5;
+
+  /* Ink */
+  --ink: #1a1a1a;
+  --ink-soft: #4a4a4a;
+  /** De-emphasized copy on cream; darker than legacy faint for readable captions (WCAG intent). */
+  --ink-subtle: #5c5751;
+  --ink-faint: #8a8580;
+
+  /* Primary */
+  --forest: #2d5b3a;
+  --forest-deep: #1f4029;
+  --forest-light: #6b9b7b;
+  --forest-faint: #d4e0d8;
+
+  /* Danger — restraint-locked */
+  --brick: #8b2929;
+  --brick-deep: #6e1f1f;
+
+  /* Disabled / not-chosen states */
+  --sage-dim: #91a89a;
+  --rose-dim: #b89090;
+
+  --surface: var(--cream);
+  --surface-elevated: var(--cream-dim);
+  --divider: var(--border);
+
+  --text-primary: var(--ink);
+  --text-secondary: var(--ink-soft);
+  --text-tertiary: var(--ink-subtle);
+  --text-on-primary: var(--cream);
+  --text-on-danger: var(--cream);
+
+  --primary: var(--forest);
+  --primary-hover: var(--forest-deep);
+  --primary-soft: var(--forest-faint);
+  --accent: var(--forest-light);
+
+  --danger: var(--brick);
+  --danger-hover: var(--brick-deep);
+
+  --state-disabled: var(--ink-faint);
+  --state-disabled-bg: var(--cream-dim);
+  --state-not-chosen-primary: var(--sage-dim);
+  --state-not-chosen-danger: var(--rose-dim);
+
+  --focus-ring: var(--forest);
+
+  /** Slight upward shift for the Today rail mic cluster (~2cm at typical density). */
+  --record-rail-lift: 4.5rem;
+  /** Statistics rail: heading ↔ calendar, and calendar ↔ metrics (layout revision). */
+  --stat-rail-heading-calendar-gap: 6.25rem;
+  --stat-rail-calendar-metrics-gap: 6.25rem;
+
+  /* shadcn / Radix bridge (maps to editorial tokens) */
+  --background: var(--surface);
+  --foreground: var(--text-primary);
+  --card: var(--surface-elevated);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-elevated);
+  --popover-foreground: var(--text-primary);
+  --primary-foreground: var(--text-on-primary);
+  --secondary: var(--cream-dim);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--cream-dim);
+  /** Helpers: readable on cream (avoid pairing shadcn muted with legacy faint ink). */
+  --muted-foreground: var(--text-secondary);
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--danger);
+  --input: var(--border);
+  --ring: var(--focus-ring);
+  --chart-1: var(--forest);
+  --chart-2: var(--forest-light);
+  --chart-3: var(--forest-deep);
+  --chart-4: var(--ink-soft);
+  --chart-5: var(--ink-faint);
+  --radius: 0.625rem;
+  --sidebar: var(--surface-elevated);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--text-on-primary);
+  --sidebar-accent: var(--primary-soft);
+  --sidebar-accent-foreground: var(--text-primary);
+  --sidebar-border: var(--divider);
+  --sidebar-ring: var(--focus-ring);
+}
+
+.dark {
+  --background: var(--surface);
+  --foreground: var(--text-primary);
+  --card: var(--surface-elevated);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-elevated);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--forest);
+  --primary-foreground: var(--text-on-primary);
+  --secondary: var(--cream-dim);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--cream-dim);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--forest-faint);
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--danger);
+  --border: var(--divider);
+  --input: var(--border);
+  --ring: var(--focus-ring);
+}
+
+@theme inline {
+  --font-serif: var(--font-serif), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+  --font-heading: var(--font-serif), Georgia, "Times New Roman", serif;
+
+  --color-cream: var(--cream);
+  --color-cream-dim: var(--cream-dim);
+  --color-border: var(--border);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-ink-faint: var(--ink-faint);
+  --color-forest: var(--forest);
+  --color-forest-deep: var(--forest-deep);
+  --color-forest-light: var(--forest-light);
+  --color-forest-faint: var(--forest-faint);
+  --color-brick: var(--brick);
+  --color-brick-deep: var(--brick-deep);
+  --color-sage-dim: var(--sage-dim);
+  --color-rose-dim: var(--rose-dim);
+
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-divider: var(--divider);
+  --color-on-primary: var(--text-on-primary);
+  --color-on-danger: var(--text-on-danger);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-state-disabled: var(--state-disabled);
+  --color-state-disabled-bg: var(--state-disabled-bg);
+  --color-state-not-chosen-primary: var(--state-not-chosen-primary);
+  --color-state-not-chosen-danger: var(--state-not-chosen-danger);
+  --color-focus: var(--focus-ring);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+}
+
+/* Tailwind ties `text-secondary` to `--color-secondary` (cream for `bg-secondary`), so captions
+ * looked invisible on cream. Force editorial `--text-*` ink. (`text-primary` remains shadcn green.) */
+@utility text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+@utility text-tertiary {
+  color: var(--text-tertiary) !important;
+}
+
+@utility -mt-record-rail-lift {
+  margin-top: calc(-1 * var(--record-rail-lift));
+}
+
+@utility mt-stat-rail-heading-calendar-gap {
+  margin-top: var(--stat-rail-heading-calendar-gap);
+}
+
+@utility mt-stat-rail-calendar-metrics-gap {
+  margin-top: var(--stat-rail-calendar-metrics-gap);
+}
+
+@utility text-display {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: 4.5rem;
+  line-height: 1.1;
+}
+
+@utility text-headline-1 {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: 3rem;
+  line-height: 1.2;
+}
+
+@utility text-headline-2 {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: 1.875rem;
+  line-height: 1.3;
+}
+
+@utility text-headline-3 {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+@utility text-paragraph-hero {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: 1.25rem;
+  line-height: 1.7;
+}
+
+@utility text-body {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+@utility text-ui {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+@utility text-ui-sm {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+@utility text-caption {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+@utility text-micro-label {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@utility text-data {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.2;
+  font-feature-settings: "liga" 0, "calt" 0, "dlig" 0;
+}
+
+@utility text-data-large {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 4.5rem;
+  line-height: 1;
+  font-feature-settings: "liga" 0, "calt" 0, "dlig" 0;
+}
+
+@utility text-rail {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1;
+  font-feature-settings: "liga" 0, "calt" 0, "dlig" 0;
+}
+
+@utility text-footnote {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: 0.75rem;
+  vertical-align: super;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: var(--font-serif), Georgia, serif;
+  }
+
+  body {
+    @apply min-h-full bg-background text-foreground;
+  }
+}
+
+.font-mono,
+[style*="--font-mono"],
+code,
+kbd,
+pre,
+samp {
+  font-feature-settings: "liga" 0, "calt" 0, "dlig" 0;
+}

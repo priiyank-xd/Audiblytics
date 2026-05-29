@@ -1,0 +1,116 @@
+# generated: 2026-05-04T14:32:00+05:30
+# last_updated: 2026-05-12T16:50:00+05:30
+# project: Audiblytics
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-05-04T14:32:00+05:30
+last_updated: 2026-05-12T16:50:00+05:30
+project: Audiblytics
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  # Epic 1: Onboarding & First Paragraph Generation
+  epic-1: in-progress
+  1-1-project-scaffold-and-agent-configuration: done
+  1-2-visual-token-system-typography-and-self-hosted-fonts: done
+  1-3-root-layout-shell-topnav-dayrail-skeleton-statrail-skeleton-and-honesty-footer: done
+  1-4-storage-foundations-dexie-schema-uselocalstorage-hook-base-zod-schemas: done
+  1-5-llm-provider-abstraction-schema-validation-retry-and-error-parsing: done
+  1-6-hard-scope-boundary-three-layer-guard: done
+  1-7-browser-tts-wrapper-with-voice-lifecycle-handling: done
+  1-8-onboarding-flow-provider-selection-key-entry-defaults-first-generate: done
+  1-9-settings-screen-provider-switch-with-key-vault-preservation: done
+  1-10-today-screen-paragraph-hero-with-manual-generate-action: done
+  1-11-hard-words-list-with-inline-tts-and-per-word-paragraph-playback: done
+  1-12-inline-error-surface-with-two-action-recovery: done
+  epic-1-retrospective: optional
+
+  # Epic 2: Word Collection & Recycling Loop
+  epic-2: in-progress
+  2-1-save-word-from-hard-words-list-to-collection: done
+  2-2-collection-route-list-sort-by-recency-per-word-tts-remove: done
+  2-3-recycle-2-3-saved-words-into-generated-paragraphs: done
+  epic-2-retrospective: optional
+
+  # Epic 3: Voice Journal — Record, Persist, Replay, Compare
+  epic-3: done
+  3-1-mediarecorder-wrapper-with-mime-auto-detect-60s-cap-and-permission-lifecycle: done
+  3-2-day-counter-primitive-utc-anchored-idempotent: done
+  3-3-recordpanel-capture-persist-and-stamp-dayofuse: done
+  3-4-voice-journal-route-list-all-recordings-with-inline-playback: done
+  3-5-compare-any-two-recordings-via-compositeplayer-general-purpose-mode: done
+  3-6-voice-journal-retention-policy-and-90-day-pruning-hook: done
+  epic-3-retrospective: optional
+
+  # Epic 4: Daily Habit — Calendar, Streak, and Completion
+  epic-4: in-progress
+  4-1-same-day-paragraph-cache-reuse-on-app-open: done
+  4-2-day-completion-logic-i-read-it-action: done
+  4-3-streak-computation-and-right-rail-streak-stat-card: done
+  4-4-calendar-route-30-60-90-day-toggle-grid-with-honest-empty-cells: done
+  4-5-archived-day-view-drill-into-past-day-details: done
+  epic-4-retrospective: optional
+
+  # Epic 5: Pen-Drill Warm-Up
+  epic-5: in-progress
+  5-1-tongue-twister-library-and-warmupdrill-component-with-pen-pass: done
+  5-2-without-pen-pass-transition-and-back-to-today-affordance: done
+  5-3-optional-recording-per-warm-up-pass: done
+  epic-5-retrospective: optional
+
+  # Epic 6: Daily Review — Flashcards
+  epic-6: done
+  6-1-review-queue-selector-oldest-reviewed-first: done
+  6-2-flashcard-ui-with-three-button-feedback: done
+  6-3-per-word-tts-playback-during-review: done
+  epic-6-retrospective: optional
+
+  # Epic 7: Day-14 Aha Moment
+  epic-7: in-progress
+  7-1-day-14-trigger-detection-exact-once: done
+  7-2-day-14-gate-at-layout-level-url-unbypassable: done
+  7-3-day14takeover-ui-compositeplayer-same-word-match-heuristic: done
+  7-4-yes-no-capture-persistence-then-flow-and-continue-affordance: done
+  epic-7-retrospective: optional
+
+  # Epic 8: Offline Pack & Error Recovery Resilience
+  epic-8: done
+  8-1-offline-pack-generation-script-node-standalone: done
+  8-2-download-pack-settings-action-load-pack-into-indexeddb: done
+  8-3-offline-pack-selection-on-llm-failure-with-30-day-rolling-de-dupe: done
+  8-4-extend-inlineerrorsurface-to-three-action-recovery: done
+  8-5-offlinebadge-on-calendar-day-cells-and-voice-journal-rows: done
+  epic-8-retrospective: optional

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" fill="none">
+<defs>
+    <style>
+      .label { font: 600 11px Inter, system-ui, sans-serif; fill: #4a4a4a; letter-spacing: 0.06em; text-transform: uppercase; }
+      .title { font: 400 28px Georgia, serif; fill: #1a1a1a; }
+      .subtitle { font: 400 14px Georgia, serif; fill: #4a4a4a; }
+      .body { font: 400 13px Georgia, serif; fill: #1a1a1a; }
+      .ui { font: 500 13px Inter, system-ui, sans-serif; fill: #1a1a1a; }
+      .mono { font: 500 12px ui-monospace, monospace; fill: #1a1a1a; }
+      .caption { font: 400 11px Inter, system-ui, sans-serif; fill: #5c5751; }
+      .frame-title { font: 700 16px Inter, system-ui, sans-serif; fill: #1a1a1a; }
+      .chip { font: 500 11px Inter, system-ui, sans-serif; fill: #f5f0e6; }
+      .note { font: 400 11px Inter, system-ui, sans-serif; fill: #8b2929; }
+      .comp-tag { font: 500 10px ui-monospace, monospace; fill: #2d5b3a; }
+    </style>
+  </defs>
+<g id="CURRENT - Home" transform="translate(1540, 100)">
+    <rect width="1440" height="960" rx="8" fill="#f5f0e6" stroke="#d9d2c5" stroke-width="2"/>
+    <text class="frame-title" x="24" y="32">CURRENT - Home (/)</text>
+    <text class="comp-tag" x="24" y="50">HomeDashboard</text>
+    <g transform="translate(24, 80)">
+      <text class="title" x="400" y="60" text-anchor="middle">Review</text>
+      <rect x="300" y="80" width="200" height="44" rx="4" fill="#2d5b3a"/>
+      <text class="chip" x="400" y="108" text-anchor="middle">Start review</text>
+      <text class="title" x="400" y="220" text-anchor="middle">Today&apos;s paragraph</text>
+      <rect x="300" y="240" width="200" height="44" rx="4" fill="none" stroke="#2d5b3a" stroke-width="2"/>
+      <text class="ui" x="400" y="268" text-anchor="middle" fill="#2d5b3a">Open Today</text>
+      <text class="note" x="400" y="310" text-anchor="middle">Equal weight - extra click to daily ritual</text>
+      <rect x="900" y="0" width="440" height="720" stroke="#d9d2c5"/>
+      <text class="label" x="920" y="24">CalendarDayCell grid</text>
+      <text class="label" x="920" y="400">Collection link + count</text>
+    </g>
+  </g>
+</svg>
