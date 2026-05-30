@@ -1,23 +1,47 @@
 # Audiblytics
 
-> **PERSONAL USE ONLY — n=1.** API keys live in browser `localStorage`; deploying this app publicly is forbidden until a backend proxy is introduced. See `architecture.md` § Hard-Scope-Boundary (AR15).
+Monorepo for **Audiblytics** — daily voice-journal and paragraph companion.
+
+```
+Audiblytics/
+  apps/
+    web/          # Next.js 16 frontend (@audiblytics/web)
+    api/          # FastAPI backend (audiblytics-api)
+  _bmad-output/   # PRD, architecture, stories
+```
 
 ## Development
 
-This repo was scaffolded with:
+From the repo root:
 
 ```bash
-pnpm create next-app@latest <project> --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --turbopack --use-pnpm
+pnpm install
+pnpm dev          # Next.js at http://localhost:3000 (local storage mode by default)
 ```
 
-Day to day:
+### Phase 1 — API mode (auth + Postgres settings)
 
-- `pnpm dev` — Turbopack dev server (http://localhost:3000)
-- `pnpm build` — production build
-- `pnpm start` — serve the `.next` output locally
+```bash
+docker compose up -d postgres
+cd apps/api && cp .env.example .env && pip install -e ".[dev]"
+uvicorn app.main:app --reload --port 8000
+```
 
-**Where to put new code:** follow the folder decision tree in `architecture.md` § Structure Patterns (lines 641–656) — capability areas under `src/features/`, shared UI composites under `src/components/audiblytics/`, cross-cutting code under `src/lib/`.
+In `apps/web/.env.local` set `NEXT_PUBLIC_STORAGE_BACKEND=api` and `API_URL=http://localhost:8000`, then `pnpm dev` and visit `/login`.
 
-**Architecture (source of truth):** `_bmad-output/planning-artifacts/architecture.md` — especially § Implementation Patterns and § Enforcement Guidelines.
+See `apps/api/README.md` for seed user and tests.
 
-**Script-only env:** see root `.env.example` (`OFFLINE_PACK_PROVIDER_KEY` for the offline-pack generator; not used by the Next.js app at runtime).
+## Architecture
+
+| Document | Scope |
+|----------|--------|
+| `_bmad-output/planning-artifacts/architecture.md` | Client app (Dexie / localStorage era) |
+| `_bmad-output/planning-artifacts/architecture-v2-fastapi-backend.md` | Backend v2 — FastAPI, Neon, R2 |
+
+## Personal-use boundary
+
+The **web** app still supports n=1 client-only mode (`localStorage` + IndexedDB). Public deployment with browser-held API keys remains gated until `NEXT_PUBLIC_STORAGE_BACKEND=api` and the FastAPI proxy are fully wired. See `architecture.md` § Hard-Scope-Boundary (AR15).
+
+## Vercel
+
+Set **Root Directory** to `apps/web` for frontend deploys.

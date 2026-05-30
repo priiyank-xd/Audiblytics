@@ -2,6 +2,8 @@
 
 **Repo identity:** Audiblytics is an **n=1 personal-use** browser app. API keys live in `localStorage`. Do not treat this as a production multi-tenant product without an explicit architecture change.
 
+**Repo layout:** Monorepo — Next.js frontend in `apps/web/` (`@audiblytics/web`); FastAPI backend in `apps/api/`. Backend spec: `architecture-v2-fastapi-backend.md`.
+
 **Canonical doc:** `_bmad-output/planning-artifacts/architecture.md`
 
 Before writing or editing code, read **`architecture.md` § Implementation Patterns** (lines 571–873): naming, folder placement (capability-area colocation per NFR28), error handling (`Result<T, E>` discriminated unions; no throws for app-level failures), styling (semantic tokens only; no arbitrary Tailwind values), state management (decision tree in § Communication Patterns), and § Enforcement Guidelines.
@@ -12,7 +14,7 @@ All implementers MUST:
 
 1. Read `architecture.md` § Implementation Patterns before writing code.
 2. Use exported Zod schemas as the source of truth for any persisted shape — never hand-write a parallel TS type.
-3. Place new files using the folder decision tree (`architecture.md` § Structure Patterns, lines 641–656).
+3. Place new files using the folder decision tree (`architecture.md` § Structure Patterns, lines 641–656) under `apps/web/src/`.
 4. Use namespaced `audiblytics.*` localStorage keys via the `useLocalStorage` hook.
 5. Return `Result<T, E>` discriminated unions for fallible operations; throw only for programmer errors.
 6. Render errors via the appropriate inline surface — never via toast/modal/alert.

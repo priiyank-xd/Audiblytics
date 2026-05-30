@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: audiblytics
+      POSTGRES_PASSWORD: audiblytics
+      POSTGRES_DB: audiblytics
+    ports:
+      - "5432:5432"
+    volumes:
+      - audiblytics_pg:/var/lib/postgresql/data
+
+volumes:
+  audiblytics_pg:

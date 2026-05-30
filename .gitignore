@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,10 +12,11 @@
 
 # testing
 /coverage
+apps/web/coverage
 
-# next.js
-/.next/
-/out/
+# next.js (apps/web)
+apps/web/.next/
+apps/web/out/
 .swc
 
 # production
@@ -38,13 +39,20 @@ yarn-error.log*
 .env
 .env*.local
 !.env.example
+apps/web/.env
+apps/web/.env*.local
+!apps/web/.env.example
+apps/api/.env
+apps/api/.env*.local
+!apps/api/.env.example
 
 # vercel
 .vercel
+apps/web/.vercel
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+apps/web/next-env.d.ts
 
 # tooling caches
 .eslintcache
@@ -57,5 +65,16 @@ next-env.d.ts
 # BMad user overrides (machine-local customizations)
 *.user.toml
 
+# Python (apps/api)
+apps/api/.venv/
+apps/api/**/__pycache__/
+apps/api/**/*.py[cod]
+apps/api/.pytest_cache/
+apps/api/.mypy_cache/
+apps/api/.ruff_cache/
+
 # large generated artifacts (Story 8.1)
-public/offline-pack.json
+apps/web/public/offline-pack.json
+
+# legacy root artifacts (pre-monorepo)
+/.next/

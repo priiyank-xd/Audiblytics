@@ -1,8 +1,8 @@
 ---
-description: Audiblytics architecture — implementation patterns and enforcement (read before editing src/)
+description: Audiblytics architecture — implementation patterns and enforcement (read before editing apps/web/src/)
 globs:
-  - src/**/*.ts
-  - src/**/*.tsx
+  - apps/web/src/**/*.ts
+  - apps/web/src/**/*.tsx
 ---
 
 # Audiblytics — Cursor rule
@@ -17,7 +17,7 @@ All implementers MUST (§ Enforcement Guidelines, lines 853–864):
 
 1. Read `architecture.md` § Implementation Patterns before writing code.
 2. Use exported Zod schemas as the source of truth for any persisted shape — never hand-write a parallel TS type.
-3. Place new files using the folder decision tree (§ Structure Patterns, lines 641–656).
+3. Place new files using the folder decision tree (§ Structure Patterns, lines 641–656) under `apps/web/src/`.
 4. Use namespaced `audiblytics.*` localStorage keys via the `useLocalStorage` hook.
 5. Return `Result<T, E>` discriminated unions for fallible operations; throw only for programmer errors.
 6. Render errors via the appropriate inline surface — never via toast/modal/alert.
