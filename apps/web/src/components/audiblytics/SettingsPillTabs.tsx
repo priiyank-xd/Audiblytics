@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 export type SettingsSectionId = 'provider' | 'defaults' | 'voice' | 'retention' | 'offline-pack';
 
-const SECTIONS: { id: SettingsSectionId; label: string }[] = [
+const ALL_SECTIONS: { id: SettingsSectionId; label: string }[] = [
   { id: 'provider', label: 'Provider' },
   { id: 'defaults', label: 'Defaults' },
   { id: 'voice', label: 'Voice' },
@@ -13,19 +13,28 @@ const SECTIONS: { id: SettingsSectionId; label: string }[] = [
   { id: 'offline-pack', label: 'Offline Pack' },
 ];
 
+export function settingsSectionsForBackend(apiMode: boolean): typeof ALL_SECTIONS {
+  if (!apiMode) return ALL_SECTIONS;
+  return ALL_SECTIONS.filter((s) => s.id !== 'provider');
+}
+
 export type SettingsPillTabsProps = {
   value: SettingsSectionId;
   onValueChange: (id: SettingsSectionId) => void;
+  /** Omit provider tab when API mode hides the client key vault (BV4). */
+  apiMode?: boolean;
 };
 
-export function SettingsPillTabs({ value, onValueChange }: SettingsPillTabsProps) {
+export function SettingsPillTabs({ value, onValueChange, apiMode = false }: SettingsPillTabsProps) {
+  const sections = settingsSectionsForBackend(apiMode);
+
   return (
     <div
       role="tablist"
       aria-label="Settings sections"
       className="flex flex-wrap gap-2 pb-2"
     >
-      {SECTIONS.map((s) => {
+      {sections.map((s) => {
         const selected = value === s.id;
         return (
           <Button

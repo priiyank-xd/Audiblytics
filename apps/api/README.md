@@ -7,6 +7,8 @@ FastAPI backend. Spec: `_bmad-output/planning-artifacts/architecture-v2-fastapi-
 - `POST /api/v1/auth/register|login|logout`
 - `GET /api/v1/auth/me`
 - `GET|PATCH /api/v1/settings`
+- `POST /api/v1/paragraphs/generate` — Gemini proxy (Gemini key in **Settings**, or `GEMINI_API_KEY` in `.env` as fallback)
+- `GET /api/v1/paragraphs/today` — same-day cache hit
 - JWT in httpOnly cookie `audiblytics_session`
 
 ## Quick start
@@ -22,12 +24,26 @@ docker compose up -d postgres
 ```bash
 cd apps/api
 cp .env.example .env
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 uvicorn app.main:app --reload --port 8000
 ```
 
-Tables are created on startup via `init_db()`.
+`alembic` and `uvicorn` live in `.venv` — activate it first, or use `python -m alembic` / `python -m uvicorn`.
+
+Tables are created on startup via `init_db()` (dev), or apply migrations:
+
+```bash
+source .venv/bin/activate
+python -m alembic upgrade head
+```
+
+If tables already exist from `init_db()` but Alembic errors with “already exists”, stamp instead:
+
+```bash
+python -m alembic stamp head
+```
 
 **3. Seed user (optional)**
 

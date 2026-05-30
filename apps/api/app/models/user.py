@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
+    from app.models.paragraph_cache import ParagraphCache
     from app.models.user_settings import UserSettings
 
 
@@ -23,3 +24,4 @@ class User(Base):
     )
 
     settings: Mapped["UserSettings"] = relationship(back_populates="user", uselist=False)
+    paragraph_cache: Mapped[list["ParagraphCache"]] = relationship(back_populates="user")

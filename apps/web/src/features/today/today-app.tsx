@@ -38,6 +38,8 @@ import {
 import { speak } from '@/lib/audio/tts';
 import type { LlmError } from '@/lib/llm/types';
 import { ok, type Result } from '@/lib/result';
+import { fetchApiSettings, patchApiSettings, type ApiSettings } from '@/lib/api/settings';
+import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import { useDistinctDayOfUse } from '@/lib/day-counter/use-distinct-day-of-use';
 import {
   activeProviderSchema,
@@ -396,7 +398,9 @@ function TodayRouteBody({
             isUsingOfflinePack={isApplyingOfflinePack}
             hasOfflinePack={hasOfflinePack}
             onRetry={() => void handleGenerate()}
-            onOpenSettings={() => router.push('/settings?focus=provider')}
+            onOpenSettings={() =>
+              router.push(isApiStorageBackend() ? '/settings' : '/settings?focus=provider')
+            }
             onUseOfflinePack={() => void handleApplyOfflinePack()}
           />
         ) : null}
@@ -708,20 +712,58 @@ function TodayRouteBody({
 }
 
 export function TodayApp() {
+  const apiMode = isApiStorageBackend();
   const [providerKeys] = useLocalStorage(
     'audiblytics.providerKeys',
     providerKeysSchema.parse({}),
     providerKeysSchema,
   );
-  const [activeProvider] = useLocalStorage(
+  const [localActiveProvider] = useLocalStorage(
     'audiblytics.activeProvider',
     'gemini',
     activeProviderSchema,
   );
-  const [settings, setSettings] = useLocalStorage(
+  const [localSettings, setLocalSettings] = useLocalStorage(
     'audiblytics.settings',
     settingsSchema.parse({}),
     settingsSchema,
+  );
+  const [apiSettings, setApiSettings] = useState<ApiSettings | null>(null);
+  const [settingsReady, setSettingsReady] = useState(!apiMode);
+
+  useEffect(() => {
+    if (!apiMode) return;
+    void (async () => {
+      try {
+        const remote = await fetchApiSettings();
+        setApiSettings(remote);
+      } catch (e) {
+        console.warn('[today] failed to load API settings', e);
+      } finally {
+        setSettingsReady(true);
+      }
+    })();
+  }, [apiMode]);
+
+  const settings = apiMode ? (apiSettings ?? settingsSchema.parse({})) : localSettings;
+  const activeProvider = apiMode ? (apiSettings?.activeProvider ?? 'gemini') : localActiveProvider;
+
+  const handleSettingsChange = useCallback(
+    (next: Settings) => {
+      if (!apiMode) {
+        setLocalSettings(next);
+        return;
+      }
+      void (async () => {
+        try {
+          const patched = await patchApiSettings(next);
+          setApiSettings(patched);
+        } catch (e) {
+          console.warn('[today] failed to save API settings', e);
+        }
+      })();
+    },
+    [apiMode, setLocalSettings],
   );
   const distinctDays = useDistinctDayOfUse();
   const paragraphOfTheDay = useParagraphOfTheDay();
@@ -771,7 +813,8 @@ export function TodayApp() {
           ? paragraphOfTheDay.cached.id
           : paragraphId;
   const displayRecycleKeys = usedOfflinePackThisSession || !cacheHit ? recycledWordKeys : recycleTextsToKeySet([]);
-  const paragraphCacheLoading = paragraphOfTheDay.status === 'loading';
+  const paragraphCacheLoading =
+    !settingsReady || paragraphOfTheDay.status === 'loading';
 
   const { setHasParagraphForTodayOnScreen } = useStatStreakSurface();
   useEffect(() => {
@@ -779,11 +822,15 @@ export function TodayApp() {
     return () => setHasParagraphForTodayOnScreen(false);
   }, [displayParagraph, setHasParagraphForTodayOnScreen]);
 
+  if (apiMode && !settingsReady) {
+    return <ParagraphZoneSkeleton />;
+  }
+
   return (
     <TodayRouteBody
       dayNumber={dayNumber}
       settings={settings}
-      onSettingsChange={setSettings}
+      onSettingsChange={handleSettingsChange}
       paragraph={displayParagraph}
       recycledWordKeys={displayRecycleKeys}
       cachePersistError={cacheHit ? null : cachePersistError}

@@ -8,7 +8,10 @@ import {
   type Settings,
 } from '@/lib/schemas/settings.schema';
 
-export type ApiSettings = Settings & { activeProvider: ActiveProvider };
+export type ApiSettings = Settings & {
+  activeProvider: ActiveProvider;
+  hasGeminiApiKey: boolean;
+};
 
 export async function fetchApiSettings(): Promise<ApiSettings> {
   const raw = await apiFetch<Record<string, unknown>>('/api/v1/settings');
@@ -20,11 +23,12 @@ export async function fetchApiSettings(): Promise<ApiSettings> {
     voiceURI: raw.voiceURI ?? null,
   });
   const activeProvider = activeProviderSchema.parse(raw.activeProvider ?? 'gemini');
-  return { ...settings, activeProvider };
+  const hasGeminiApiKey = Boolean(raw.hasGeminiApiKey);
+  return { ...settings, activeProvider, hasGeminiApiKey };
 }
 
 export async function patchApiSettings(
-  patch: Partial<ApiSettings>,
+  patch: Partial<ApiSettings> & { geminiApiKey?: string },
 ): Promise<ApiSettings> {
   const body: Record<string, unknown> = {};
   if (patch.theme !== undefined) body.theme = patch.theme;
@@ -33,6 +37,7 @@ export async function patchApiSettings(
   if (patch.retention !== undefined) body.retention = patch.retention;
   if (patch.voiceURI !== undefined) body.voiceURI = patch.voiceURI;
   if (patch.activeProvider !== undefined) body.activeProvider = patch.activeProvider;
+  if (patch.geminiApiKey !== undefined) body.geminiApiKey = patch.geminiApiKey;
 
   const raw = await apiFetch<Record<string, unknown>>('/api/v1/settings', {
     method: 'PATCH',
@@ -46,5 +51,6 @@ export async function patchApiSettings(
     voiceURI: raw.voiceURI ?? null,
   });
   const activeProvider = activeProviderSchema.parse(raw.activeProvider ?? 'gemini');
-  return { ...settings, activeProvider };
+  const hasGeminiApiKey = Boolean(raw.hasGeminiApiKey);
+  return { ...settings, activeProvider, hasGeminiApiKey };
 }

@@ -10,7 +10,7 @@ import { AppShell } from "@/components/audiblytics/AppShell";
 import { TopNav } from "@/components/audiblytics/TopNav";
 import { StatStreakSurfaceProvider } from "@/features/calendar/stat-streak-surface-context";
 import { AppProviders } from "@/app/providers";
-import { AuthGate } from "@/components/audiblytics/AuthGate";
+import { AppGate } from "@/components/audiblytics/AppGate";
 import "./globals.css";
 
 /* Latin-only woff2 from Google Fonts gstatic (`src/fonts/*.woff2`). Matches
@@ -66,7 +66,7 @@ export default function RootLayout({
                   <main className="min-w-0 flex-1 px-5 pb-12 pt-8 md:px-8 lg:px-14 lg:pb-16">
                     <AppShell>
                       <RetentionPruneOnMount />
-                      <AuthGate>{children}</AuthGate>
+                      <AppGate>{children}</AppGate>
                     </AppShell>
                   </main>
                 </StatStreakSurfaceProvider>

@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from 'react';
 
+import { generateParagraphViaApi } from '@/lib/api/paragraphs';
+import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import { generateParagraph } from '@/lib/llm/generate';
 import {
   defaultLastLlmCallStatus,
@@ -29,6 +31,7 @@ export function useGenerateParagraph({
   settings,
   paragraphId,
 }: UseGenerateParagraphArgs) {
+  const apiMode = isApiStorageBackend();
   const [isGenerating, setIsGenerating] = useState(false);
   const [, setLastLlmCallStatus] = useLocalStorage(
     'audiblytics.lastLlmCallStatus',
@@ -43,6 +46,28 @@ export function useGenerateParagraph({
       const collection = await db.collection.toArray();
       const recycle = selectRecycleWords(collection);
       const recycleWords = recycle.map((w) => w.word);
+
+      if (apiMode) {
+        const out = await generateParagraphViaApi({
+          paragraphId: targetParagraphId,
+          recycleWords,
+        });
+        if (out.ok) {
+          setLastLlmCallStatus({
+            ok: true,
+            lastProvider: 'gemini',
+            at: new Date().toISOString(),
+          });
+        } else {
+          setLastLlmCallStatus({
+            ok: false,
+            lastProvider: 'gemini',
+            lastErrorKind: out.error.kind,
+            at: new Date().toISOString(),
+          });
+        }
+        return out;
+      }
 
       const { getProvider } = await import('@/lib/llm/client');
       const model = getProvider({ activeProvider, providerKeys });
@@ -76,20 +101,20 @@ export function useGenerateParagraph({
           at: generatedAt,
         });
         return { ok: true, value: payload };
-      } else {
-        setLastLlmCallStatus({
-          ok: false,
-          lastProvider: activeProvider,
-          lastErrorKind: out.error.kind,
-          at: new Date().toISOString(),
-        });
       }
+      setLastLlmCallStatus({
+        ok: false,
+        lastProvider: activeProvider,
+        lastErrorKind: out.error.kind,
+        at: new Date().toISOString(),
+      });
       return out;
     } finally {
       setIsGenerating(false);
     }
   }, [
     activeProvider,
+    apiMode,
     paragraphId,
     providerKeys,
     setLastLlmCallStatus,

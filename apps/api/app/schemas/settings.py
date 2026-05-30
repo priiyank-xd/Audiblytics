@@ -35,6 +35,7 @@ class SettingsResponse(BaseModel):
     retention: RetentionPolicy
     voiceURI: str | None = None
     activeProvider: ActiveProvider
+    hasGeminiApiKey: bool = False
 
     @classmethod
     def from_row(cls, row: "UserSettings") -> "SettingsResponse":
@@ -48,6 +49,7 @@ class SettingsResponse(BaseModel):
             retention=row.retention,  # type: ignore[arg-type]
             voiceURI=row.voice_uri,
             activeProvider=row.active_provider,  # type: ignore[arg-type]
+            hasGeminiApiKey=bool(row.gemini_api_key and row.gemini_api_key.strip()),
         )
 
 
@@ -60,3 +62,4 @@ class SettingsPatch(BaseModel):
     retention: RetentionPolicy | None = None
     voiceURI: str | None = None
     activeProvider: ActiveProvider | None = None
+    geminiApiKey: str | None = None

@@ -16,7 +16,10 @@ DbSession = Annotated[AsyncSession, Depends(get_db)]
 
 async def get_current_user_id(
     db: DbSession,
-    audiblytics_session: Annotated[str | None, Cookie()] = None,
+    audiblytics_session: Annotated[
+        str | None,
+        Cookie(alias=get_settings().cookie_name),
+    ] = None,
 ) -> UUID:
     if not audiblytics_session:
         raise HTTPException(

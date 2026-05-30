@@ -4,6 +4,7 @@ app/__init__.py
 app/main.py
 app/api/v1/auth.py
 app/api/v1/health.py
+app/api/v1/paragraphs.py
 app/api/v1/router.py
 app/api/v1/settings.py
 app/core/config.py
@@ -12,13 +13,18 @@ app/core/deps.py
 app/core/security.py
 app/models/__init__.py
 app/models/base.py
+app/models/paragraph_cache.py
 app/models/user.py
 app/models/user_settings.py
 app/schemas/auth.py
+app/schemas/paragraph.py
 app/schemas/settings.py
+app/services/gemini_paragraph.py
+app/services/paragraph_prompt.py
 audiblytics_api.egg-info/PKG-INFO
 audiblytics_api.egg-info/SOURCES.txt
 audiblytics_api.egg-info/dependency_links.txt
 audiblytics_api.egg-info/requires.txt
 audiblytics_api.egg-info/top_level.txt
 tests/test_auth_settings.py
+tests/test_paragraphs.py

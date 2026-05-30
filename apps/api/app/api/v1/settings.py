@@ -29,6 +29,9 @@ async def patch_settings(body: SettingsPatch, user: CurrentUser, db: DbSession) 
         row.voice_uri = body.voiceURI
     if body.activeProvider is not None:
         row.active_provider = body.activeProvider
+    if body.geminiApiKey is not None:
+        trimmed = body.geminiApiKey.strip()
+        row.gemini_api_key = trimmed if trimmed else None
     await db.commit()
     await db.refresh(row)
     return SettingsResponse.from_row(row)

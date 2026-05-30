@@ -14,8 +14,8 @@ Requires-Dist: pydantic-settings>=2.7.0
 Requires-Dist: email-validator>=2.2.0
 Requires-Dist: pyjwt>=2.10.0
 Requires-Dist: bcrypt>=4.2.0
+Requires-Dist: httpx>=0.28.0
 Provides-Extra: dev
-Requires-Dist: httpx>=0.28.0; extra == "dev"
 Requires-Dist: pytest>=8.0.0; extra == "dev"
 Requires-Dist: pytest-asyncio>=0.25.0; extra == "dev"
 
@@ -28,6 +28,8 @@ FastAPI backend. Spec: `_bmad-output/planning-artifacts/architecture-v2-fastapi-
 - `POST /api/v1/auth/register|login|logout`
 - `GET /api/v1/auth/me`
 - `GET|PATCH /api/v1/settings`
+- `POST /api/v1/paragraphs/generate` — Gemini proxy (requires `GEMINI_API_KEY`)
+- `GET /api/v1/paragraphs/today` — same-day cache hit
 - JWT in httpOnly cookie `audiblytics_session`
 
 ## Quick start
@@ -43,12 +45,26 @@ docker compose up -d postgres
 ```bash
 cd apps/api
 cp .env.example .env
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 uvicorn app.main:app --reload --port 8000
 ```
 
-Tables are created on startup via `init_db()`.
+`alembic` and `uvicorn` live in `.venv` — activate it first, or use `python -m alembic` / `python -m uvicorn`.
+
+Tables are created on startup via `init_db()` (dev), or apply migrations:
+
+```bash
+source .venv/bin/activate
+python -m alembic upgrade head
+```
+
+If tables already exist from `init_db()` but Alembic errors with “already exists”, stamp instead:
+
+```bash
+python -m alembic stamp head
+```
 
 **3. Seed user (optional)**
 

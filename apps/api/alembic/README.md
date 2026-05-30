@@ -1,14 +1,29 @@
 # Alembic
 
-Phase 1 uses `init_db()` on API startup for local/dev table creation.
+Migrations for Postgres (local Docker or Neon). Matches `app.models` / BV5.
 
-For production (Neon), generate migrations once Postgres is wired:
+## Local
 
 ```bash
+docker compose up -d postgres
 cd apps/api
-alembic init alembic   # if not already configured
-alembic revision --autogenerate -m "initial users and settings"
-alembic upgrade head
+cp .env.example .env
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+python -m alembic upgrade head
 ```
 
-See `architecture-v2-fastapi-backend.md` BV5.
+`init_db()` on API startup still creates tables in development if you skip Alembic; use migrations before production deploy.
+
+If tables already exist from `init_db()`, stamp instead of re-running create:
+
+```bash
+alembic stamp head
+```
+
+## New revision
+
+```bash
+alembic revision --autogenerate -m "describe change"
+alembic upgrade head
+```

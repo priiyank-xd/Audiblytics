@@ -1,7 +1,10 @@
 'use client';
 
+import { useCallback, useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 
+import { fetchParagraphToday } from '@/lib/api/paragraphs';
+import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 import { LIVE_QUERY_EMPTY_DEPS } from '@/lib/hooks/live-query-empty-deps';
 import { paragraphSchema, type ParagraphResult } from '@/lib/llm/schemas/paragraph.schema';
@@ -29,25 +32,54 @@ async function queryMostRecentCachedParagraphForUtcToday(): Promise<CachedParagr
   return rows[0];
 }
 
-/**
- * Reactive same-UTC-day paragraph cache read (FR19, AR10). Does not trigger generation.
- */
-export function useParagraphOfTheDay(): ParagraphOfTheDayStatus {
-  const row = useLiveQuery(() => queryMostRecentCachedParagraphForUtcToday(), LIVE_QUERY_EMPTY_DEPS);
-
-  if (row === undefined) {
-    return { status: 'loading' };
-  }
-
+function toParagraphStatus(row: CachedParagraph | null): ParagraphOfTheDayStatus {
   if (row === null) {
     return { status: 'miss' };
   }
-
   const parsed = paragraphSchema.safeParse({ paragraph: row.paragraph, hardWords: row.hardWords });
   if (!parsed.success) {
     console.warn('[paragraph] same-day cache row failed paragraph validation', parsed.error.issues);
     return { status: 'miss' };
   }
-
   return { status: 'hit', cached: row, result: parsed.data };
+}
+
+function useLocalParagraphOfTheDay(): ParagraphOfTheDayStatus {
+  const row = useLiveQuery(() => queryMostRecentCachedParagraphForUtcToday(), LIVE_QUERY_EMPTY_DEPS);
+
+  if (row === undefined) {
+    return { status: 'loading' };
+  }
+  return toParagraphStatus(row);
+}
+
+function useApiParagraphOfTheDay(): ParagraphOfTheDayStatus {
+  const [status, setStatus] = useState<ParagraphOfTheDayStatus>({ status: 'loading' });
+
+  const refresh = useCallback(async () => {
+    setStatus({ status: 'loading' });
+    try {
+      const row = await fetchParagraphToday();
+      setStatus(toParagraphStatus(row));
+    } catch (e) {
+      console.warn('[paragraph] API today fetch failed', e);
+      setStatus({ status: 'miss' });
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return status;
+}
+
+/**
+ * Reactive same-UTC-day paragraph cache read (FR19, AR10). Does not trigger generation.
+ */
+export function useParagraphOfTheDay(): ParagraphOfTheDayStatus {
+  const apiMode = isApiStorageBackend();
+  const local = useLocalParagraphOfTheDay();
+  const api = useApiParagraphOfTheDay();
+  return apiMode ? api : local;
 }

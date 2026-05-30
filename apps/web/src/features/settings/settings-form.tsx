@@ -152,7 +152,9 @@ export function SettingsForm() {
   const [isLoadingPack, setIsLoadingPack] = useState(false);
   const [packError, setPackError] = useState<StorageError | null>(null);
 
-  const [section, setSection] = useState<SettingsSectionId>('provider');
+  const [section, setSection] = useState<SettingsSectionId>(() =>
+    apiMode ? 'defaults' : 'provider',
+  );
   const [draftProvider, setDraftProvider] = useState<ActiveProvider>(() => activeProvider);
   const [keysDraft, setKeysDraft] = useState<ProviderKeys>(() => providerKeysSchema.parse(providerKeys));
   const [themeDraft, setThemeDraft] = useState<Theme>(() => settings.theme);
@@ -160,6 +162,8 @@ export function SettingsForm() {
   const [lengthDraft, setLengthDraft] = useState<number>(() => settings.length);
   const [retentionDraft, setRetentionDraft] = useState<RetentionPolicy>(() => settings.retention);
   const [voiceUriDraft, setVoiceUriDraft] = useState<string | null>(() => settings.voiceURI);
+  const [geminiKeyDraft, setGeminiKeyDraft] = useState('');
+  const [hasGeminiApiKey, setHasGeminiApiKey] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [apiSettingsLoading, setApiSettingsLoading] = useState(apiMode);
@@ -180,6 +184,8 @@ export function SettingsForm() {
         setRetentionDraft(remote.retention);
         setVoiceUriDraft(remote.voiceURI);
         setDraftProvider(remote.activeProvider);
+        setHasGeminiApiKey(remote.hasGeminiApiKey);
+        setGeminiKeyDraft('');
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Could not load settings from the API.');
       } finally {
@@ -213,7 +219,7 @@ export function SettingsForm() {
   }, [settings]);
 
   useEffect(() => {
-    if (searchParams.get('focus') !== 'provider') return;
+    if (apiMode || searchParams.get('focus') !== 'provider') return;
     queueMicrotask(() => setSection('provider'));
     const outer = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -221,7 +227,7 @@ export function SettingsForm() {
       });
     });
     return () => cancelAnimationFrame(outer);
-  }, [searchParams]);
+  }, [apiMode, searchParams]);
 
   const apiKeyValue = readProviderKey(keysDraft, draftProvider);
   const needsApiKey = draftProvider !== 'ollama';
@@ -239,20 +245,26 @@ export function SettingsForm() {
 
       if (apiMode) {
         try {
-          const next = await patchApiSettings({
+          const patch: Parameters<typeof patchApiSettings>[0] = {
             theme: themeDraft,
             persona: personaDraft,
             length: lengthDraft,
             retention: retentionDraft,
             voiceURI: voiceUriDraft,
             activeProvider: draftProvider,
-          });
+          };
+          if (geminiKeyDraft.trim()) {
+            patch.geminiApiKey = geminiKeyDraft.trim();
+          }
+          const next = await patchApiSettings(patch);
           setThemeDraft(next.theme);
           setPersonaDraft(next.persona);
           setLengthDraft(next.length);
           setRetentionDraft(next.retention);
           setVoiceUriDraft(next.voiceURI);
           setDraftProvider(next.activeProvider);
+          setHasGeminiApiKey(next.hasGeminiApiKey);
+          setGeminiKeyDraft('');
         } catch (e) {
           setError(e instanceof Error ? e.message : 'Could not save settings to the API.');
         }
@@ -311,6 +323,7 @@ export function SettingsForm() {
     lengthDraft,
     retentionDraft,
     draftProvider,
+    geminiKeyDraft,
   ]);
 
   const handleDownloadPack = useCallback(() => {
@@ -338,7 +351,7 @@ export function SettingsForm() {
       </header>
 
       <div className="flex flex-col gap-8 pt-2">
-        <SettingsPillTabs value={section} onValueChange={setSection} />
+        <SettingsPillTabs value={section} onValueChange={setSection} apiMode={apiMode} />
 
         <div
           role="tabpanel"
@@ -346,14 +359,8 @@ export function SettingsForm() {
           aria-labelledby={`settings-tab-${section}`}
           className="min-h-[12rem] space-y-6"
         >
-            {section === 'provider' ? (
+            {section === 'provider' && !apiMode ? (
               <div className="space-y-4">
-                {apiMode ? (
-                  <p className="text-body text-secondary">
-                    LLM API keys are configured on the server (<code className="text-ui-sm">apps/api/.env</code>).
-                    Provider selection is saved to your account; paragraph proxy ships in Phase 2.
-                  </p>
-                ) : null}
                 <div className="space-y-2">
                   <Label htmlFor="settings-provider">Provider</Label>
                   <Select value={draftProvider} onValueChange={handleProviderSelect}>
@@ -370,28 +377,26 @@ export function SettingsForm() {
                   </Select>
                 </div>
 
-                {!apiMode ? (
-                  <div className="space-y-2">
-                    <Label htmlFor="settings-api-key">API key</Label>
-                    <Input
-                      id="settings-api-key"
-                      type="password"
-                      name="apiKey"
-                      autoComplete="off"
-                      disabled={!needsApiKey}
-                      value={apiKeyValue}
-                      onChange={(e) => {
-                        setKeysDraft((prev) => patchProviderKey(prev, draftProvider, e.target.value));
-                        setError(null);
-                      }}
-                      className={cn(!needsApiKey && 'opacity-60')}
-                      placeholder={needsApiKey ? 'Paste your API key' : undefined}
-                    />
-                    {!needsApiKey ? (
-                      <p className="text-caption text-secondary">No key required for Ollama.</p>
-                    ) : null}
-                  </div>
-                ) : null}
+                <div className="space-y-2">
+                  <Label htmlFor="settings-api-key">API key</Label>
+                  <Input
+                    id="settings-api-key"
+                    type="password"
+                    name="apiKey"
+                    autoComplete="off"
+                    disabled={!needsApiKey}
+                    value={apiKeyValue}
+                    onChange={(e) => {
+                      setKeysDraft((prev) => patchProviderKey(prev, draftProvider, e.target.value));
+                      setError(null);
+                    }}
+                    className={cn(!needsApiKey && 'opacity-60')}
+                    placeholder={needsApiKey ? 'Paste your API key' : undefined}
+                  />
+                  {!needsApiKey ? (
+                    <p className="text-caption text-secondary">No key required for Ollama.</p>
+                  ) : null}
+                </div>
               </div>
             ) : null}
 
@@ -437,6 +442,51 @@ export function SettingsForm() {
 
             {section === 'defaults' ? (
               <div className="grid gap-4">
+                {apiMode ? (
+                  <>
+                    <p className="text-body text-secondary">
+                      Paragraphs are generated on the server with your Gemini key (not stored in the
+                      browser). Keys are saved to your account in Postgres.
+                    </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="settings-gemini-api-key">Gemini API key</Label>
+                      <Input
+                        id="settings-gemini-api-key"
+                        type="password"
+                        name="geminiApiKey"
+                        autoComplete="off"
+                        value={geminiKeyDraft}
+                        onChange={(e) => {
+                          setGeminiKeyDraft(e.target.value);
+                          setError(null);
+                        }}
+                        placeholder={
+                          hasGeminiApiKey
+                            ? 'Key saved — paste only to replace'
+                            : 'Paste your Gemini API key'
+                        }
+                      />
+                      {hasGeminiApiKey && !geminiKeyDraft ? (
+                        <p className="text-caption text-secondary">A Gemini key is already saved.</p>
+                      ) : null}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="settings-provider">Provider</Label>
+                      <Select value={draftProvider} onValueChange={handleProviderSelect}>
+                        <SelectTrigger id="settings-provider" className="w-full min-w-0">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PROVIDER_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                ) : null}
                 <div className="space-y-2">
                   <Label htmlFor="settings-theme">Theme</Label>
                   <Select

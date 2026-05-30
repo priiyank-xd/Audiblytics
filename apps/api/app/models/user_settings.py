@@ -27,6 +27,7 @@ class UserSettings(Base):
     retention: Mapped[str] = mapped_column(String(32), nullable=False, default=DEFAULT_RETENTION)
     voice_uri: Mapped[str | None] = mapped_column(String(512), nullable=True)
     active_provider: Mapped[str] = mapped_column(String(32), nullable=False, default=DEFAULT_ACTIVE_PROVIDER)
+    gemini_api_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

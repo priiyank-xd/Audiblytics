@@ -69,9 +69,12 @@ export function useLocalStorage<T>(
         const resolved = typeof next === 'function' ? (next as (p: T) => T)(prev) : next;
         try {
           window.localStorage.setItem(key, JSON.stringify(resolved));
-          window.dispatchEvent(
-            new CustomEvent(AUDIBLYTICS_STORAGE_SYNC, { detail: { key } }),
-          );
+          // Defer so same-tab listeners do not setState while another tree is rendering.
+          queueMicrotask(() => {
+            window.dispatchEvent(
+              new CustomEvent(AUDIBLYTICS_STORAGE_SYNC, { detail: { key } }),
+            );
+          });
         } catch (e) {
           console.error(`[storage] localStorage write failed for '${key}':`, e);
         }
@@ -127,7 +130,11 @@ export function writeDaysOfUse(next: DaysOfUse): void {
   }
   try {
     window.localStorage.setItem(DAYS_OF_USE_STORAGE_KEY, JSON.stringify(parsed.data));
-    window.dispatchEvent(new CustomEvent(AUDIBLYTICS_STORAGE_SYNC, { detail: { key: DAYS_OF_USE_STORAGE_KEY } }));
+    queueMicrotask(() => {
+      window.dispatchEvent(
+        new CustomEvent(AUDIBLYTICS_STORAGE_SYNC, { detail: { key: DAYS_OF_USE_STORAGE_KEY } }),
+      );
+    });
   } catch (e) {
     console.error(`[storage] localStorage write failed for '${DAYS_OF_USE_STORAGE_KEY}':`, e);
   }
@@ -155,9 +162,11 @@ export function writeDay14State(next: Day14State): void {
   }
   try {
     window.localStorage.setItem(DAY14_STATE_STORAGE_KEY, JSON.stringify(parsed.data));
-    window.dispatchEvent(
-      new CustomEvent(AUDIBLYTICS_STORAGE_SYNC, { detail: { key: DAY14_STATE_STORAGE_KEY } }),
-    );
+    queueMicrotask(() => {
+      window.dispatchEvent(
+        new CustomEvent(AUDIBLYTICS_STORAGE_SYNC, { detail: { key: DAY14_STATE_STORAGE_KEY } }),
+      );
+    });
   } catch (e) {
     console.error(`[storage] localStorage write failed for '${DAY14_STATE_STORAGE_KEY}':`, e);
   }
@@ -173,7 +182,11 @@ export function writeCompletions(next: Completions): void {
   }
   try {
     window.localStorage.setItem(COMPLETIONS_STORAGE_KEY, JSON.stringify(parsed.data));
-    window.dispatchEvent(new CustomEvent(AUDIBLYTICS_STORAGE_SYNC, { detail: { key: COMPLETIONS_STORAGE_KEY } }));
+    queueMicrotask(() => {
+      window.dispatchEvent(
+        new CustomEvent(AUDIBLYTICS_STORAGE_SYNC, { detail: { key: COMPLETIONS_STORAGE_KEY } }),
+      );
+    });
   } catch (e) {
     console.error(`[storage] localStorage write failed for '${COMPLETIONS_STORAGE_KEY}':`, e);
   }

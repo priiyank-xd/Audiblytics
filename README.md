@@ -19,6 +19,14 @@ pnpm install
 pnpm dev          # Next.js at http://localhost:3000 (local storage mode by default)
 ```
 
+### Phase 2 — API paragraph generation
+
+Set `GEMINI_API_KEY` in `apps/api/.env`. With API mode enabled, the Today page calls `POST /api/v1/paragraphs/generate` instead of the browser LLM client.
+
+```bash
+cd apps/api && alembic upgrade head   # adds paragraph_cache
+```
+
 ### Phase 1 — API mode (auth + Postgres settings)
 
 ```bash
@@ -28,6 +36,12 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 In `apps/web/.env.local` set `NEXT_PUBLIC_STORAGE_BACKEND=api` and `API_URL=http://localhost:8000`, then `pnpm dev` and visit `/login`.
+
+Apply DB migrations once (or `alembic stamp head` if tables already exist from `init_db()`):
+
+```bash
+cd apps/api && alembic upgrade head
+```
 
 See `apps/api/README.md` for seed user and tests.
 
