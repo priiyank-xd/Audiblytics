@@ -9,8 +9,7 @@ import { useStatStreakSurface } from '@/features/calendar/stat-streak-surface-co
 import { loadParagraphCacheUtcDateSet } from '@/features/calendar/load-paragraph-cache-utc-date-set';
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 import { LIVE_QUERY_EMPTY_DEPS } from '@/lib/hooks/live-query-empty-deps';
-import { completionsSchema } from '@/lib/schemas/completions.schema';
-import { useLocalStorage } from '@/lib/storage/use-local-storage';
+import { useCompletions } from '@/features/calendar/use-completions';
 
 export type CalendarGridCell = {
   utcDate: string;
@@ -34,11 +33,7 @@ export function useCalendarGrid(
   options?: UseCalendarGridOptions,
 ): CalendarGridCell[] {
   const includeEphemeralParagraphOnToday = options?.includeEphemeralParagraphOnToday ?? true;
-  const [completions] = useLocalStorage(
-    'audiblytics.completions',
-    completionsSchema.parse({}),
-    completionsSchema,
-  );
+  const completions = useCompletions() ?? {};
   const paragraphDates = useLiveQuery(() => loadParagraphCacheUtcDateSet(), LIVE_QUERY_EMPTY_DEPS);
   const { hasParagraphForTodayOnScreen } = useStatStreakSurface();
 

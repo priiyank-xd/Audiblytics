@@ -3,8 +3,7 @@
 import { CheckCircle2, Circle } from 'lucide-react';
 
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
-import { completionsSchema } from '@/lib/schemas/completions.schema';
-import { useLocalStorage } from '@/lib/storage/use-local-storage';
+import { useCompletions } from '@/features/calendar/use-completions';
 import { cn } from '@/lib/utils';
 
 export type TodaySessionStatusProps = {
@@ -34,11 +33,7 @@ function StatusItem({ label, complete }: StatusItemProps) {
 }
 
 export function TodaySessionStatus({ paragraphOnScreen, className }: TodaySessionStatusProps) {
-  const [completions] = useLocalStorage(
-    'audiblytics.completions',
-    completionsSchema.parse({}),
-    completionsSchema,
-  );
+  const completions = useCompletions() ?? {};
   const today = completions[formatUtcDate()];
   const hasReadIt = today?.hasReadIt === true;
   const hasRecording = today?.hasRecording === true;

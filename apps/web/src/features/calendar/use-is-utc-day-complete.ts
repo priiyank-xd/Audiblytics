@@ -8,15 +8,10 @@ import { loadParagraphCacheUtcDateSet } from '@/features/calendar/load-paragraph
 import { useStatStreakSurface } from '@/features/calendar/stat-streak-surface-context';
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 import { LIVE_QUERY_EMPTY_DEPS } from '@/lib/hooks/live-query-empty-deps';
-import { completionsSchema } from '@/lib/schemas/completions.schema';
-import { useLocalStorage } from '@/lib/storage/use-local-storage';
+import { useCompletions } from '@/features/calendar/use-completions';
 
 export function useIsUtcDayComplete(utcDate: string | null): boolean | undefined {
-  const [completions] = useLocalStorage(
-    'audiblytics.completions',
-    completionsSchema.parse({}),
-    completionsSchema,
-  );
+  const completions = useCompletions() ?? {};
   const paragraphDates = useLiveQuery(() => loadParagraphCacheUtcDateSet(), LIVE_QUERY_EMPTY_DEPS);
   const { hasParagraphForTodayOnScreen } = useStatStreakSurface();
 

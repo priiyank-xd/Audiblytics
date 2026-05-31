@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 
 import { generateParagraphViaApi } from '@/lib/api/paragraphs';
+import { fetchCollection } from '@/lib/api/collection';
 import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import { generateParagraph } from '@/lib/llm/generate';
 import {
@@ -17,6 +18,18 @@ import { useLocalStorage } from '@/lib/storage/use-local-storage';
 import { persistParagraphToCache } from './persist-paragraph-cache';
 import type { GenerateParagraphHookResult, ParagraphGeneratePayload } from './paragraph-generate-payload';
 import { selectRecycleWords } from './select-recycle-words';
+
+async function loadCollectionForRecycle(apiMode: boolean) {
+  if (!apiMode) {
+    return db.collection.toArray();
+  }
+  try {
+    return await fetchCollection();
+  } catch (e) {
+    console.warn('[paragraph] collection load failed for recycle; cold-start', e);
+    return [];
+  }
+}
 
 export type UseGenerateParagraphArgs = {
   activeProvider: ActiveProvider;
@@ -43,7 +56,7 @@ export function useGenerateParagraph({
     const targetParagraphId = opts?.paragraphId ?? paragraphId;
     setIsGenerating(true);
     try {
-      const collection = await db.collection.toArray();
+      const collection = await loadCollectionForRecycle(apiMode);
       const recycle = selectRecycleWords(collection);
       const recycleWords = recycle.map((w) => w.word);
 

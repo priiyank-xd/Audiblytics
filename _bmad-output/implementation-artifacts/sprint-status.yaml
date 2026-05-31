@@ -1,5 +1,5 @@
 # generated: 2026-05-04T14:32:00+05:30
-# last_updated: 2026-05-31T14:00:00+05:30
+# last_updated: 2026-05-31T20:00:00+05:30
 # project: Audiblytics
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-05-04T14:32:00+05:30
-last_updated: 2026-05-31T14:00:00+05:30
+last_updated: 2026-05-31T20:00:00+05:30
 project: Audiblytics
 project_key: NOKEY
 tracking_system: file-system
@@ -142,3 +142,16 @@ development_status:
   11-4-frontend-save-recording-via-api: done
   11-5-server-side-90-day-retention-prune: done
   epic-11-retrospective: optional
+
+  # Epic 12: Server-Backed Daily Loop (Stretch)
+  epic-12: done
+  12-1-collection-words-api: done
+  12-2-day-completions-api: done
+  epic-12-retrospective: optional
+
+  # Epic 13: Production Deploy & Interview Polish
+  epic-13: done
+  13-1-dockerfile-and-production-env-docs: done
+  13-2-neon-migrations-and-seed-for-production: done
+  13-3-architecture-adrs-3-minimum: done
+  epic-13-retrospective: optional

@@ -1,0 +1,52 @@
+name: API migrations
+
+on:
+  push:
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/api-migrations.yml"
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/api-migrations.yml"
+
+jobs:
+  alembic-upgrade-head:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: audiblytics
+          POSTGRES_PASSWORD: audiblytics
+          POSTGRES_DB: audiblytics
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U audiblytics -d audiblytics"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install API package
+        working-directory: apps/api
+        run: pip install -e ".[dev]"
+
+      - name: Alembic upgrade head (asyncpg URL)
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql+asyncpg://audiblytics:audiblytics@localhost:5432/audiblytics
+        run: python -m alembic upgrade head
+
+      - name: Alembic upgrade head (Neon-style postgresql URL)
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://audiblytics:audiblytics@localhost:5432/audiblytics
+        run: python -m alembic upgrade head

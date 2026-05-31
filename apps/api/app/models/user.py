@@ -8,6 +8,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
+    from app.models.collection_word import CollectionWord
+    from app.models.day_completion import DayCompletion
     from app.models.paragraph_cache import ParagraphCache
     from app.models.recording import Recording
     from app.models.user_settings import UserSettings
@@ -27,3 +29,5 @@ class User(Base):
     settings: Mapped["UserSettings"] = relationship(back_populates="user", uselist=False)
     paragraph_cache: Mapped[list["ParagraphCache"]] = relationship(back_populates="user")
     recordings: Mapped[list["Recording"]] = relationship(back_populates="user")
+    collection_words: Mapped[list["CollectionWord"]] = relationship(back_populates="user")
+    day_completions: Mapped[list["DayCompletion"]] = relationship(back_populates="user")

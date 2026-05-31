@@ -11,7 +11,7 @@ import { playRecordingItem } from '@/lib/audio/play-recording';
 import { useCompareRecordings } from '@/features/voice-journal/use-compare-recordings';
 import type { RecordingWithTheme } from '@/features/voice-journal/use-recordings';
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
-import { completionsSchema } from '@/lib/schemas/completions.schema';
+import { useCompletions } from '@/features/calendar/use-completions';
 import { useLocalStorage } from '@/lib/storage/use-local-storage';
 import { cn } from '@/lib/utils';
 import { isWarmupRecordingParagraphId } from '@/lib/warmup-recording-id';
@@ -65,11 +65,7 @@ export type VoiceJournalListProps = {
 type RowCompareTone = 'neutral' | 'active' | 'dim';
 
 export function VoiceJournalList({ recordings, className, hideCompare }: VoiceJournalListProps) {
-  const [completions] = useLocalStorage(
-    'audiblytics.completions',
-    completionsSchema.parse({}),
-    completionsSchema,
-  );
+  const completions = useCompletions() ?? {};
   const compare = useCompareRecordings(recordings);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [comparePhase, setComparePhase] = useState<CompareModePhase>('idle');

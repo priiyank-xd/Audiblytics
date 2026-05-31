@@ -10,7 +10,9 @@ from app.core.database import init_db
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    await init_db()
+    settings = get_settings()
+    if settings.environment != "production":
+        await init_db()
     yield
 
 

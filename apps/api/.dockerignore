@@ -1,0 +1,10 @@
+.venv
+__pycache__
+.pytest_cache
+.env
+.env.*
+*.egg-info
+audiblytics_api.egg-info
+tests
+uv.lock
+.git

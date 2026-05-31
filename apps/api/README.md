@@ -1,6 +1,6 @@
 # Audiblytics API (`apps/api`)
 
-FastAPI backend. Spec: `_bmad-output/planning-artifacts/architecture-v2-fastapi-backend.md`.
+FastAPI backend. Spec: `_bmad-output/planning-artifacts/architecture-v2-fastapi-backend.md`. ADRs: [`docs/decisions/`](../../docs/decisions/).
 
 ## Phase 1 — auth + settings
 
@@ -77,5 +77,92 @@ Uses in-memory SQLite; no Docker required for tests.
 
 ## Deploy
 
-- Docker image name: `audiblytics-api`
-- Set `COOKIE_SECURE=true` and a strong `JWT_SECRET` in production
+Production topology (BV15): **Vercel** (Next.js) + **Railway / Fly.io** (this API) + **Neon** (Postgres) + **Cloudflare R2** (audio). Set secrets in the host dashboard — never commit `.env` to the image.
+
+### Environment variables
+
+All variables map to `app/core/config.py` (`Settings`). Use host env injection on Railway/Fly.
+
+| Variable | Required | Production notes |
+|----------|----------|------------------|
+| `DATABASE_URL` | Yes | Neon URL: paste dashboard `postgresql://…` or `postgres://…` as-is — auto-normalized to `postgresql+asyncpg://` (`app/core/database_url.py`). Include `?sslmode=require` when Neon provides it. |
+| `JWT_SECRET` | Yes | Strong random (`openssl rand -hex 32`). Never use the dev default. |
+| `JWT_EXPIRE_MINUTES` | No | Default `10080` (7 days). |
+| `COOKIE_NAME` | No | Default `audiblytics_session`; change only if coordinating with the Next.js proxy/cookie config. |
+| `COOKIE_SECURE` | Yes | `true` when the API is served over HTTPS. |
+| `CORS_ORIGINS` | Yes | Comma-separated Vercel origin(s), e.g. `https://your-app.vercel.app`. |
+| `ENVIRONMENT` | Yes | `production` — skips `create_all` on startup; use Alembic for schema (see below). |
+| `GEMINI_API_KEY` | For paragraphs | Server fallback when the user has not saved a key in Settings. |
+| `GEMINI_MODEL` | No | Default `gemini-2.5-flash`. |
+| `R2_ACCOUNT_ID` | For recordings | Cloudflare R2 S3 API. |
+| `R2_ACCESS_KEY_ID` | For recordings | R2 access key. |
+| `R2_SECRET_ACCESS_KEY` | For recordings | R2 secret. |
+| `R2_BUCKET` | For recordings | Bucket name (e.g. `audiblytics-recordings`). |
+| `PORT` | Auto on Railway/Fly | Injected by the platform. Default `8000` locally and in Docker. |
+
+### Neon production database
+
+1. Create a Neon project and copy the connection string from the dashboard (often `postgresql://…` with `?sslmode=require`).
+2. Set `DATABASE_URL` on your machine or CI — **no manual scheme edit needed**: the API normalizes `postgresql://` and `postgres://` to `postgresql+asyncpg://` automatically (`app/core/database_url.py`).
+3. Apply migrations (required before first API deploy with `ENVIRONMENT=production`):
+
+```bash
+cd apps/api
+export DATABASE_URL='postgresql://USER:PASS@ep-….neon.tech/neondb?sslmode=require'
+./scripts/migrate.sh
+```
+
+Or: `python -m alembic upgrade head` (same effect).
+
+4. Seed your login user (idempotent — skips if email exists):
+
+```bash
+python scripts/seed_user.py --email you@example.com --password 'your-secure-password'
+```
+
+`seed_user.py` does **not** call `create_all`; it expects Alembic schema. Local dev may still use `init_db()` on API startup when `ENVIRONMENT` is not `production`.
+
+CI: `.github/workflows/api-migrations.yml` runs `alembic upgrade head` against Postgres on every API change.
+
+### Database migrations (local)
+
+Run **before** or immediately after first deploy (not in the container entrypoint):
+
+```bash
+cd apps/api
+./scripts/migrate.sh   # requires DATABASE_URL in .env or environment
+```
+
+Point `DATABASE_URL` at local Docker Postgres or Neon. Seed a user if needed: `python scripts/seed_user.py`.
+
+### Docker
+
+Build context is `apps/api`:
+
+```bash
+docker build -t audiblytics-api apps/api
+```
+
+Run locally (health only — set a real `DATABASE_URL` for auth routes):
+
+```bash
+docker run --rm -p 8000:8000 \
+  -e ENVIRONMENT=production \
+  -e JWT_SECRET=local-smoke-secret \
+  -e DATABASE_URL=postgresql+asyncpg://audiblytics:audiblytics@host.docker.internal:5432/audiblytics \
+  -e CORS_ORIGINS=http://localhost:3000 \
+  audiblytics-api
+```
+
+Verify: `curl -f http://localhost:8000/api/v1/health` → `{"status":"ok"}`.
+
+The image includes a `HEALTHCHECK` on `/api/v1/health`. On Railway, set the HTTP health check path to `/api/v1/health`.
+
+### Platform notes
+
+| Host | Health check | `PORT` |
+|------|--------------|--------|
+| Railway | Path `/api/v1/health` | Set automatically |
+| Fly.io | `http_service` checks on `/api/v1/health` | Match `internal_port` to `PORT` |
+
+Image name suggestion: `audiblytics-api`.

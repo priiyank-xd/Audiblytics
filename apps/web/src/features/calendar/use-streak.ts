@@ -9,19 +9,14 @@ import { useStatStreakSurface } from '@/features/calendar/stat-streak-surface-co
 import { currentStreak } from '@/lib/day-counter/index';
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 import { LIVE_QUERY_EMPTY_DEPS } from '@/lib/hooks/live-query-empty-deps';
-import { completionsSchema } from '@/lib/schemas/completions.schema';
-import { useLocalStorage } from '@/lib/storage/use-local-storage';
+import { useCompletions } from '@/features/calendar/use-completions';
 
 /**
  * Reactive FR57 streak: completion predicate matches Story 4.2; invalidates on completions,
  * paragraph cache, offline-pack flags, and same-session Today paragraph visibility.
  */
 export function useStreak(): number {
-  const [completions] = useLocalStorage(
-    'audiblytics.completions',
-    completionsSchema.parse({}),
-    completionsSchema,
-  );
+  const completions = useCompletions() ?? {};
   const paragraphDates = useLiveQuery(() => loadParagraphCacheUtcDateSet(), LIVE_QUERY_EMPTY_DEPS);
   const { hasParagraphForTodayOnScreen } = useStatStreakSurface();
 

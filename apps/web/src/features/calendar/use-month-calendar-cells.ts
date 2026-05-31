@@ -10,8 +10,7 @@ import { useStatStreakSurface } from '@/features/calendar/stat-streak-surface-co
 import { loadParagraphCacheUtcDateSet } from '@/features/calendar/load-paragraph-cache-utc-date-set';
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 import { LIVE_QUERY_EMPTY_DEPS } from '@/lib/hooks/live-query-empty-deps';
-import { completionsSchema } from '@/lib/schemas/completions.schema';
-import { useLocalStorage } from '@/lib/storage/use-local-storage';
+import { useCompletions } from '@/features/calendar/use-completions';
 
 export type MonthCalendarSlot =
   | { kind: 'pad' }
@@ -32,11 +31,7 @@ export function useMonthCalendarCells(): {
   const anchor = useMemo(() => new Date(), []);
   const { monthLabel, items } = useMemo(() => buildUtcMonthGrid(anchor), [anchor]);
 
-  const [completions] = useLocalStorage(
-    'audiblytics.completions',
-    completionsSchema.parse({}),
-    completionsSchema,
-  );
+  const completions = useCompletions() ?? {};
   const paragraphDates = useLiveQuery(
     () => loadParagraphCacheUtcDateSet(),
     LIVE_QUERY_EMPTY_DEPS,

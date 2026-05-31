@@ -1,12 +1,9 @@
 'use client';
 
-import { useLiveQuery } from 'dexie-react-hooks';
-
 import { HardWordRow } from '@/components/audiblytics/HardWordRow';
 import { InlineErrorSurface } from '@/components/audiblytics/InlineErrorSurface';
+import { useCollection } from '@/features/collection/use-collection';
 import { useSaveWord } from '@/features/collection/use-save-word';
-import { db } from '@/lib/storage/db';
-import { LIVE_QUERY_EMPTY_DEPS } from '@/lib/hooks/live-query-empty-deps';
 import type { HardWord } from '@/lib/schemas/paragraph-cache.schema';
 import { cn } from '@/lib/utils';
 
@@ -33,10 +30,8 @@ export function HardWordsList({
   recycledWordKeys,
   variant = 'default',
 }: HardWordsListProps) {
-  const savedWords = useLiveQuery(async () => {
-    const rows = await db.collection.toArray();
-    return new Set(rows.map((r) => r.word));
-  }, LIVE_QUERY_EMPTY_DEPS);
+  const collection = useCollection();
+  const savedWords = collection ? new Set(collection.map((r) => r.word)) : undefined;
 
   const { isSaving, error, saveWord } = useSaveWord();
 

@@ -51,11 +51,21 @@ See `apps/api/README.md` for seed user and tests.
 |----------|--------|
 | `_bmad-output/planning-artifacts/architecture.md` | Client app (Dexie / localStorage era) |
 | `_bmad-output/planning-artifacts/architecture-v2-fastapi-backend.md` | Backend v2 — FastAPI, Neon, R2 |
+| [`docs/decisions/`](docs/decisions/) | ADRs (auth, R2 blobs, strangler migration) — BV4, BV6, BV9 |
 
 ## Personal-use boundary
 
 The **web** app still supports n=1 client-only mode (`localStorage` + IndexedDB). Public deployment with browser-held API keys remains gated until `NEXT_PUBLIC_STORAGE_BACKEND=api` and the FastAPI proxy are fully wired. See `architecture.md` § Hard-Scope-Boundary (AR15).
 
-## Vercel
+## Deploy (BV15)
 
-Set **Root Directory** to `apps/web` for frontend deploys.
+| Component | Host |
+|-----------|------|
+| Next.js (`apps/web`) | Vercel — set **Root Directory** to `apps/web` |
+| FastAPI (`apps/api`) | Railway or Fly.io — Docker image from `apps/api/Dockerfile` |
+| Postgres | Neon |
+| Audio blobs | Cloudflare R2 |
+
+Full API env vars, Docker build/run, and migration steps: **[apps/api/README.md § Deploy](apps/api/README.md#deploy)**.
+
+In API mode, set `NEXT_PUBLIC_STORAGE_BACKEND=api` on Vercel and point `API_URL` at your deployed API origin (or use the Next.js rewrite proxy per your setup).

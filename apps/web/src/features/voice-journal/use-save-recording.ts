@@ -1,6 +1,8 @@
 import { dayOfUseAtRecordingSave, recordDayOfUse } from '@/lib/day-counter/index';
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 import { saveRecordingViaApi } from '@/lib/api/recordings';
+import { notifyCompletionsMutated } from '@/features/calendar/completions-mutated';
+import { upsertDayCompletion } from '@/lib/api/completions';
 import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import { err, ok, type Result } from '@/lib/result';
 import { dayCompletionSchema } from '@/lib/schemas/completions.schema';
@@ -19,15 +21,22 @@ export type SaveRecordingInput = {
   paragraphId: string;
 };
 
-function stampCompletionsAndDayOfUse(): void {
+async function stampCompletionsAndDayOfUse(): Promise<void> {
   const todayUtc = formatUtcDate();
-  const completions = readCompletions();
-  const prev = completions[todayUtc] ?? dayCompletionSchema.parse({});
-  const merged = dayCompletionSchema.parse({
-    ...prev,
-    hasRecording: true,
-  });
-  writeCompletions({ ...completions, [todayUtc]: merged });
+  if (isApiStorageBackend()) {
+    const result = await upsertDayCompletion(todayUtc, { hasRecording: true });
+    if (result.ok) {
+      notifyCompletionsMutated();
+    }
+  } else {
+    const completions = readCompletions();
+    const prev = completions[todayUtc] ?? dayCompletionSchema.parse({});
+    const merged = dayCompletionSchema.parse({
+      ...prev,
+      hasRecording: true,
+    });
+    writeCompletions({ ...completions, [todayUtc]: merged });
+  }
   recordDayOfUse();
 }
 
@@ -69,7 +78,7 @@ export async function saveRecording(input: SaveRecordingInput): Promise<Result<V
     if (!apiResult.ok) {
       return err(apiResult.error);
     }
-    stampCompletionsAndDayOfUse();
+    await stampCompletionsAndDayOfUse();
     notifyRecordingsMutated();
     return ok(parsed.data);
   }
@@ -79,7 +88,7 @@ export async function saveRecording(input: SaveRecordingInput): Promise<Result<V
     return write;
   }
 
-  stampCompletionsAndDayOfUse();
+  await stampCompletionsAndDayOfUse();
 
   return ok(parsed.data);
 }

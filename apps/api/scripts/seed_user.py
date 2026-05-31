@@ -5,29 +5,39 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import sys
 import uuid
 
 from sqlalchemy import select
 
-from app.core.database import get_session_factory, init_db, reset_engine
+from sqlalchemy.exc import OperationalError, ProgrammingError
+
+from app.core.database import get_session_factory, reset_engine
 from app.core.security import hash_password
 from app.models.user import User
 from app.models.user_settings import UserSettings
 
 
 async def seed(email: str, password: str) -> None:
-    await init_db()
     factory = get_session_factory()
-    async with factory() as session:
-        existing = await session.execute(select(User).where(User.email == email.lower()))
-        if existing.scalar_one_or_none():
-            print(f"User already exists: {email}")
-            return
-        user = User(id=uuid.uuid4(), email=email.lower(), password_hash=hash_password(password))
-        user.settings = UserSettings(user_id=user.id)
-        session.add(user)
-        await session.commit()
-        print(f"Created user {email} (id={user.id})")
+    try:
+        async with factory() as session:
+            existing = await session.execute(select(User).where(User.email == email.lower()))
+            if existing.scalar_one_or_none():
+                print(f"User already exists: {email}")
+                return
+            user = User(id=uuid.uuid4(), email=email.lower(), password_hash=hash_password(password))
+            user.settings = UserSettings(user_id=user.id)
+            session.add(user)
+            await session.commit()
+            print(f"Created user {email} (id={user.id})")
+    except (OperationalError, ProgrammingError) as exc:
+        print(
+            "Database schema missing or unreachable. Run migrations first:\n"
+            "  cd apps/api && ./scripts/migrate.sh   # or: alembic upgrade head",
+            file=sys.stderr,
+        )
+        raise SystemExit(1) from exc
 
 
 def main() -> None:
