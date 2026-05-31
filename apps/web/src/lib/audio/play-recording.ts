@@ -82,3 +82,55 @@ export function isRecordingBlobPlayable(data: RecordingBlobLike): boolean {
     return false;
   }
 }
+
+export type RecordingPlaySource = {
+  id: string;
+  mimeType: string;
+  blob?: Blob;
+};
+
+export type RecordingPlaybackHandle = {
+  kind: 'blob' | 'remote';
+  url: string;
+};
+
+/** Presigned GET URL — caller must not revoke. */
+export function playRecordingFromUrl(audio: HTMLAudioElement, url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const fail = (err: unknown) => {
+      cleanup();
+      reject(err instanceof Error ? err : new Error(String(err)));
+    };
+
+    const cleanup = () => {
+      audio.removeEventListener('canplay', onCanPlay);
+      audio.removeEventListener('error', onError);
+    };
+
+    const onCanPlay = () => {
+      cleanup();
+      void audio.play().then(() => resolve()).catch(fail);
+    };
+
+    const onError = () => fail(new Error('Audio element failed to load recording URL.'));
+
+    audio.addEventListener('canplay', onCanPlay, { once: true });
+    audio.addEventListener('error', onError, { once: true });
+    audio.src = url;
+    audio.load();
+  });
+}
+
+export async function playRecordingItem(
+  audio: HTMLAudioElement,
+  item: RecordingPlaySource,
+  resolvePlaybackUrl: (id: string) => Promise<string>,
+): Promise<RecordingPlaybackHandle> {
+  if (item.blob && isRecordingBlobPlayable(item.blob)) {
+    const url = await playRecordingOnAudio(audio, item.blob, item.mimeType);
+    return { kind: 'blob', url };
+  }
+  const url = await resolvePlaybackUrl(item.id);
+  await playRecordingFromUrl(audio, url);
+  return { kind: 'remote', url };
+}

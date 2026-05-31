@@ -1,5 +1,5 @@
 # generated: 2026-05-04T14:32:00+05:30
-# last_updated: 2026-05-12T16:50:00+05:30
+# last_updated: 2026-05-31T14:00:00+05:30
 # project: Audiblytics
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-05-04T14:32:00+05:30
-last_updated: 2026-05-12T16:50:00+05:30
+last_updated: 2026-05-31T14:00:00+05:30
 project: Audiblytics
 project_key: NOKEY
 tracking_system: file-system
@@ -114,3 +114,31 @@ development_status:
   8-4-extend-inlineerrorsurface-to-three-action-recovery: done
   8-5-offlinebadge-on-calendar-day-cells-and-voice-journal-rows: done
   epic-8-retrospective: optional
+
+  # Epic 9: Server Account & Settings (implemented 2026-05-30 — tracking added for continuity)
+  epic-9: done
+  9-1-fastapi-scaffold-health-and-postgres: done
+  9-2-users-model-jwt-auth-routes-and-seed-script: done
+  9-3-alembic-migrations-for-users-and-user-settings: done
+  9-4-nextjs-login-authprovider-and-appgate: done
+  9-5-settings-api-and-api-mode-settings-form: done
+  9-6-nextjs-api-proxy-for-same-origin-cookies: done
+  epic-9-retrospective: optional
+
+  # Epic 10: Server-Side Paragraph Generation (implemented 2026-05-30)
+  epic-10: done
+  10-1-paragraph-cache-migration-and-model: done
+  10-2-post-paragraphs-generate-gemini-proxy: done
+  10-3-get-paragraphs-today-same-day-cache: done
+  10-4-frontend-api-paragraph-hooks: done
+  10-5-paragraph-route-tests: done
+  epic-10-retrospective: optional
+
+  # Epic 11: Cloud Recording Persistence
+  epic-11: in-progress
+  11-1-recordings-table-and-r2-client-service: done
+  11-2-post-recordings-and-presigned-upload-start: done
+  11-3-post-recordings-id-complete-and-playback-url: done
+  11-4-frontend-save-recording-via-api: done
+  11-5-server-side-90-day-retention-prune: done
+  epic-11-retrospective: optional

@@ -1,20 +1,35 @@
+import logging
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Response, status
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.orm import selectinload
 
 from app.core.deps import CurrentUser, DbSession, session_cookie_kwargs
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
 from app.models.user_settings import UserSettings
 from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse
+from app.services.recording_retention import prune_expired_recordings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def user_to_response(user: User) -> UserResponse:
     return UserResponse(id=str(user.id), email=user.email)
+
+
+async def _prune_recordings_best_effort(db: DbSession, user: User) -> None:
+    try:
+        await prune_expired_recordings(db, user)
+    except SQLAlchemyError:
+        await db.rollback()
+        logger.exception("Recording retention prune failed for user %s", user.id)
+    except Exception:
+        logger.exception("Recording retention prune failed for user %s", user.id)
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -38,7 +53,9 @@ async def register(body: RegisterRequest, response: Response, db: DbSession) -> 
 
 @router.post("/login", response_model=UserResponse)
 async def login(body: LoginRequest, response: Response, db: DbSession) -> UserResponse:
-    result = await db.execute(select(User).where(User.email == body.email.lower()))
+    result = await db.execute(
+        select(User).options(selectinload(User.settings)).where(User.email == body.email.lower())
+    )
     user = result.scalar_one_or_none()
     if user is None or not verify_password(body.password, user.password_hash):
         raise HTTPException(
@@ -47,6 +64,7 @@ async def login(body: LoginRequest, response: Response, db: DbSession) -> UserRe
         )
     token = create_access_token(user.id)
     response.set_cookie(value=token, **session_cookie_kwargs())
+    await _prune_recordings_best_effort(db, user)
     return user_to_response(user)
 
 
@@ -57,5 +75,6 @@ async def logout(response: Response) -> None:
 
 
 @router.get("/me", response_model=UserResponse)
-async def me(user: CurrentUser) -> UserResponse:
+async def me(user: CurrentUser, db: DbSession) -> UserResponse:
+    await _prune_recordings_best_effort(db, user)
     return user_to_response(user)

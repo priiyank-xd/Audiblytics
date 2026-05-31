@@ -1,9 +1,12 @@
 ---
-stepsCompleted: ['step-01-extract-requirements', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation']
+stepsCompleted: ['step-01-extract-requirements', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation', 'v2-backend-epics-9-13', 'ui-redesign-epic-14']
 inputDocuments:
   - '_bmad-output/planning-artifacts/prd.md'
   - '_bmad-output/planning-artifacts/architecture.md'
+  - '_bmad-output/planning-artifacts/architecture-v2-fastapi-backend.md'
   - '_bmad-output/planning-artifacts/ux-design-specification.md'
+  - '_bmad-output/planning-artifacts/implementation-readiness-report-2026-05-30.md'
+  - '_bmad-output/design/ui-mockups-v2/index.md'
 ---
 
 # Audiblytics - Epic Breakdown
@@ -257,6 +260,40 @@ This document provides the complete epic and story breakdown for Audiblytics, de
 - **UX-DR42 — /_dev/components route:** Single dev-only Next.js route renders every custom component in every state for visual QA. Gated by `NEXT_PUBLIC_DEV_GALLERY` env flag; not shipped to production builds.
 - **UX-DR43 — Build verification checklist:** Before declaring "done", run: Lighthouse a11y ≥95 + performance ≥90 on all pages; axe-core zero serious/critical; keyboard-only walkthrough of all 5 flows; VoiceOver spot-check on Day14Takeover; responsive spot-check at 375px / 768px / 1280px; real-device check on iPhone Safari; `prefers-reduced-motion` toggle zeroes transitions; color-blindness simulation; no horizontal scroll ≥320px; all touch targets ≥44×44; Day-14 deliberate exception code comment present.
 
+### Backend V2 Requirements (architecture-v2)
+
+> Authoritative when `NEXT_PUBLIC_STORAGE_BACKEND=api`. Gemini key stored per-user in `user_settings.gemini_api_key` (write-only from client).
+
+- **BVR1:** JWT auth — register, login, logout, `/auth/me`; httpOnly session cookie (BV4).
+- **BVR2:** `GET|PATCH /settings` mirroring Zod `settingsSchema`; `hasGeminiApiKey` boolean only — never return raw key (BV10).
+- **BVR3:** `AppGate` → `AuthGate` in API mode; `/login` page (BV4.3).
+- **BVR4:** Hide client `providerKeys` vault in API mode; Gemini key field under Settings → Defaults (DB-stored).
+- **BVR5:** Next.js same-origin proxy `/api/v1/*` forwarding cookies (BV-Q1 default).
+- **BVR6:** Alembic migrations for all schema changes (BV17).
+- **BVR7:** `POST /paragraphs/generate` — server Gemini proxy + `paragraph_cache` write (BV8).
+- **BVR8:** `GET /paragraphs/today` — same-UTC-day cache hit (FR19 server path).
+- **BVR9:** Frontend paragraph hooks call API when `STORAGE_BACKEND=api`.
+- **BVR10:** R2 presigned PUT upload + `recordings` Postgres metadata (BV6, Phase 3).
+- **BVR11:** Presigned GET playback URL; list recordings API (Phase 3).
+- **BVR12:** MediaRecorder stays client-side; only blob persistence moves server-side.
+- **BVR13:** Collection + completions API (Phase 4 stretch).
+- **BVR14:** Server-side 90-day recording prune when retention policy applies (FR41).
+- **BVR15:** Deploy README, Dockerfile, Neon/R2 wiring, 3 ADRs (Phase 5).
+
+### UI Refresh Requirements (May 2026 mockups)
+
+> Reference: `_bmad-output/design/ui-mockups-v2/`. Supersedes hub-and-spoke shell sections where noted; **retains** Day-14 takeover, honest calendar semantics, inline errors (no toasts).
+
+- **UX-V2-UI1 — App shell v2:** Left sidebar nav (Home, Review, Collection, Voice Journal, Journey, Stats); user profile footer; cream canvas + white rounded cards + forest green primary.
+- **UX-V2-UI2 — Home dashboard:** Greeting, "Start Today's Session" CTA, continue cards (Review / Collection / Voice Journal), right rail widgets (calendar, streak, today's focus, monthly progress).
+- **UX-V2-UI3 — Today session layout:** Center reading column with highlighted hard words + bottom word-detail card; right column recording studio + difficult-words list; session status bar (day/theme/persona).
+- **UX-V2-UI4 — Voice Journal v2:** Recording rows with waveform placeholder, clarity/pace/pause metadata, compare-sessions card, private notes field.
+- **UX-V2-UI5 — Collection master-detail:** Search, sort, tabs (All / Practicing / Mastered), selectable list + right detail panel with pronunciation guide.
+- **UX-V2-UI6 — Review session v2:** Central flashcard, Easy/Medium/Hard/Again feedback row, circular progress ring, "Up next" queue sidebar.
+- **UX-V2-UI7 — Settings hub:** Sub-routes Practice, Audio, Data & Storage, Advanced, Appearance, About — card-based settings rows with icons.
+- **UX-V2-UI8 — Journey page:** Calendar/timeline toggle, session detail panel, streak stats row, export journey action.
+- **UX-V2-UI9 — Stretch (shell only unless noted):** Live pace/clarity badges, AI session reflection, mood picker — UI placeholders; no new LLM calls in MVP refresh.
+
 ### FR Coverage Map
 
 | FR | Epic | Notes |
@@ -326,6 +363,24 @@ This document provides the complete epic and story breakdown for Audiblytics, de
 | FR63 | Epic 8 | 30-day rolling de-dupe |
 | FR64 | Epic 8 | 3-action error recovery surface (Retry / Settings / Use Pack) |
 
+### BVR & UX-V2 Coverage Map
+
+| Requirement | Epic | Notes |
+|---|---|---|
+| BVR1–BVR6 | Epic 9 | Auth + settings + proxy + migrations |
+| BVR7–BVR9 | Epic 10 | Paragraph LLM proxy + cache |
+| BVR10–BVR12, BVR14 | Epic 11 | R2 recordings |
+| BVR13 | Epic 12 | Collection + completions API (stretch) |
+| BVR15 | Epic 13 | Deploy + docs |
+| UX-V2-UI1–UI2 | Epic 14 | Shell + home |
+| UX-V2-UI3 | Epic 14 | Today session |
+| UX-V2-UI4 | Epic 14 | Voice Journal |
+| UX-V2-UI5 | Epic 14 | Collection |
+| UX-V2-UI6 | Epic 14 | Settings hub |
+| UX-V2-UI7 | Epic 14 | Journey |
+| UX-V2-UI8 | Epic 14 | Review |
+| UX-V2-UI9 | Epic 14 | Stretch placeholders |
+
 ## Epic List
 
 ### Epic 1: Onboarding & First Paragraph Generation
@@ -376,6 +431,42 @@ Standalone Node script (`scripts/generate-offline-pack.ts` — outside the deplo
 
 **FRs covered:** FR59, FR60, FR61, FR62, FR63, FR64
 
+### Epic 9: Server Account & Settings
+
+Log in with email/password; settings (theme, persona, length, retention, voice, Gemini key) persist in Postgres when `STORAGE_BACKEND=api`. Client provider-key vault hidden; `AppGate` replaces `ProviderKeysGate`. **Status: implemented (Phase 1).**
+
+**BVRs covered:** BVR1, BVR2, BVR3, BVR4, BVR5, BVR6
+
+### Epic 10: Server-Side Paragraph Generation
+
+Generate today's paragraph via FastAPI Gemini proxy; same-day cache in `paragraph_cache`; browser never holds Gemini key after save. **Status: implemented (Phase 2).**
+
+**BVRs covered:** BVR7, BVR8, BVR9 · **FRs covered (server path):** FR14, FR19, FR21
+
+### Epic 11: Cloud Recording Persistence
+
+One recording upload end-to-end: presigned PUT to R2, metadata in Postgres, playback via signed GET. MediaRecorder remains client-side.
+
+**BVRs covered:** BVR10, BVR11, BVR12, BVR14 · **FRs covered (server path):** FR31, FR35, FR41
+
+### Epic 12: Server-Backed Daily Loop (Stretch)
+
+Collection words and day completions synced via API when in API mode. Defer until Epic 11 demo is clean.
+
+**BVRs covered:** BVR13 · **FRs covered (server path):** FR26–FR29, FR53–FR57
+
+### Epic 13: Production Deploy & Interview Polish
+
+Dockerfile, Neon production wiring, Vercel + API host deploy, README architecture diagram, 3 ADRs.
+
+**BVRs covered:** BVR15
+
+### Epic 14: Product UI Refresh (2026 Mockups)
+
+Replace the editorial hub-and-spoke shell with the soft-card dashboard design from `_bmad-output/design/ui-mockups-v2/`. Same feature set as Epics 1–8; visual/layout overhaul only. Day-14 takeover and inline error patterns preserved.
+
+**UX-V2 covered:** UX-V2-UI1 through UX-V2-UI9 · **Visual reference:** mockups index in design folder
+
 ## Inter-Epic Dependencies
 
 | Epic | Depends on | Standalone delivery |
@@ -388,6 +479,12 @@ Standalone Node script (`scripts/generate-offline-pack.ts` — outside the deplo
 | Epic 6 | Epic 2 (collection table) | Review queue + flip-card + feedback complete |
 | Epic 7 | Epic 3 (recordings + day-counter) | Takeover + comparison + outcome capture complete |
 | Epic 8 | Epic 1 (LLM error path), Epic 4 (calendar badge surface) | Script + load + fallback + recovery + badge + dedupe complete |
+| Epic 9 | (none for API layer) | Login + Postgres settings in API mode |
+| Epic 10 | Epic 9 (auth + settings) | Server paragraph generate + cache |
+| Epic 11 | Epic 9 (auth), Epic 10 optional (paragraph ref on recording) | One recording upload + playback from R2 |
+| Epic 12 | Epic 9, Epic 10 | Collection + completions on server (stretch) |
+| Epic 13 | Epics 9–11 minimum | Deployable demo URL |
+| Epic 14 | Epics 1–8 features exist | New UI shell; can run parallel to Epic 11 after 14.1 |
 
 ## MVP-Slip Hierarchy Mapping
 
@@ -1715,3 +1812,575 @@ So that future-me can see at a glance which sessions ran on fresh LLM generation
 
 ---
 
+
+## Epic 9: Server Account & Settings
+
+JWT-authenticated account with Postgres-backed settings when `NEXT_PUBLIC_STORAGE_BACKEND=api`. Replaces client-only provider-key gate for API mode.
+
+**Reference:** `architecture-v2-fastapi-backend.md` BV4, BV5, BV12 Phase 1 · **Status:** implemented 2026-05-30
+
+### Story 9.1: FastAPI Scaffold, Health, and Postgres
+
+As Priyank,
+I want a monorepo `apps/api/` FastAPI service with health check and async Postgres connection,
+So that the backend foundation exists for auth and settings.
+
+**Status:** done
+
+**Acceptance Criteria:**
+
+**Given** `docker compose up postgres` and `uvicorn app.main:app`
+**When** `GET /api/v1/health` is called
+**Then** response is 200 with liveness payload (BVR1 scaffold)
+
+**Given** `DATABASE_URL` points at Postgres
+**When** the API starts
+**Then** SQLAlchemy async engine connects without error (BV2)
+
+---
+
+### Story 9.2: Users Model, JWT Auth Routes, and Seed Script
+
+As Priyank,
+I want register, login, logout, and `/auth/me` with httpOnly JWT cookie,
+So that I can authenticate securely without storing tokens in localStorage.
+
+**Status:** done · **BVR1**
+
+**Acceptance Criteria:**
+
+**Given** a new email/password via `POST /auth/register`
+**When** login succeeds
+**Then** `audiblytics_session` httpOnly cookie is set and `GET /auth/me` returns user id + email
+
+**Given** `scripts/seed_user.py`
+**When** run locally
+**Then** seeded account exists for dogfooding (BV12)
+
+---
+
+### Story 9.3: Alembic Migrations for Users and User Settings
+
+As Priyank,
+I want Alembic migrations for `users` and `user_settings`,
+So that schema changes are versioned for Neon/production (BVR6).
+
+**Status:** done
+
+**Acceptance Criteria:**
+
+**Given** fresh Postgres
+**When** `alembic upgrade head` runs
+**Then** `users` and `user_settings` tables exist matching BV5 schema
+
+---
+
+### Story 9.4: Next.js Login, AuthProvider, and AppGate
+
+As Priyank,
+I want `/login` and `AuthGate` wrapping the app when API mode is on,
+So that unauthenticated users are redirected to login instead of the provider-key vault.
+
+**Status:** done · **BVR3, UX-V2-1**
+
+**Acceptance Criteria:**
+
+**Given** `NEXT_PUBLIC_STORAGE_BACKEND=api` and no session cookie
+**When** visiting `/today`
+**Then** user is redirected to `/login` with inline error on failed login (no toast)
+
+**Given** valid credentials
+**When** login succeeds
+**Then** user lands on home/today and session persists across reload
+
+---
+
+### Story 9.5: Settings API and API-Mode Settings Form
+
+As Priyank,
+I want theme, persona, length, retention, voice, and Gemini key saved via `PATCH /settings`,
+So that preferences persist in Postgres across devices.
+
+**Status:** done · **BVR2, BVR4**
+
+**Acceptance Criteria:**
+
+**Given** authenticated session
+**When** `PATCH /settings` with theme/persona/length
+**Then** `GET /settings` returns updated values mirroring Zod shapes (BV10)
+
+**Given** `geminiApiKey` in PATCH body
+**When** settings save succeeds
+**Then** `GET /settings` returns `hasGeminiApiKey: true` but never the raw key (BV-NFR2)
+
+---
+
+### Story 9.6: Next.js API Proxy for Same-Origin Cookies
+
+As Priyank,
+I want `/api/v1/*` proxied through Next.js with cookie forwarding,
+So that httpOnly session cookies work in local dev and production (BVR5).
+
+**Status:** done
+
+**Acceptance Criteria:**
+
+**Given** web on `:3000` and API on `:8000`
+**When** browser calls `/api/v1/settings`
+**Then** request reaches FastAPI with `Cookie` header and `Set-Cookie` from login is stored
+
+---
+
+## Epic 10: Server-Side Paragraph Generation
+
+Server Gemini proxy with `paragraph_cache`; client stops calling browser LLM in API mode.
+
+**Reference:** BV8, BV12 Phase 2 · **Status:** implemented 2026-05-30
+
+### Story 10.1: Paragraph Cache Migration and Model
+
+As Priyank,
+I want a `paragraph_cache` table and SQLAlchemy model,
+So that generated paragraphs persist server-side for same-day reuse (BVR7).
+
+**Status:** done · **FR19 server path**
+
+**Acceptance Criteria:**
+
+**Given** `alembic upgrade head`
+**When** migration `20260530_0002` applies
+**Then** `paragraph_cache` exists with user_id, paragraph, hard_words JSONB, theme, persona, generated_at
+
+---
+
+### Story 10.2: POST /paragraphs/generate Gemini Proxy
+
+As Priyank,
+I want paragraph generation to run on the server using my DB-stored Gemini key,
+So that the browser never calls Gemini directly in API mode (BVR7, AR15 lifted).
+
+**Status:** done · **FR14**
+
+**Acceptance Criteria:**
+
+**Given** authenticated user with `gemini_api_key` saved
+**When** `POST /paragraphs/generate` with optional recycleWords
+**Then** response matches paragraph schema and row is inserted into `paragraph_cache`
+
+**Given** missing Gemini key
+**When** generate is called
+**Then** 502 with `error.kind: auth` and inline-friendly message (BV7)
+
+---
+
+### Story 10.3: GET /paragraphs/today Same-Day Cache
+
+As Priyank,
+I want today's cached paragraph returned without re-generation,
+So that app open on the same UTC day shows the existing paragraph (BVR8, FR19).
+
+**Status:** done
+
+**Acceptance Criteria:**
+
+**Given** a paragraph generated today UTC
+**When** `GET /paragraphs/today`
+**Then** 200 with cached row
+
+**Given** no paragraph today
+**When** `GET /paragraphs/today`
+**Then** 404 with structured not_found error
+
+---
+
+### Story 10.4: Frontend API Paragraph Hooks
+
+As Priyank,
+I want `use-generate-paragraph` and `use-paragraph-of-the-day` to call the API in API mode,
+So that Today works end-to-end without Dexie paragraph cache (BVR9).
+
+**Status:** done
+
+**Acceptance Criteria:**
+
+**Given** `NEXT_PUBLIC_STORAGE_BACKEND=api`
+**When** user taps Generate on Today
+**Then** network tab shows `POST /api/v1/paragraphs/generate` not provider SDK
+
+**Given** same UTC day reload
+**When** Today mounts
+**Then** `GET /paragraphs/today` hydrates paragraph without generate tap
+
+---
+
+### Story 10.5: Paragraph Route Tests
+
+As Priyank,
+I want pytest coverage for generate and today routes,
+So that regressions are caught before deploy (BV-NFR5).
+
+**Status:** done
+
+**Acceptance Criteria:**
+
+**Given** mocked Gemini
+**When** tests run
+**Then** generate + today + missing-key cases pass in `test_paragraphs.py`
+
+---
+
+## Epic 11: Cloud Recording Persistence
+
+Presigned R2 upload with Postgres metadata; hardest remaining backend slice.
+
+**Reference:** BV6, BV12 Phase 3 · **Status:** ready-for-dev
+
+### Story 11.1: Recordings Table and R2 Client Service
+
+As Priyank,
+I want a `recordings` model and R2 presign helper,
+So that upload orchestration has a data layer (BVR10).
+
+**Acceptance Criteria:**
+
+**Given** Alembic migration
+**When** applied
+**Then** `recordings` table matches BV5 schema with `storage_key` nullable until complete
+
+**Given** R2 env vars configured
+**When** presign PUT is requested
+**Then** URL expires ≤15 minutes and key follows `recordings/{user_id}/{id}.{ext}`
+
+---
+
+### Story 11.2: POST /recordings and Presigned Upload Start
+
+As Priyank,
+I want to start an upload and receive a presigned PUT URL,
+So that audio bytes go direct to R2 without streaming through FastAPI (BV6, BVR10).
+
+**Acceptance Criteria:**
+
+**Given** authenticated POST with metadata (paragraphId, durationMs, mimeType, dayOfUse)
+**When** route succeeds
+**Then** response includes recording id + presigned PUT URL and row status is pending
+
+---
+
+### Story 11.3: POST /recordings/{id}/complete and Playback URL
+
+As Priyank,
+I want to finalize upload and play back via short-lived GET URL,
+So that Voice Journal works with cloud blobs (BVR11, FR35).
+
+**Acceptance Criteria:**
+
+**Given** client PUT blob to R2
+**When** `POST /recordings/{id}/complete`
+**Then** row updates `storage_key` and returns RecordingResponse
+
+**Given** completed recording
+**When** `GET /recordings/{id}/playback-url`
+**Then** presigned GET URL returned (60–300s TTL)
+
+---
+
+### Story 11.4: Frontend Save Recording via API
+
+As Priyank,
+I want `use-save-recording` to use API path when `STORAGE_BACKEND=api`,
+So that recordings persist to R2 instead of Dexie blobs (BVR12, FR31).
+
+**Acceptance Criteria:**
+
+**Given** API mode and successful MediaRecorder stop
+**When** save runs
+**Then** flow is presign → PUT R2 → complete → local list refresh from `GET /recordings`
+
+**Given** upload failure
+**When** caught
+**Then** `<InlineErrorSurface variant="storage">` renders (FR42)
+
+---
+
+### Story 11.5: Server-Side 90-Day Retention Prune
+
+As Priyank,
+I want old recordings deleted on server when retention is 90-day rolling,
+So that FR41 holds in API mode (BVR14).
+
+**Acceptance Criteria:**
+
+**Given** user `retention=90-day-rolling` and recordings older than 90 days
+**When** prune job runs on login (or scheduled)
+**Then** R2 objects and Postgres rows are removed
+
+---
+
+## Epic 12: Server-Backed Daily Loop (Stretch)
+
+**Status:** ready-for-dev · defer until Epic 11 demo
+
+### Story 12.1: Collection Words API
+
+As Priyank,
+I want collection CRUD on the server,
+So that saved words sync when using API mode (BVR13, FR26–FR29).
+
+**Acceptance Criteria:**
+
+**Given** authenticated user
+**When** `POST /collection` with word payload
+**Then** word persists with user_id scope and appears in `GET /collection` recency sort
+
+---
+
+### Story 12.2: Day Completions API
+
+As Priyank,
+I want completion state upserted per UTC date on the server,
+So that calendar and streak work cross-device (BVR13, FR53–FR57).
+
+**Acceptance Criteria:**
+
+**Given** `PUT /completions/{utc_date}` with hasReadIt/hasRecording flags
+**When** saved
+**Then** calendar evaluation uses server completions in API mode
+
+---
+
+## Epic 13: Production Deploy & Interview Polish
+
+**Status:** ready-for-dev
+
+### Story 13.1: Dockerfile and Production Env Docs
+
+As Priyank,
+I want a production Dockerfile and updated README,
+So that I can deploy API to Railway/Fly (BVR15).
+
+**Acceptance Criteria:**
+
+**Given** `apps/api/Dockerfile`
+**When** built
+**Then** container runs uvicorn with health check on `/api/v1/health`
+
+---
+
+### Story 13.2: Neon Migrations and Seed for Production
+
+As Priyank,
+I want Alembic applied against Neon with seed script documented,
+So that production DB matches local schema (BVR6, BVR15).
+
+**Acceptance Criteria:**
+
+**Given** Neon `DATABASE_URL`
+**When** `alembic upgrade head` runs in CI or manually
+**Then** all migrations apply cleanly
+
+---
+
+### Story 13.3: Architecture ADRs (3 minimum)
+
+As Priyank,
+I want ADRs for auth, R2-not-DB-blobs, and strangler migration,
+So that interview narrative has written decisions (BVR15).
+
+**Acceptance Criteria:**
+
+**Given** `docs/decisions/`
+**When** complete
+**Then** at least 3 ADRs exist referencing BV decision IDs
+
+---
+
+## Epic 14: Product UI Refresh (2026 Mockups)
+
+Visual overhaul to match `_bmad-output/design/ui-mockups-v2/`. **Does not remove features** from Epics 1–8; remaps them to new shell. Day-14 takeover behavior unchanged.
+
+### Story 14.1: Design Tokens and App Shell v2
+
+As Priyank,
+I want the cream/forest soft-card shell with left sidebar navigation,
+So that the app matches the 2026 mockup aesthetic (UX-V2-UI1).
+
+**Acceptance Criteria:**
+
+**Given** `globals.css` semantic tokens
+**When** shell renders at ≥1024px
+**Then** layout uses sidebar + main + optional right rail; primary green uses existing `--forest` tokens (no arbitrary hex)
+
+**Given** sidebar nav
+**When** user navigates
+**Then** items match mockups: Home, Review, Collection, Voice Journal, Journey, Stats; active state uses light green background + forest text
+
+**Given** user profile footer in sidebar
+**When** API mode
+**Then** shows logged-in identity (from `/auth/me`) or local n=1 label
+
+---
+
+### Story 14.2: Home Dashboard
+
+As Priyank,
+I want a home dashboard with greeting, start session CTA, and continue cards,
+So that daily entry matches the home mockup (UX-V2-UI2).
+
+**Acceptance Criteria:**
+
+**Given** `/` or `/home` route
+**When** rendered
+**Then** shows time-of-day greeting, "Start Today's Session" primary button routing to `/today`, and three continue cards (Review, Collection, Voice Journal) with live counts from existing hooks
+
+**Given** right rail on home
+**When** rendered
+**Then** calendar mini-widget, streak card, and monthly progress stats use existing day-counter/completion data
+
+---
+
+### Story 14.3: Today Session Three-Column Layout
+
+As Priyank,
+I want Today redesigned as center reading column + right recording/difficult-words column,
+So that the session screen matches the today mockup (UX-V2-UI3).
+
+**Acceptance Criteria:**
+
+**Given** `/today` in new shell
+**When** paragraph is rendered
+**Then** hard words are highlighted in paragraph body; tapping a word opens bottom detail card with IPA, meaning, example, Add to collection
+
+**Given** right column
+**When** session active
+**Then** recording studio card wraps existing `RecordPanel`; difficult-words list shows today's hard words with speaker icons
+
+**Given** session status bar
+**When** visible
+**Then** shows day-of-30, theme, persona, optional Warm-Up link (Epic 5 preserved)
+
+---
+
+### Story 14.4: Voice Journal Page v2
+
+As Priyank,
+I want Voice Journal as a rich list with waveforms and compare card,
+So that the journal matches the voice-journal mockup (UX-V2-UI4).
+
+**Acceptance Criteria:**
+
+**Given** `/voice-journal`
+**When** recordings exist
+**Then** each row shows play button, title/date, waveform placeholder (CSS or static SVG), clarity/pace/pause labels (static or derived from duration until analytics exist)
+
+**Given** compare sessions card
+**When** two recordings selected
+**Then** existing `use-compare-recordings` + `CompositePlayer` mount in compare panel
+
+**Given** notes field
+**When** user types
+**Then** notes persist to localStorage namespaced key (server notes defer to Epic 12)
+
+---
+
+### Story 14.5: Collection Master-Detail
+
+As Priyank,
+I want Collection as searchable list with right detail panel,
+So that browsing saved words matches the collection mockup (UX-V2-UI5).
+
+**Acceptance Criteria:**
+
+**Given** `/collection`
+**When** rendered
+**Then** tabs All / Practicing / Mastered filter list (Practicing/Mastered may map to reviewCount thresholds initially)
+
+**Given** row selection
+**When** user clicks a word
+**Then** detail panel shows pronunciation guide, meaning, example, source day, Play slow + Add to practice actions wired to existing TTS/save hooks
+
+---
+
+### Story 14.6: Review Session v2
+
+As Priyank,
+I want Review as a centered flashcard with Easy/Medium/Hard/Again feedback,
+So that review matches the review mockup (UX-V2-UI8).
+
+**Acceptance Criteria:**
+
+**Given** `/review`
+**When** session runs
+**Then** central card shows word + phonetic; Reveal meaning toggles IPA/meaning/example; feedback buttons map to existing Got it / Almost / Forgot semantics (Easy/Medium/Hard/Again)
+
+**Given** right sidebar
+**When** visible
+**Then** circular progress ring shows N reviewed / queue length; Up Next lists next 3 words
+
+---
+
+### Story 14.7: Settings Hub Sub-Pages
+
+As Priyank,
+I want Settings split into Practice, Audio, Data & Storage, Advanced, Appearance, About,
+So that settings match the settings mockups (UX-V2-UI6).
+
+**Acceptance Criteria:**
+
+**Given** `/settings` with sidebar sub-nav
+**When** user opens Practice
+**Then** card rows for theme, persona, length, remember-last-used toggle match practice mockup; Save persists via existing settings form/API path
+
+**Given** Advanced page in API mode
+**When** rendered
+**Then** Gemini key field + Test Connection (optional) replace multi-provider vault; keys save to Postgres (BVR4)
+
+**Given** Data & Storage page
+**When** rendered
+**Then** retention dropdown, offline pack section, export/delete actions reuse existing Epic 8 flows where implemented
+
+**Given** Appearance page
+**When** user selects theme/accent/text size
+**Then** choices apply via semantic tokens (dark mode may defer if not in current token set)
+
+---
+
+### Story 14.8: Journey Page (Calendar + Timeline)
+
+As Priyank,
+I want a Journey page combining calendar/timeline with session detail,
+So that progress tracking matches journey mockups (UX-V2-UI7).
+
+**Acceptance Criteria:**
+
+**Given** `/journey` route
+**When** rendered
+**Then** top stats row shows current streak, sessions completed, longest streak, words practiced from existing hooks
+
+**Given** calendar/timeline toggle
+**When** user switches views
+**Then** calendar reuses honest completion cells (FR58); timeline lists sessions with completion icons
+
+**Given** day selection
+**When** user picks a completed day
+**Then** detail panel shows session summary, reflection note (localStorage), and link to archived day content (Epic 4)
+
+---
+
+### Story 14.9: Stretch UI Placeholders (Optional)
+
+As Priyank,
+I want placeholder UI for live feedback and AI reflection,
+So that mockup parity exists without new backend work (UX-V2-UI9).
+
+**Acceptance Criteria:**
+
+**Given** Today right column
+**When** stretch flag enabled
+**Then** Pace/Clarity/Accuracy cards render static or "—" values with copy "Coming soon"
+
+**Given** Voice Journal
+**When** stretch flag enabled
+**Then** "AI Session Reflection" card shows placeholder text, not live LLM call
+
+---

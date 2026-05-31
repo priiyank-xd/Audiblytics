@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import get_settings
+from app.models import ParagraphCache, Recording, User, UserSettings  # noqa: F401 — register metadata
 from app.models.base import Base
 
 _engine: AsyncEngine | None = None

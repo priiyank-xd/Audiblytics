@@ -1,11 +1,11 @@
 import type { RecordingWithTheme } from '@/features/voice-journal/use-recordings';
-import type { VoiceRecording } from '@/lib/schemas/recording.schema';
+import type { RecordingListItem } from '@/lib/schemas/recording.schema';
 import { db } from '@/lib/storage/db';
 import { themeKeyToLabel } from '@/lib/ui/theme-key-label';
 import { isWarmupRecordingParagraphId } from '@/lib/warmup-recording-id';
 
 export async function enrichRecordingsWithTheme(
-  rows: VoiceRecording[],
+  rows: RecordingListItem[],
 ): Promise<RecordingWithTheme[]> {
   const paragraphIds = [...new Set(rows.map((r) => r.paragraphId))].filter(
     (id) => !isWarmupRecordingParagraphId(id),

@@ -9,9 +9,12 @@ import { CompositePlayer } from '@/components/audiblytics/CompositePlayer';
 import { InlineErrorSurface } from '@/components/audiblytics/InlineErrorSurface';
 import { Button } from '@/components/ui/button';
 import { saveRecording } from '@/features/voice-journal/use-save-recording';
-import { playRecordingOnAudio } from '@/lib/audio/play-recording';
+import { RECORDINGS_MUTATED_EVENT } from '@/features/voice-journal/recordings-mutated';
+import { fetchRecordingPlaybackUrl, fetchRecordings } from '@/lib/api/recordings';
+import { isApiStorageBackend } from '@/lib/config/storage-backend';
+import { playRecordingItem } from '@/lib/audio/play-recording';
 import { createRecorder, type RecorderError } from '@/lib/audio/recorder';
-import type { VoiceRecording } from '@/lib/schemas/recording.schema';
+import type { RecordingListItem } from '@/lib/schemas/recording.schema';
 import type { StorageError } from '@/lib/storage/db';
 import { db } from '@/lib/storage/db';
 import { cn } from '@/lib/utils';
@@ -124,6 +127,7 @@ export function RecordPanel({
   const [replacement, setReplacement] = useState<PendingSave | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const revokeObjectUrlRef = useRef(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const transcriptRef = useRef('');
 
@@ -131,7 +135,12 @@ export function RecordPanel({
     setRecState(recorder.state);
   }, [recorder]);
 
-  const todaysRecordings = useLiveQuery(
+  const apiMode = isApiStorageBackend();
+  const [apiTodaysRecordings, setApiTodaysRecordings] = useState<RecordingListItem[] | undefined>(
+    apiMode ? undefined : [],
+  );
+
+  const dexieTodaysRecordings = useLiveQuery(
     async () => {
       const rows = await db.recordings.where('paragraphId').equals(paragraphId).toArray();
       const todayRows = rows.filter((r) => isSameLocalCalendarDay(r.recordingDate));
@@ -141,6 +150,33 @@ export function RecordPanel({
     [paragraphId],
     [],
   );
+
+  useEffect(() => {
+    if (!apiMode) return;
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const rows = await fetchRecordings();
+        const todayRows = rows
+          .filter((r) => r.paragraphId === paragraphId && isSameLocalCalendarDay(r.recordingDate))
+          .sort((a, b) => new Date(b.recordingDate).getTime() - new Date(a.recordingDate).getTime());
+        if (!cancelled) setApiTodaysRecordings(todayRows);
+      } catch (e) {
+        console.warn('[RecordPanel] api recordings load failed', e);
+        if (!cancelled) setApiTodaysRecordings([]);
+      }
+    };
+
+    void load();
+    window.addEventListener(RECORDINGS_MUTATED_EVENT, load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(RECORDINGS_MUTATED_EVENT, load);
+    };
+  }, [apiMode, paragraphId]);
+
+  const todaysRecordings = apiMode ? (apiTodaysRecordings ?? []) : (dexieTodaysRecordings ?? []);
 
   useEffect(() => {
     if (recState !== 'recording') return;
@@ -171,10 +207,11 @@ export function RecordPanel({
       a.removeAttribute('src');
       a.load();
     }
-    if (objectUrlRef.current) {
+    if (objectUrlRef.current && revokeObjectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
-      objectUrlRef.current = null;
     }
+    objectUrlRef.current = null;
+    revokeObjectUrlRef.current = false;
     setPlayingId(null);
   }, []);
 
@@ -215,7 +252,9 @@ export function RecordPanel({
         }));
       }
 
-      const existingRows = await db.recordings.where('paragraphId').equals(paragraphId).toArray();
+      const existingRows = apiMode
+        ? []
+        : await db.recordings.where('paragraphId').equals(paragraphId).toArray();
       if (existingRows.length > 0 && pendingSave === null) {
         setReplacement(candidate);
         return;
@@ -294,7 +333,7 @@ export function RecordPanel({
 
     recordingStartedAtRef.current = Date.now();
     setElapsedMs(0);
-  }, [onAnalysis, paragraphId, paragraphText, pendingSave, recState, recorder, syncRecorder]);
+  }, [onAnalysis, paragraphId, paragraphText, pendingSave, recState, recorder, syncRecorder, apiMode]);
 
   const handleKeepPrevious = useCallback(() => {
     setReplacement(null);
@@ -361,7 +400,7 @@ export function RecordPanel({
   );
 
   const toggleRowPlayback = useCallback(
-    (row: VoiceRecording) => {
+    (row: RecordingListItem) => {
       if (playingId === row.id) {
         stopPlayback();
         return;
@@ -371,8 +410,14 @@ export function RecordPanel({
       if (!a) return;
       void (async () => {
         try {
-          const url = await playRecordingOnAudio(a, row.blob, row.mimeType);
-          objectUrlRef.current = url;
+          const handle = await playRecordingItem(a, row, fetchRecordingPlaybackUrl);
+          if (handle.kind === 'blob') {
+            objectUrlRef.current = handle.url;
+            revokeObjectUrlRef.current = true;
+          } else {
+            objectUrlRef.current = handle.url;
+            revokeObjectUrlRef.current = false;
+          }
           setPlayingId(row.id);
         } catch (e) {
           console.warn('[RecordPanel] playback failed', e);

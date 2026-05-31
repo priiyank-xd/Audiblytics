@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { isRecordingBlobPlayable, playRecordingOnAudio } from '@/lib/audio/play-recording';
+import { fetchRecordingPlaybackUrl } from '@/lib/api/recordings';
+import { playRecordingItem } from '@/lib/audio/play-recording';
 import { cancelSpeech, getPersistedVoice, speakAsync } from '@/lib/audio/tts';
 import { cn } from '@/lib/utils';
 
@@ -13,7 +14,7 @@ export type CompareModePhase = 'idle' | 'playing_a' | 'gap' | 'playing_b';
 
 export type CompositePlayerCompareSource = {
   recordingId: string;
-  blob: Blob;
+  blob?: Blob;
   mimeType: string;
   ttsFallbackWord: string | null;
 };
@@ -89,22 +90,27 @@ export function CompositePlayer({
     }
   }, []);
 
-  const playBlobToEnd = useCallback(
-    (blob: Blob, mimeType: string, signal: AbortSignal): Promise<boolean> => {
-      if (!isRecordingBlobPlayable(blob)) return Promise.resolve(false);
+  const playClipToEnd = useCallback(
+    (src: CompositePlayerCompareSource, signal: AbortSignal): Promise<boolean> => {
       const audio = audioRef.current;
       if (!audio) return Promise.resolve(false);
-
       if (signal.aborted) return Promise.resolve(false);
+      if (!src.blob && !src.recordingId) return Promise.resolve(false);
 
-      return playRecordingOnAudio(audio, blob, mimeType)
-        .then((url) => {
+      return playRecordingItem(
+        audio,
+        { id: src.recordingId, mimeType: src.mimeType, blob: src.blob },
+        fetchRecordingPlaybackUrl,
+      )
+        .then((handle) => {
           if (signal.aborted) {
-            URL.revokeObjectURL(url);
+            if (handle.kind === 'blob') {
+              URL.revokeObjectURL(handle.url);
+            }
             cleanupAudio();
             return false;
           }
-          objectUrlRef.current = url;
+          objectUrlRef.current = handle.kind === 'blob' ? handle.url : null;
 
           return new Promise<boolean>((resolve) => {
             const finish = (ok: boolean) => {
@@ -137,10 +143,7 @@ export function CompositePlayer({
 
   const runOneClip = useCallback(
     async (src: CompositePlayerCompareSource, signal: AbortSignal): Promise<void> => {
-      let played = false;
-      if (isRecordingBlobPlayable(src.blob)) {
-        played = await playBlobToEnd(src.blob, src.mimeType, signal);
-      }
+      const played = await playClipToEnd(src, signal);
       if (played) return;
       if (signal.aborted) return;
 
@@ -151,7 +154,7 @@ export function CompositePlayer({
         await speakAsync(word, getPersistedVoice() ?? undefined);
       }
     },
-    [onClipUnavailable, playBlobToEnd],
+    [onClipUnavailable, playClipToEnd],
   );
 
   const handlePlayComparison = useCallback(() => {

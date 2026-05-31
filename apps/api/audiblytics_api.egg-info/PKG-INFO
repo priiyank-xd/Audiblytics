@@ -15,6 +15,7 @@ Requires-Dist: email-validator>=2.2.0
 Requires-Dist: pyjwt>=2.10.0
 Requires-Dist: bcrypt>=4.2.0
 Requires-Dist: httpx>=0.28.0
+Requires-Dist: boto3<2,>=1.35.0
 Provides-Extra: dev
 Requires-Dist: pytest>=8.0.0; extra == "dev"
 Requires-Dist: pytest-asyncio>=0.25.0; extra == "dev"
@@ -28,7 +29,7 @@ FastAPI backend. Spec: `_bmad-output/planning-artifacts/architecture-v2-fastapi-
 - `POST /api/v1/auth/register|login|logout`
 - `GET /api/v1/auth/me`
 - `GET|PATCH /api/v1/settings`
-- `POST /api/v1/paragraphs/generate` — Gemini proxy (requires `GEMINI_API_KEY`)
+- `POST /api/v1/paragraphs/generate` — Gemini proxy (Gemini key in **Settings**, or `GEMINI_API_KEY` in `.env` as fallback)
 - `GET /api/v1/paragraphs/today` — same-day cache hit
 - JWT in httpOnly cookie `audiblytics_session`
 

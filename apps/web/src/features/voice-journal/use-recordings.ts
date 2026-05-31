@@ -4,29 +4,33 @@ import Dexie from 'dexie';
 import { useEffect, useState } from 'react';
 
 import { enrichRecordingsWithTheme } from '@/features/voice-journal/enrich-recordings-with-theme';
-import type { VoiceRecording } from '@/lib/schemas/recording.schema';
+import { RECORDINGS_MUTATED_EVENT } from '@/features/voice-journal/recordings-mutated';
+import { fetchRecordings } from '@/lib/api/recordings';
+import { isApiStorageBackend } from '@/lib/config/storage-backend';
+import type { RecordingListItem } from '@/lib/schemas/recording.schema';
 import { db } from '@/lib/storage/db';
 
-export type RecordingWithTheme = VoiceRecording & {
+export type RecordingWithTheme = RecordingListItem & {
   themeLabel: string;
   /** First hard word from cached paragraph — TTS fallback when blob playback fails. */
   ttsFallbackWord: string | null;
 };
 
-async function queryRecordingsWithTheme(): Promise<RecordingWithTheme[]> {
+async function queryRecordingsWithThemeLocal(): Promise<RecordingWithTheme[]> {
   const rows = await db.recordings.orderBy('recordingDate').reverse().toArray();
+  return enrichRecordingsWithTheme(rows);
+}
+
+async function queryRecordingsWithThemeApi(): Promise<RecordingWithTheme[]> {
+  const rows = await fetchRecordings();
   return enrichRecordingsWithTheme(rows);
 }
 
 /**
  * Reactive list of recordings with theme labels.
  *
- * Does **not** use `Dexie.liveQuery` / `useLiveQuery`: in dev, React Strict Mode
- * runs effect cleanup before `liveQuery`’s deferred `setTimeout(0)` tick, which
- * aborts the first run so `next` never fires and the UI stays on `undefined`.
- *
- * Loads explicitly on mount, then re-fetches on global `storagemutated` (same
- * signal `liveQuery` uses internally).
+ * Local mode: loads from Dexie on mount + `storagemutated`.
+ * API mode: loads from `GET /recordings` on mount + `audiblytics:recordings-mutated`.
  */
 export function useRecordings(): RecordingWithTheme[] | undefined {
   const [data, setData] = useState<RecordingWithTheme[] | undefined>(undefined);
@@ -34,12 +38,17 @@ export function useRecordings(): RecordingWithTheme[] | undefined {
   useEffect(() => {
     let cancelled = false;
     let generation = 0;
+    const apiMode = isApiStorageBackend();
 
     const load = async () => {
       const id = ++generation;
       try {
-        await db.open();
-        const value = await queryRecordingsWithTheme();
+        if (!apiMode) {
+          await db.open();
+        }
+        const value = apiMode
+          ? await queryRecordingsWithThemeApi()
+          : await queryRecordingsWithThemeLocal();
         if (cancelled || id !== generation) return;
         setData(value);
       } catch (e) {
@@ -52,15 +61,23 @@ export function useRecordings(): RecordingWithTheme[] | undefined {
 
     void load();
 
-    const onStorageMutated = () => {
+    const onReload = () => {
       void load();
     };
 
-    Dexie.on('storagemutated', onStorageMutated);
+    if (apiMode) {
+      window.addEventListener(RECORDINGS_MUTATED_EVENT, onReload);
+    } else {
+      Dexie.on('storagemutated', onReload);
+    }
 
     return () => {
       cancelled = true;
-      Dexie.on.storagemutated.unsubscribe(onStorageMutated);
+      if (apiMode) {
+        window.removeEventListener(RECORDINGS_MUTATED_EVENT, onReload);
+      } else {
+        Dexie.on.storagemutated.unsubscribe(onReload);
+      }
     };
   }, []);
 

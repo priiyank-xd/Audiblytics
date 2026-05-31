@@ -15,6 +15,19 @@ class Settings(BaseSettings):
     environment: str = "development"
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
+    r2_account_id: str = ""
+    r2_access_key_id: str = ""
+    r2_secret_access_key: str = ""
+    r2_bucket: str = ""
+
+    @property
+    def r2_configured(self) -> bool:
+        return bool(
+            self.r2_account_id.strip()
+            and self.r2_access_key_id.strip()
+            and self.r2_secret_access_key.strip()
+            and self.r2_bucket.strip()
+        )
 
     @property
     def cors_origin_list(self) -> list[str]:

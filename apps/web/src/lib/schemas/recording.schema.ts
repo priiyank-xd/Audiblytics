@@ -12,3 +12,15 @@ export const recordingSchema = z.object({
   dayOfUse: z.number().int().positive(),
 });
 export type VoiceRecording = z.infer<typeof recordingSchema>;
+
+/** Voice journal row — local rows always have blob; API rows fetch playback URL on demand. */
+export const recordingListItemSchema = recordingSchema
+  .omit({ blob: true })
+  .extend({ blob: z.instanceof(Blob).optional() });
+export type RecordingListItem = z.infer<typeof recordingListItemSchema>;
+
+/** Mirrors FastAPI `RecordingResponse` JSON (no blob). */
+export const apiRecordingResponseSchema = recordingSchema.omit({ blob: true }).extend({
+  storageKey: z.string().nullable().optional(),
+});
+export type ApiRecordingResponse = z.infer<typeof apiRecordingResponseSchema>;

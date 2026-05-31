@@ -6,7 +6,8 @@ import { Download, Pause, Play } from 'lucide-react';
 import { CompositePlayer, type CompareModePhase } from '@/components/audiblytics/CompositePlayer';
 import { OfflineBadge } from '@/components/audiblytics/OfflineBadge';
 import { Button } from '@/components/ui/button';
-import { playRecordingOnAudio } from '@/lib/audio/play-recording';
+import { fetchRecordingPlaybackUrl } from '@/lib/api/recordings';
+import { playRecordingItem } from '@/lib/audio/play-recording';
 import { useCompareRecordings } from '@/features/voice-journal/use-compare-recordings';
 import type { RecordingWithTheme } from '@/features/voice-journal/use-recordings';
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
@@ -39,6 +40,7 @@ function localHhmm(isoUtc: string): string {
 }
 
 function triggerDownload(row: RecordingWithTheme): void {
+  if (!row.blob) return;
   const ext = downloadExtension(row.mimeType);
   const hhmm = localHhmm(row.recordingDate);
   const filename = `audiblytics-day-${row.dayOfUse}-${hhmm}.${ext}`;
@@ -75,6 +77,7 @@ export function VoiceJournalList({ recordings, className, hideCompare }: VoiceJo
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const revokeObjectUrlRef = useRef(false);
 
   const stopPlayback = useCallback(() => {
     const a = audioRef.current;
@@ -83,10 +86,11 @@ export function VoiceJournalList({ recordings, className, hideCompare }: VoiceJo
       a.removeAttribute('src');
       a.load();
     }
-    if (objectUrlRef.current) {
+    if (objectUrlRef.current && revokeObjectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
-      objectUrlRef.current = null;
     }
+    objectUrlRef.current = null;
+    revokeObjectUrlRef.current = false;
     setPlayingId(null);
   }, []);
 
@@ -125,8 +129,14 @@ export function VoiceJournalList({ recordings, className, hideCompare }: VoiceJo
       if (!a) return;
       void (async () => {
         try {
-          const url = await playRecordingOnAudio(a, row.blob, row.mimeType);
-          objectUrlRef.current = url;
+          const handle = await playRecordingItem(a, row, fetchRecordingPlaybackUrl);
+          if (handle.kind === 'blob') {
+            objectUrlRef.current = handle.url;
+            revokeObjectUrlRef.current = true;
+          } else {
+            objectUrlRef.current = handle.url;
+            revokeObjectUrlRef.current = false;
+          }
           setPlayingId(row.id);
         } catch (e) {
           console.warn('[VoiceJournalList] playback failed', e);
