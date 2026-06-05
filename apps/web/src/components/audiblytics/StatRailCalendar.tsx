@@ -15,16 +15,29 @@ type RailDayProps = {
   day: number;
   complete: boolean;
   isToday: boolean;
+  showTodayDot?: boolean;
+  compact?: boolean;
   onSelectComplete?: () => void;
 };
 
-function RailDay({ day, complete, isToday, onSelectComplete }: RailDayProps) {
-  const className = cn(
-    'flex min-h-8 min-w-0 items-center justify-center rounded-md text-caption tabular-nums',
+function RailDay({ day, complete, isToday, showTodayDot, compact, onSelectComplete }: RailDayProps) {
+  const dayClassName = cn(
+    'flex items-center justify-center rounded-full tabular-nums',
+    compact ? 'min-h-7 min-w-7 text-caption' : 'min-h-8 min-w-8 text-caption',
     isToday && 'bg-primary font-medium text-on-primary shadow-sm',
     !isToday && complete && 'font-medium text-foreground',
     !isToday && !complete && 'text-tertiary',
   );
+
+  const dayContent =
+    isToday && showTodayDot ? (
+      <span className="flex flex-col items-center gap-1">
+        <span className={dayClassName}>{day}</span>
+        <span className="size-1 rounded-full bg-primary" aria-hidden="true" />
+      </span>
+    ) : (
+      <span className={dayClassName}>{day}</span>
+    );
 
   if (complete && onSelectComplete) {
     return (
@@ -35,25 +48,43 @@ function RailDay({ day, complete, isToday, onSelectComplete }: RailDayProps) {
           onSelectComplete();
         }}
         className={cn(
-          className,
-          'w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1',
+          'flex w-full flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1',
+          isToday && showTodayDot && 'gap-1',
         )}
         aria-label={`Day ${day}, completed. Open archived day.`}
       >
-        {day}
+        {dayContent}
       </button>
     );
   }
 
   return (
-    <span className={className} aria-label={`Day ${day}${isToday ? ', today' : ''}`}>
-      {day}
+    <span
+      className={cn('flex flex-col items-center', isToday && showTodayDot && 'gap-1')}
+      aria-label={`Day ${day}${isToday ? ', today' : ''}`}
+    >
+      {dayContent}
     </span>
   );
 }
 
+export type StatRailCalendarProps = {
+  className?: string;
+  showWeekSummary?: boolean;
+  showTodayDot?: boolean;
+  compact?: boolean;
+  /** Home rail: fixed card dimensions per UX-V2 mockup. */
+  homeCard?: boolean;
+};
+
 /** Editorial month grid for the statistics rail (UTC month, app tokens). */
-export function StatRailCalendar() {
+export function StatRailCalendar({
+  className,
+  showWeekSummary = true,
+  showTodayDot = false,
+  compact = false,
+  homeCard = false,
+}: StatRailCalendarProps) {
   const router = useRouter();
   const { monthLabel, slots, isReady } = useMonthCalendarCells();
   const todayUtc = formatUtcDate(new Date());
@@ -83,7 +114,13 @@ export function StatRailCalendar() {
   return (
     <section
       aria-label={`Calendar for ${monthLabel}. Open full calendar.`}
-      className="min-w-0 cursor-pointer outline-none"
+      className={cn(
+        'min-w-0 cursor-pointer outline-none',
+        homeCard &&
+          'flex h-home-calendar min-h-0 w-home-rail flex-col overflow-hidden rounded-home-card border border-divider bg-surface-card p-home-card shadow-sm',
+        !homeCard && 'rounded-lg',
+        className,
+      )}
       role="button"
       tabIndex={0}
       onClick={openCalendar}
@@ -94,18 +131,37 @@ export function StatRailCalendar() {
         }
       }}
     >
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-headline-3 text-foreground">{monthName}</h2>
-        <div className="flex items-center gap-5 text-tertiary" aria-hidden="true">
-          <ChevronLeft className="size-5" strokeWidth={1.5} />
-          <ChevronRight className="size-5" strokeWidth={1.5} />
+      <div className="flex items-center justify-between gap-2">
+        <h2
+          className={cn(
+            'text-foreground',
+            homeCard ? 'font-serif text-headline-3' : compact ? 'text-ui-sm' : 'text-headline-3',
+          )}
+        >
+          {monthName}
+        </h2>
+        <div className="flex items-center gap-3 text-tertiary" aria-hidden="true">
+          <ChevronLeft className={compact ? 'size-4' : 'size-5'} strokeWidth={1.5} />
+          <ChevronRight className={compact ? 'size-4' : 'size-5'} strokeWidth={1.5} />
         </div>
       </div>
       <p className="sr-only">{monthLabel}</p>
 
-      <div className="mt-5 grid grid-cols-7 gap-y-1 text-center" role="presentation">
+      <div
+        className={cn(
+          'grid grid-cols-7 text-center',
+          homeCard ? 'mt-4 gap-y-1' : compact ? 'mt-2 gap-y-0' : 'mt-5 gap-y-1',
+        )}
+        role="presentation"
+      >
         {WEEKDAY_SHORT.map((label) => (
-          <span key={label} className="pb-2 text-micro-label text-secondary">
+          <span
+            key={label}
+            className={cn(
+              'text-micro-label text-secondary',
+              compact ? 'pb-1' : 'pb-2',
+            )}
+          >
             {label}
           </span>
         ))}
@@ -113,7 +169,10 @@ export function StatRailCalendar() {
 
       {!isReady ? (
         <div
-          className="grid min-h-36 grid-cols-7 gap-y-2 bg-cream-dim"
+          className={cn(
+            'grid grid-cols-7 bg-cream-dim',
+            compact ? 'min-h-28 gap-y-0' : 'min-h-36 gap-y-2',
+          )}
           aria-busy="true"
           aria-label="Loading calendar"
         />
@@ -121,11 +180,21 @@ export function StatRailCalendar() {
         <ul
           role="list"
           aria-label={`Month calendar for ${monthLabel}`}
-          className="grid grid-cols-7 gap-y-1"
+          className={cn(
+            'grid grid-cols-7',
+            homeCard && 'min-h-0 flex-1 content-start',
+            compact ? 'gap-y-0' : 'gap-y-1',
+          )}
         >
           {slots.map((slot, idx) => {
             if (slot.kind === 'pad') {
-              return <li key={`pad-${idx}`} aria-hidden className="min-h-8" />;
+              return (
+                <li
+                  key={`pad-${idx}`}
+                  aria-hidden
+                  className={compact ? 'min-h-7' : 'min-h-8'}
+                />
+              );
             }
             const day = Number(slot.utcDate.split('-')[2]);
             return (
@@ -134,6 +203,8 @@ export function StatRailCalendar() {
                   day={day}
                   complete={slot.complete}
                   isToday={slot.utcDate === todayUtc}
+                  showTodayDot={showTodayDot}
+                  compact={compact}
                   onSelectComplete={
                     slot.complete ? () => openArchivedDay(slot.utcDate) : undefined
                   }
@@ -144,23 +215,25 @@ export function StatRailCalendar() {
         </ul>
       )}
 
-      <div className="mt-8">
-        <h2 className="text-headline-3 text-foreground">This week</h2>
-        <div className="mt-4 grid grid-cols-7 text-center">
-          {WEEK_DAYS.map((label, index) => (
-            <div key={`${label}-${index}`} className="space-y-2">
-              <span className="block text-ui-sm text-foreground">{label}</span>
-              <span
-                className={cn(
-                  'mx-auto block size-4 rounded-full border border-divider',
-                  index === todayWeekdayIndex && 'border-primary bg-primary',
-                )}
-                aria-hidden="true"
-              />
-            </div>
-          ))}
+      {showWeekSummary ? (
+        <div className="mt-8">
+          <h2 className="text-headline-3 text-foreground">This week</h2>
+          <div className="mt-4 grid grid-cols-7 text-center">
+            {WEEK_DAYS.map((label, index) => (
+              <div key={`${label}-${index}`} className="space-y-2">
+                <span className="block text-ui-sm text-foreground">{label}</span>
+                <span
+                  className={cn(
+                    'mx-auto block size-4 rounded-full border border-divider',
+                    index === todayWeekdayIndex && 'border-primary bg-primary',
+                  )}
+                  aria-hidden="true"
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }

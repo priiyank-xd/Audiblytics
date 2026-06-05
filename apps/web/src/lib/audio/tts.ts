@@ -27,9 +27,14 @@ export function useVoices(): SpeechSynthesisVoice[] {
   return voices;
 }
 
+/** Default speech rate for "Play slow" (browser `SpeechSynthesisUtterance.rate`). */
+export const SLOW_SPEECH_RATE = 0.75;
+
 export type SpeakCallbacks = {
   /** Fired when playback finishes normally, is canceled, or errors (for UI teardown). */
   onEnd?: () => void;
+  /** Utterance rate; omit for browser default (1). */
+  rate?: number;
 };
 
 /**
@@ -74,6 +79,9 @@ export function speak(text: string, voice?: SpeechSynthesisVoice, callbacks?: Sp
   const chosen = resolveVoiceForPlayback(voice);
   if (chosen) {
     utterance.voice = chosen;
+  }
+  if (callbacks?.rate != null) {
+    utterance.rate = callbacks.rate;
   }
 
   const teardown = () => {

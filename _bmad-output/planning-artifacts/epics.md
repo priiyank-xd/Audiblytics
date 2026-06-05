@@ -1,5 +1,5 @@
 ---
-stepsCompleted: ['step-01-extract-requirements', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation', 'v2-backend-epics-9-13', 'ui-redesign-epic-14']
+stepsCompleted: ['step-01-extract-requirements', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation', 'v2-backend-epics-9-13', 'ui-redesign-epic-14', 'epic-15-api-parity-pending']
 inputDocuments:
   - '_bmad-output/planning-artifacts/prd.md'
   - '_bmad-output/planning-artifacts/architecture.md'
@@ -279,6 +279,11 @@ This document provides the complete epic and story breakdown for Audiblytics, de
 - **BVR13:** Collection + completions API (Phase 4 stretch).
 - **BVR14:** Server-side 90-day recording prune when retention policy applies (FR41).
 - **BVR15:** Deploy README, Dockerfile, Neon/R2 wiring, 3 ADRs (Phase 5).
+- **BVR16:** `GET /paragraphs/dates` (or equivalent) — UTC dates with server `paragraph_cache` rows for calendar/streak (API mode).
+- **BVR17:** Archived day read path in API mode — paragraph + recordings for a selected UTC date on Journey/Calendar drill-down.
+- **BVR18:** `days_of_use` server persistence + frontend sync when `STORAGE_BACKEND=api` (Day-14 trigger parity across reloads).
+- **BVR19:** Stats nav resolved — implement minimal Stats page or remove sidebar item (no dead link).
+- **BVR20:** Docs + tracking hygiene — README (DB Gemini key), sprint epic statuses, optional UX v2 addendum pointer.
 
 ### UI Refresh Requirements (May 2026 mockups)
 
@@ -380,6 +385,8 @@ This document provides the complete epic and story breakdown for Audiblytics, de
 | UX-V2-UI7 | Epic 14 | Journey |
 | UX-V2-UI8 | Epic 14 | Review |
 | UX-V2-UI9 | Epic 14 | Stretch placeholders |
+| BVR16–BVR18 | Epic 15 | API mode calendar/journey/history parity |
+| BVR19–BVR20 | Epic 15 | Stats + docs housekeeping |
 
 ## Epic List
 
@@ -467,6 +474,12 @@ Replace the editorial hub-and-spoke shell with the soft-card dashboard design fr
 
 **UX-V2 covered:** UX-V2-UI1 through UX-V2-UI9 · **Visual reference:** mockups index in design folder
 
+### Epic 15: API Mode Parity & Close-Out
+
+Close gaps discovered after Epics 9–14 shipped: calendar/streak/journey must honor server `paragraph_cache` and recordings when `STORAGE_BACKEND=api`; remove dead nav; align docs and sprint tracking. **Depends on Epics 10, 11, 12, 14.**
+
+**BVRs covered:** BVR16, BVR17, BVR18, BVR19, BVR20 · **FRs covered (server path):** FR19, FR53–FR58, FR38 (Day-14 days-of-use)
+
 ## Inter-Epic Dependencies
 
 | Epic | Depends on | Standalone delivery |
@@ -485,6 +498,7 @@ Replace the editorial hub-and-spoke shell with the soft-card dashboard design fr
 | Epic 12 | Epic 9, Epic 10 | Collection + completions on server (stretch) |
 | Epic 13 | Epics 9–11 minimum | Deployable demo URL |
 | Epic 14 | Epics 1–8 features exist | New UI shell; can run parallel to Epic 11 after 14.1 |
+| Epic 15 | Epics 10, 11, 12, 14 | Honest API-mode calendar/journey + close-out |
 
 ## MVP-Slip Hierarchy Mapping
 
@@ -2382,5 +2396,145 @@ So that mockup parity exists without new backend work (UX-V2-UI9).
 **Given** Voice Journal
 **When** stretch flag enabled
 **Then** "AI Session Reflection" card shows placeholder text, not live LLM call
+
+---
+
+## Epic 15: API Mode Parity & Close-Out
+
+Closes functional and process gaps after v2 + UI refresh. **Priority:** BVR16 → BVR17 → BVR19 → BVR18 → BVR20.
+
+### Story 15.1: Server Paragraph Dates for Calendar and Streak
+
+As Priyank,
+I want calendar, streak, and journey stats to know which UTC days have a server-generated paragraph,
+So that completion dots and streaks stay honest in API mode after reload (BVR16, FR53, FR58).
+
+**Status:** ready-for-dev
+
+**Acceptance Criteria:**
+
+**Given** `NEXT_PUBLIC_STORAGE_BACKEND=api` and authenticated session
+**When** `GET /api/v1/paragraphs/dates` is called (optional `from` / `to` query for window)
+**Then** response is a JSON array of UTC `YYYY-MM-DD` strings derived from `paragraph_cache.generated_at` for the current user only (BV17)
+
+**Given** API mode
+**When** `loadParagraphCacheUtcDateSet()` (or successor) runs
+**Then** it merges server dates with local Dexie dates (union) so legacy local rows still count
+
+**Given** user generated a paragraph yesterday via API, marked read, and reloads today
+**When** Journey calendar or streak hooks evaluate yesterday
+**Then** yesterday shows as complete when completions flags are set (FR53)
+
+**Given** pytest
+**When** tests run
+**Then** new tests cover dates endpoint + empty-user case
+
+---
+
+### Story 15.2: Archived Day Detail in API Mode
+
+As Priyank,
+I want Journey (and calendar drill-down) to show paragraph excerpt and recordings for a past UTC day in API mode,
+So that historical session detail matches local mode (BVR17, FR56).
+
+**Status:** ready-for-dev
+
+**Acceptance Criteria:**
+
+**Given** API mode and a completed UTC date selected on Journey
+**When** detail panel renders
+**Then** it loads cached paragraph for that date from API (`GET /paragraphs?date=` or `GET /paragraphs/by-date/{utc_date}`) and recordings from `GET /recordings` filtered by date
+
+**Given** no paragraph exists for that date on server
+**When** panel renders
+**Then** quiet empty state (UX-DR34) — no error toast
+
+**Given** API mode
+**When** `JourneyDayDetailPanel` runs
+**Then** it no longer disables archived content solely because `apiMode === true`
+
+**Given** recording playback
+**When** user plays from archived panel
+**Then** presigned playback URL flow from Epic 11 is used
+
+---
+
+### Story 15.3: Days-of-Use Server Sync (Day-14 Parity)
+
+As Priyank,
+I want distinct practice days stored on the server when in API mode,
+So that Day-14 trigger and journey stats survive reload and match Postgres truth (BVR18, FR37).
+
+**Status:** ready-for-dev
+
+**Acceptance Criteria:**
+
+**Given** Alembic migration
+**When** applied
+**Then** `days_of_use` table exists per architecture-v2 BV5 (`user_id`, `utc_date`, PK composite)
+
+**Given** authenticated user
+**When** `POST /days-of-use` or idempotent stamp on mark-read-it / save-recording
+**Then** today's UTC date is recorded once per user
+
+**Given** API mode
+**When** `recordDayOfUse()` runs
+**Then** it calls server stamp in addition to (or instead of) localStorage `audiblytics.daysOfUse`
+
+**Given** Day-14 evaluation
+**When** API mode
+**Then** `distinctDaysOfUse` reads from server list (with local fallback during migration)
+
+---
+
+### Story 15.4: Stats Route — Implement or Remove Nav
+
+As Priyank,
+I want the Stats sidebar item to lead somewhere useful,
+So that the v2 shell has no dead navigation (BVR19).
+
+**Status:** ready-for-dev
+
+**Acceptance Criteria:**
+
+**Given** product decision **A — implement**
+**When** user opens `/stats`
+**Then** page shows streak, sessions completed, words practiced, and link to Journey — data from existing hooks (`use-streak`, journey stats, collection count)
+
+**Given** product decision **B — defer**
+**When** shell renders
+**Then** Stats is removed from `AppSidebar` nav until a future epic; no `/stats` route advertised
+
+**Given** either decision
+**When** axe/keyboard pass on shell
+**Then** no broken `aria-current` on missing route
+
+---
+
+### Story 15.5: Documentation and Sprint Tracking Hygiene
+
+As Priyank,
+I want docs and sprint status to reflect shipped v2 + UI work,
+So that the repo is interview-ready and agents see accurate epic state (BVR20).
+
+**Status:** ready-for-dev
+
+**Acceptance Criteria:**
+
+**Given** root `README.md` Phase 2 section
+**When** read
+**Then** primary Gemini path is **Settings → Postgres** (`gemini_api_key`); `GEMINI_API_KEY` in `.env` documented as optional dev fallback only
+
+**Given** `sprint-status.yaml`
+**When** epics 1–8 and 11 have all stories `done`
+**Then** epic rows are `done` (not `in-progress`)
+
+**Given** `_bmad-output/planning-artifacts/`
+**When** complete
+**Then** optional one-page `ux-v2-mockups-addendum.md` links mockup folder + notes API-mode login/settings (or UX spec § addendum stub)
+
+**Given** Epics 9–10
+**When** traceability desired
+**Then** story files exist in `implementation-artifacts/` matching 9.1–10.5 (retroactive, copy ACs from `epics.md`)
 
 ---

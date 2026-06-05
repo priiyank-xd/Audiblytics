@@ -18,3 +18,9 @@ export const cachedParagraphSchema = z.object({
   generatedAt: z.string().datetime(),
 });
 export type CachedParagraph = z.infer<typeof cachedParagraphSchema>;
+
+/** UTC `YYYY-MM-DD` keys from `GET /paragraphs/dates` (BVR16). */
+export const paragraphUtcDatesSchema = z.array(
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected UTC date YYYY-MM-DD'),
+);
+export type ParagraphUtcDates = z.infer<typeof paragraphUtcDatesSchema>;

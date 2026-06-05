@@ -4,8 +4,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 
 import { excerptParagraphWords } from '@/features/calendar/excerpt-paragraph-words';
 import { queryLatestCachedParagraphForUtcDate } from '@/features/calendar/query-latest-cached-paragraph-for-utc-date';
+import { useArchivedDayApi } from '@/features/calendar/use-archived-day-api';
 import { enrichRecordingsWithTheme } from '@/features/voice-journal/enrich-recordings-with-theme';
 import type { RecordingWithTheme } from '@/features/voice-journal/use-recordings';
+import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 import type { CachedParagraph } from '@/lib/schemas/paragraph-cache.schema';
 import { db } from '@/lib/storage/db';
@@ -17,7 +19,7 @@ export type ArchivedDaySnapshot = {
   recordings: RecordingWithTheme[];
 };
 
-export function useArchivedDay(utcDate: string | null): ArchivedDaySnapshot | undefined {
+function useArchivedDayLocal(utcDate: string | null): ArchivedDaySnapshot | undefined {
   const dep = utcDate ?? '';
 
   return useLiveQuery(
@@ -46,4 +48,11 @@ export function useArchivedDay(utcDate: string | null): ArchivedDaySnapshot | un
     },
     [dep],
   );
+}
+
+export function useArchivedDay(utcDate: string | null): ArchivedDaySnapshot | undefined {
+  const apiMode = isApiStorageBackend();
+  const api = useArchivedDayApi(apiMode ? utcDate : null);
+  const local = useArchivedDayLocal(apiMode ? null : utcDate);
+  return apiMode ? api : local;
 }

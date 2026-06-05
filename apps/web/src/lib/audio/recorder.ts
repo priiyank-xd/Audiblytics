@@ -15,8 +15,6 @@ export type Recorder = {
   stop(): Promise<Result<{ blob: Blob; mimeType: string; durationMs: number }, RecorderError>>;
 };
 
-const CAP_MS = 60_000;
-
 function nowMs(): number {
   // Avoid referencing `performance` at module scope (SSR bundling); it's only used at runtime inside APIs.
   if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
@@ -110,7 +108,6 @@ export function createRecorder(): Recorder {
   let stopPromiseHandlers: Array<(result: Result<{ blob: Blob; mimeType: string; durationMs: number }, RecorderError>) => void> =
     [];
 
-  let capTimer: ReturnType<typeof setTimeout> | null = null;
   let recordedMimeType = '';
 
   let recordingStartedAtMs: number | null = null;
@@ -121,15 +118,7 @@ export function createRecorder(): Recorder {
     for (const resolve of waiters) resolve(result);
   };
 
-  const clearCapTimer = () => {
-    if (!capTimer) return;
-    clearTimeout(capTimer);
-    capTimer = null;
-  };
-
   const finalizeError = (error: RecorderError) => {
-    clearCapTimer();
-
     recorderError = error;
     state = 'error';
 
@@ -148,8 +137,6 @@ export function createRecorder(): Recorder {
   };
 
   const finalizeSuccess = (blob: Blob, mimeType: string) => {
-    clearCapTimer();
-
     const durationMs =
       recordingStartedAtMs === null ? 0 : Math.max(0, Math.round(nowMs() - recordingStartedAtMs));
 
@@ -260,13 +247,6 @@ export function createRecorder(): Recorder {
         finalizeError({ kind: 'unsupported', message });
         return;
       }
-
-      clearCapTimer();
-      capTimer = setTimeout(() => {
-        void recorder.stop().catch(() => {
-          // Swallow: stop() resolves a Result; errors should not throw for expected flows.
-        });
-      }, CAP_MS);
     },
 
     async stop(): Promise<Result<{ blob: Blob; mimeType: string; durationMs: number }, RecorderError>> {

@@ -198,53 +198,6 @@ test('createRecorder: records webm-ish mime + returns blob', async () => {
   }
 });
 
-test('createRecorder: auto-stop at 60s finalizes recording', async () => {
-  const { restore } = installFakeGlobals();
-
-  try {
-    const globalRef = globalThis as unknown as {
-      setTimeout: typeof setTimeout;
-    };
-    const origSetTimeout = globalRef.setTimeout;
-
-    globalRef.setTimeout = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
-      if (timeout === 60_000) {
-        queueMicrotask(() => {
-          queueMicrotask(() => {
-            if (typeof handler === 'function') {
-              (handler as (...innerArgs: unknown[]) => void)(...args);
-            }
-          });
-        });
-        return 123 as unknown as ReturnType<typeof setTimeout>;
-      }
-
-      const callOrig = origSetTimeout as unknown as (
-        h: TimerHandler,
-        t?: number,
-        ...rest: unknown[]
-      ) => ReturnType<typeof setTimeout>;
-
-      return callOrig(handler, timeout, ...args);
-    }) as unknown as typeof setTimeout;
-
-    const r = createRecorder();
-    await r.start();
-    const stopPromise = r.stop();
-
-    const result = await stopPromise;
-    assert.ok(result.ok, `unexpected recorder stop failure: ${JSON.stringify(result)}`);
-    if (!result.ok) return;
-
-    assert.ok(result.value.mimeType.startsWith('audio/webm'));
-    assert.equal(r.state, 'idle');
-
-    globalRef.setTimeout = origSetTimeout;
-  } finally {
-    restore();
-  }
-});
-
 test('createRecorder: recorder error finalizes as unknown', async () => {
   const { restore } = installFakeGlobals();
 

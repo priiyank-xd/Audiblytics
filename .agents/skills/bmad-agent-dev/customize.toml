@@ -36,6 +36,8 @@ activation_steps_append = []
 #     (glob patterns are supported; the file's contents are loaded and treated as facts).
 
 persistent_facts = [
+  "file:{project-root}/README.md",
+  "file:{project-root}/docs/**/*.md",
   "file:{project-root}/**/project-context.md",
 ]
 

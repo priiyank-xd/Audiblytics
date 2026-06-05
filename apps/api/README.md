@@ -159,6 +159,29 @@ Verify: `curl -f http://localhost:8000/api/v1/health` → `{"status":"ok"}`.
 
 The image includes a `HEALTHCHECK` on `/api/v1/health`. On Railway, set the HTTP health check path to `/api/v1/health`.
 
+### R2 bucket CORS (required for browser uploads)
+
+The web app uploads audio **directly** to R2 via presigned PUT URLs. Without bucket CORS, the browser shows `Storage write failed. Failed to fetch` even when API presign succeeds.
+
+In **Cloudflare Dashboard → R2 → your bucket → Settings → CORS policy**, add:
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000"
+    ],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+For production, add your Vercel origin (e.g. `https://your-app.vercel.app`) to `AllowedOrigins`.
+
 ### Platform notes
 
 | Host | Health check | `PORT` |

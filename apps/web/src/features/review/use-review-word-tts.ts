@@ -8,15 +8,15 @@ export type UseReviewWordTtsArgs = {
   wordId: string;
   /** Surface string passed to `speak` (FR52). */
   wordText: string;
-  /** True while the flashcard shows the back (IPA / controls). */
-  backFaceActive: boolean;
+  /** When false, playback stops (e.g. card not revealed or word changed). */
+  allowPlayback: boolean;
 };
 
 /**
- * Review flashcard TTS: play/pause chrome, cancel on card/word/face changes, and
+ * Review flashcard TTS: play/pause chrome, cancel on card/word changes, and
  * `onEnd` bookkeeping without touching `speechSynthesis` outside `tts.ts` (AR20).
  */
-export function useReviewWordTts({ wordId, wordText, backFaceActive }: UseReviewWordTtsArgs) {
+export function useReviewWordTts({ wordId, wordText, allowPlayback }: UseReviewWordTtsArgs) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const genRef = useRef(0);
 
@@ -31,10 +31,10 @@ export function useReviewWordTts({ wordId, wordText, backFaceActive }: UseReview
   }, [wordId, stopPlayback]);
 
   useEffect(() => {
-    if (!backFaceActive) {
+    if (!allowPlayback) {
       stopPlayback();
     }
-  }, [backFaceActive, stopPlayback]);
+  }, [allowPlayback, stopPlayback]);
 
   const togglePlayPause = useCallback(() => {
     if (isSpeaking) {

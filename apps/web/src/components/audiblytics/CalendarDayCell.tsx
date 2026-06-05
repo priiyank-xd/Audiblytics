@@ -13,6 +13,7 @@ export type CalendarDayCellProps = {
   onSelectComplete?: () => void;
   /** Month grid on Home omits the month prefix (shows day of month only). */
   labelStyle?: 'month-day' | 'day-only';
+  isSelected?: boolean;
 };
 
 function utcYmdToDisplayParts(
@@ -45,6 +46,7 @@ export function CalendarDayCell({
   usedOfflinePack = false,
   onSelectComplete,
   labelStyle = 'month-day',
+  isSelected = false,
 }: CalendarDayCellProps) {
   const { primaryLabel, ariaDate } = useMemo(
     () => utcYmdToDisplayParts(utcDate, labelStyle),
@@ -88,9 +90,10 @@ export function CalendarDayCell({
         onClick={onSelectComplete}
         aria-label={`${ariaDate}, completed. Open archived day.`}
         className={cn(
-          'flex min-h-10 min-w-0 w-full flex-col items-center justify-center gap-1 rounded-sm border border-transparent px-0.5 py-1',
+          'flex min-h-10 min-w-0 w-full flex-col items-center justify-center gap-1 rounded-sm border px-0.5 py-1',
           'transition-colors hover:bg-surface-elevated',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
+          isSelected ? 'border-primary bg-primary-soft' : 'border-transparent',
         )}
       >
         {inner}

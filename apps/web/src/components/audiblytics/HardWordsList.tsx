@@ -1,15 +1,20 @@
 'use client';
 
+import { Pause, Play } from 'lucide-react';
+
 import { HardWordRow } from '@/components/audiblytics/HardWordRow';
 import { InlineErrorSurface } from '@/components/audiblytics/InlineErrorSurface';
 import { useCollection } from '@/features/collection/use-collection';
 import { useSaveWord } from '@/features/collection/use-save-word';
+import { hardWordRowId, normalizeWordKey } from '@/lib/today/hard-word-match';
 import type { HardWord } from '@/lib/schemas/paragraph-cache.schema';
 import { cn } from '@/lib/utils';
 
 export type HardWordsListProps = {
   entries: HardWord[];
   activeWordId: string | null;
+  /** Selected word for detail card sync (compact variant highlight). */
+  selectedWordId?: string | null;
   onToggleWord: (rowId: string, word: string) => void;
   sourceParagraphId: string | null;
   /** Lowercase-trimmed spellings selected for this paragraph's recycle pass (matches hardWords.word). */
@@ -18,13 +23,10 @@ export type HardWordsListProps = {
   variant?: 'default' | 'rail' | 'compact';
 };
 
-function normalizeWordKey(word: string): string {
-  return word.trim().toLowerCase();
-}
-
 export function HardWordsList({
   entries,
   activeWordId,
+  selectedWordId = null,
   onToggleWord,
   sourceParagraphId,
   recycledWordKeys,
@@ -41,14 +43,16 @@ export function HardWordsList({
     return (
       <ul className="flex flex-wrap gap-2">
         {entries.map((hw) => {
-          const rowId = `${hw.word}-${hw.ipa}`;
+          const rowId = hardWordRowId(hw);
+          const isSelected = selectedWordId === rowId;
+          const isSpeaking = activeWordId === rowId;
           return (
             <li key={rowId}>
               <button
                 type="button"
                 className={cn(
                   'inline-flex min-h-9 items-center gap-2 rounded-lg border border-divider px-3 text-caption transition-colors',
-                  activeWordId === rowId
+                  isSelected
                     ? 'bg-primary text-on-primary'
                     : 'bg-surface text-foreground hover:bg-surface-elevated',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
@@ -56,7 +60,12 @@ export function HardWordsList({
                 onClick={() => onToggleWord(rowId, hw.word)}
               >
                 <span>{hw.word}</span>
-                <span className="sr-only">Listen</span>
+                {isSpeaking ? (
+                  <Pause className="size-3.5 shrink-0" strokeWidth={1.6} aria-hidden />
+                ) : (
+                  <Play className="size-3.5 shrink-0" strokeWidth={1.6} aria-hidden />
+                )}
+                <span className="sr-only">{isSpeaking ? 'Stop' : 'Listen'}</span>
               </button>
             </li>
           );
@@ -75,7 +84,7 @@ export function HardWordsList({
       )}
     >
       {entries.map((hw) => {
-        const rowId = `${hw.word}-${hw.ipa}`;
+        const rowId = hardWordRowId(hw);
         const isSaved = savedWords?.has(hw.word) ?? false;
         const isRecycled =
           recycledWordKeys !== undefined && recycledWordKeys.has(normalizeWordKey(hw.word));
@@ -98,7 +107,7 @@ export function HardWordsList({
                 variant="storage"
                 error={error}
                 onOpenSettings={() => {
-                  window.location.href = '/settings?focus=provider';
+                  window.location.href = '/settings/advanced';
                 }}
               />
             ) : null}

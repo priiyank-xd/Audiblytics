@@ -21,7 +21,9 @@ export function MainContentShell({ children }: MainContentShellProps) {
   return (
     <div
       className={cn(
-        'min-w-0 w-full xl:col-span-2',
+        'min-w-0 w-full',
+        isHome && 'flex min-h-0 flex-col justify-start',
+        !isHome && 'xl:col-span-2',
         !isHome && !isToday && 'mx-auto max-w-5xl',
       )}
     >

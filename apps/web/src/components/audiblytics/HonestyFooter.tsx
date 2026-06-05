@@ -1,11 +1,16 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
+
 import { ProviderChip } from '@/components/audiblytics/ProviderChip';
 import { cn } from '@/lib/utils';
 
 const APP_VERSION = "v0.1.0";
 
 export function HonestyFooter() {
+  const pathname = usePathname() ?? '';
+  if (pathname === '/') return null;
+
   return (
     <footer
       role="contentinfo"

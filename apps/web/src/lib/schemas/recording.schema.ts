@@ -6,7 +6,7 @@ export const recordingSchema = z.object({
   id: z.string().uuid(),
   recordingDate: z.string().datetime(),
   paragraphId: z.union([z.string().uuid(), z.string().regex(WARMUP_RECORDING_ID_RE)]),
-  durationMs: z.number().int().min(0).max(60_000),
+  durationMs: z.number().int().min(0),
   mimeType: z.string().min(1),
   blob: z.instanceof(Blob),
   dayOfUse: z.number().int().positive(),

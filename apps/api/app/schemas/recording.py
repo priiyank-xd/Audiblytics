@@ -47,7 +47,7 @@ class RecordingResponse(BaseModel):
     id: str
     recordingDate: str
     paragraphId: str
-    durationMs: int = Field(ge=0, le=60_000)
+    durationMs: int = Field(ge=0)
     mimeType: str = Field(min_length=1)
     dayOfUse: int = Field(gt=0)
     storageKey: str | None = None
@@ -100,7 +100,7 @@ class RecordingCreateRequest(BaseModel):
     id: str
     recordingDate: str
     paragraphId: str
-    durationMs: int = Field(ge=0, le=60_000)
+    durationMs: int = Field(ge=0)
     mimeType: str = Field(min_length=1)
     dayOfUse: int = Field(gt=0)
 

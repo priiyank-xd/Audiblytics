@@ -22,7 +22,6 @@ import { cn } from '@/lib/utils';
 const MIC_DENIED_COPY =
   'Microphone access is required to record. Click the lock icon in your address bar, then try again.';
 
-const CAP_MS = 60_000;
 const WAVEFORM_BAR_CLASSES = ['h-2', 'h-4', 'h-3', 'h-5', 'h-6', 'h-8', 'h-5', 'h-7'];
 
 export type RecordingAnalysis =
@@ -59,10 +58,13 @@ type SpeechRecognitionEventLike = {
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
 function formatTimer(ms: number): string {
-  const clamped = Math.min(Math.max(0, ms), CAP_MS);
-  const totalSec = Math.floor(clamped / 1000);
-  const m = Math.floor(totalSec / 60);
+  const totalSec = Math.floor(Math.max(0, ms) / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
@@ -183,7 +185,7 @@ export function RecordPanel({
     const id = window.setInterval(() => {
       syncRecorder();
       if (recordingStartedAtRef.current === null) return;
-      setElapsedMs(Math.min(CAP_MS, Date.now() - recordingStartedAtRef.current));
+      setElapsedMs(Date.now() - recordingStartedAtRef.current);
     }, 200);
     return () => window.clearInterval(id);
   }, [recState, recorder, syncRecorder]);
@@ -291,11 +293,15 @@ export function RecordPanel({
     if (recognition) {
       recognitionRef.current = recognition;
       recognition.onresult = (event) => {
-        const chunks: string[] = [];
-        for (let i = event.resultIndex; i < event.results.length; i += 1) {
-          chunks.push(event.results[i][0].transcript);
+        // Rebuild from final segments only — appending interim + final duplicates words over long takes.
+        const finals: string[] = [];
+        for (let i = 0; i < event.results.length; i += 1) {
+          const result = event.results[i];
+          if (result.isFinal) {
+            finals.push(result[0].transcript);
+          }
         }
-        transcriptRef.current = `${transcriptRef.current} ${chunks.join(' ')}`.trim();
+        transcriptRef.current = finals.join(' ').trim();
       };
       recognition.onerror = () => {
         recognitionRef.current = null;
@@ -435,10 +441,7 @@ export function RecordPanel({
 
   const isRail = layout === 'rail';
   const isStudio = layout === 'studio';
-  const timerLabel = useMemo(
-    () => (isRail ? formatTimer(elapsedMs) : `${formatTimer(elapsedMs)} / 1:00`),
-    [elapsedMs, isRail],
-  );
+  const timerLabel = useMemo(() => formatTimer(elapsedMs), [elapsedMs]);
 
   const recordButton = (
     <button
@@ -691,7 +694,7 @@ function analyzeTranscript(input: {
   const missedWords = expected.filter((word) => !spokenSet.has(word)).slice(0, 8);
   const matchedCount = expected.filter((word) => spokenSet.has(word)).length;
   const accuracyPercent = expected.length > 0 ? Math.round((matchedCount / expected.length) * 100) : 0;
-  const minutes = Math.max(input.durationMs / 60_000, 1 / 60);
+  const minutes = Math.max(input.durationMs / 60_000, 0.05);
 
   return {
     status: 'ready',

@@ -5,9 +5,74 @@ import type { LlmError } from '@/lib/llm/types';
 import { err, ok, type Result } from '@/lib/result';
 import {
   cachedParagraphSchema,
+  paragraphUtcDatesSchema,
   type CachedParagraph,
 } from '@/lib/schemas/paragraph-cache.schema';
 import type { ParagraphGeneratePayload } from '@/features/paragraph/paragraph-generate-payload';
+
+export async function fetchParagraphDates(params?: {
+  from?: string;
+  to?: string;
+}): Promise<string[]> {
+  const base = getApiBaseUrl();
+  const search = new URLSearchParams();
+  if (params?.from) search.set('from', params.from);
+  if (params?.to) search.set('to', params.to);
+  const query = search.toString();
+  const url = `${base}/api/v1/paragraphs/dates${query ? `?${query}` : ''}`;
+  const response = await fetch(url, { credentials: 'include' });
+  if (!response.ok) {
+    let message = response.statusText;
+    try {
+      const body = (await response.json()) as { error?: { message?: string }; detail?: { error?: { message?: string } } };
+      if (body.detail?.error?.message) message = body.detail.error.message;
+      else if (body.error?.message) message = body.error.message;
+    } catch {
+      // ignore
+    }
+    throw new Error(message);
+  }
+  const raw = await response.json();
+  const parsed = paragraphUtcDatesSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new Error('Paragraph dates response failed validation.');
+  }
+  return parsed.data;
+}
+
+export async function fetchParagraphByUtcDate(utcDate: string): Promise<CachedParagraph | null> {
+  const base = getApiBaseUrl();
+  const response = await fetch(
+    `${base}/api/v1/paragraphs/by-date/${encodeURIComponent(utcDate)}`,
+    { credentials: 'include' },
+  );
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    let message = response.statusText;
+    try {
+      const body = (await response.json()) as {
+        error?: { message?: string };
+        detail?: { error?: { message?: string } };
+      };
+      if (body.detail?.error?.message) message = body.detail.error.message;
+      else if (body.error?.message) message = body.error.message;
+    } catch {
+      // ignore
+    }
+    throw new Error(message);
+  }
+  const raw = (await response.json()) as Record<string, unknown>;
+  return cachedParagraphSchema.parse({
+    id: raw.id,
+    paragraph: raw.paragraph,
+    hardWords: raw.hardWords,
+    theme: raw.theme,
+    persona: raw.persona,
+    generatedAt: raw.generatedAt,
+  });
+}
 
 export async function fetchParagraphToday(): Promise<CachedParagraph | null> {
   const base = getApiBaseUrl();

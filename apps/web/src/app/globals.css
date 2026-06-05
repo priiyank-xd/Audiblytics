@@ -6,20 +6,21 @@
 
 /* Raw + semantic tokens (UX-DR1 / Color System); shadcn bridge aliases */
 :root {
-  /* Surface */
-  --cream: #f5f0e6;
-  --cream-dim: #ebe5d6;
-  --border: #d9d2c5;
+  /* Surface (UX-V2 reference) */
+  --cream: #f8f6f2;
+  --cream-dim: #f0ece4;
+  --border: #e9e4dc;
+  --surface-card: #fcfbf8;
 
   /* Ink */
-  --ink: #1a1a1a;
+  --ink: #1f1f1b;
   --ink-soft: #4a4a4a;
   /** De-emphasized copy on cream; darker than legacy faint for readable captions (WCAG intent). */
-  --ink-subtle: #5c5751;
+  --ink-subtle: #6d6a63;
   --ink-faint: #8a8580;
 
   /* Primary */
-  --forest: #2d5b3a;
+  --forest: #2f6b47;
   --forest-deep: #1f4029;
   --forest-light: #6b9b7b;
   --forest-faint: #d4e0d8;
@@ -62,6 +63,35 @@
   /** Statistics rail: heading ↔ calendar, and calendar ↔ metrics (layout revision). */
   --stat-rail-heading-calendar-gap: 6.25rem;
   --stat-rail-calendar-metrics-gap: 6.25rem;
+
+  /** Home dashboard — fixed viewport (UX-V2-UI2); no arbitrary values in components. */
+  --home-sidebar-width: 12.8125rem;
+  --home-content-max-width: 90rem;
+  --home-page-padding-x: 4rem;
+  --home-page-padding-y: 3.375rem;
+  --home-section-gap: 4rem;
+  --home-hero-min-height: min(46vh, 24rem);
+  --home-hero-max-height: 22.5rem;
+  --home-hero-greeting-size: 1.25rem;
+  --home-hero-title-size: 4.5rem;
+  --home-hero-desc-size: 1.375rem;
+  --home-btn-height: 4rem;
+  --home-btn-padding-x: 2rem;
+  --home-btn-radius: 1rem;
+  --home-card-radius: 1.5rem;
+  --home-card-padding: 2rem;
+  --home-continue-card-height: 16.25rem;
+  --home-continue-card-gap: 1.5rem;
+  --home-rail-width: 25rem;
+  --home-rail-gap: 1.5rem;
+  --home-calendar-height: 20rem;
+  --home-streak-height: 9.375rem;
+  --home-streak-gradient: linear-gradient(135deg, #3a7a52 0%, #2f6b47 45%, #1f4a30 100%);
+  --home-focus-height: 11.25rem;
+  --home-progress-height: 15rem;
+  --home-banner-height: 6.25rem;
+  --home-banner-radius: 1.5rem;
+  --home-banner-padding: 2rem;
 
   /* shadcn / Radix bridge (maps to editorial tokens) */
   --background: var(--surface);
@@ -141,6 +171,7 @@
 
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
+  --color-surface-card: var(--surface-card);
   --color-divider: var(--divider);
   --color-on-primary: var(--text-on-primary);
   --color-on-danger: var(--text-on-danger);
@@ -316,6 +347,142 @@
   font-weight: 400;
   font-size: 0.75rem;
   vertical-align: super;
+}
+
+@utility text-home-greeting {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 500;
+  font-size: var(--home-hero-greeting-size);
+  line-height: 1.4;
+  color: var(--primary);
+}
+
+@utility text-home-headline {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: var(--home-hero-title-size);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+@utility text-home-description {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: var(--home-hero-desc-size);
+  line-height: 1.6;
+  color: var(--ink-subtle);
+}
+
+@utility min-h-home-hero {
+  min-height: var(--home-hero-min-height);
+}
+
+@utility max-h-home-hero {
+  max-height: var(--home-hero-max-height);
+}
+
+@utility h-home-continue-card {
+  height: var(--home-continue-card-height);
+}
+
+@utility gap-home-continue {
+  gap: var(--home-continue-card-gap);
+}
+
+@utility gap-home-rail {
+  gap: var(--home-rail-gap);
+}
+
+@utility gap-home-section {
+  gap: var(--home-section-gap);
+}
+
+@utility grid-home-rail-rows {
+  grid-template-rows:
+    var(--home-calendar-height)
+    var(--home-streak-height)
+    var(--home-focus-height)
+    var(--home-progress-height);
+}
+
+@utility mt-home-section {
+  margin-top: var(--home-section-gap);
+}
+
+@utility h-home-banner {
+  height: var(--home-banner-height);
+}
+
+@utility w-home-rail {
+  width: var(--home-rail-width);
+}
+
+@utility w-home-sidebar {
+  width: var(--home-sidebar-width);
+}
+
+@utility max-w-home-content {
+  max-width: var(--home-content-max-width);
+}
+
+@utility px-home-page {
+  padding-left: var(--home-page-padding-x);
+  padding-right: var(--home-page-padding-x);
+}
+
+@utility py-home-page {
+  padding-top: var(--home-page-padding-y);
+  padding-bottom: var(--home-page-padding-y);
+}
+
+@utility rounded-home-card {
+  border-radius: var(--home-card-radius);
+}
+
+@utility p-home-card {
+  padding: var(--home-card-padding);
+}
+
+@utility h-home-btn {
+  height: var(--home-btn-height);
+}
+
+@utility px-home-btn {
+  padding-left: var(--home-btn-padding-x);
+  padding-right: var(--home-btn-padding-x);
+}
+
+@utility rounded-home-btn {
+  border-radius: var(--home-btn-radius);
+}
+
+@utility h-home-calendar {
+  height: var(--home-calendar-height);
+}
+
+@utility h-home-streak {
+  height: var(--home-streak-height);
+}
+
+@utility h-home-focus {
+  height: var(--home-focus-height);
+}
+
+@utility h-home-progress {
+  height: var(--home-progress-height);
+}
+
+@utility rounded-home-banner {
+  border-radius: var(--home-banner-radius);
+}
+
+@utility px-home-banner {
+  padding-left: var(--home-banner-padding);
+  padding-right: var(--home-banner-padding);
+}
+
+@utility bg-home-streak-gradient {
+  background: var(--home-streak-gradient);
 }
 
 @layer base {

@@ -5,16 +5,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ChevronRight,
-  Sparkles,
-  X,
-} from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 
 import { BackToHomeLink } from '@/components/audiblytics/BackToHomeLink';
 import { HardWordsList } from '@/components/audiblytics/HardWordsList';
 import { InlineErrorSurface } from '@/components/audiblytics/InlineErrorSurface';
 import { TodayParagraphControls } from '@/components/audiblytics/TodayParagraphControls';
+import { TodayLiveFeedbackStretch } from '@/components/audiblytics/TodayLiveFeedbackStretch';
+import { TodayWordDetailCard } from '@/components/audiblytics/TodayWordDetailCard';
 import {
   RecordPanel,
   type RecordingAnalysis,
@@ -30,6 +28,8 @@ import { useGenerateParagraph } from '@/features/paragraph/use-generate-paragrap
 import { useParagraphOfTheDay } from '@/features/paragraph/use-paragraph-of-the-day';
 import { useDay14Trigger } from '@/features/day14/use-day-14-trigger';
 import { useStatStreakSurface } from '@/features/calendar/stat-streak-surface-context';
+import { useCollection } from '@/features/collection/use-collection';
+import { useSaveWord } from '@/features/collection/use-save-word';
 import { useMarkReadIt } from '@/features/calendar/use-mark-read-it';
 import {
   filterValidHardWords,
@@ -40,6 +40,7 @@ import type { LlmError } from '@/lib/llm/types';
 import { ok, type Result } from '@/lib/result';
 import { fetchApiSettings, patchApiSettings, type ApiSettings } from '@/lib/api/settings';
 import { isApiStorageBackend } from '@/lib/config/storage-backend';
+import { isStretchUiEnabled } from '@/lib/config/stretch-ui';
 import { useDistinctDayOfUse } from '@/lib/day-counter/use-distinct-day-of-use';
 import {
   activeProviderSchema,
@@ -53,10 +54,25 @@ import {
   type Settings,
   type Theme,
 } from '@/lib/schemas/settings.schema';
-import { collectionWordSchema } from '@/lib/schemas/collection.schema';
-import type { HardWord } from '@/lib/schemas/paragraph-cache.schema';
+import { practicePrefsSchema } from '@/lib/schemas/practice-prefs.schema';
+import {
+  applyLastUsedPractice,
+  shouldApplyLastUsedOverlay,
+} from '@/lib/settings/apply-last-used-practice';
 import { LIVE_QUERY_EMPTY_DEPS } from '@/lib/hooks/live-query-empty-deps';
-import { db, safeWrite, type StorageError } from '@/lib/storage/db';
+import { db, type StorageError } from '@/lib/storage/db';
+import {
+  findHardWordForToken,
+  hardWordRowId,
+  isWordToken,
+  normalizeWordKey,
+  splitParagraphTokens,
+} from '@/lib/today/hard-word-match';
+import {
+  isPlainWordEntry,
+  resolveWordEntry,
+  resolveWordRowId,
+} from '@/lib/today/plain-word-entry';
 import { useLocalStorage } from '@/lib/storage/use-local-storage';
 import { cn } from '@/lib/utils';
 
@@ -107,33 +123,6 @@ function ParagraphZoneSkeleton() {
   );
 }
 
-function buildPronunciationGuide(word: string): string {
-  return word
-    .trim()
-    .split(/(?=[aeiouy])/i)
-    .filter(Boolean)
-    .join('-')
-    .toUpperCase();
-}
-
-function makeAdHocHardWord(word: string, paragraph: string): HardWord {
-  return {
-    word,
-    ipa: word,
-    pronunciationGuide: buildPronunciationGuide(word),
-    meaning: 'Meaning not generated yet.',
-    exampleSentence: paragraph,
-  };
-}
-
-function getMeaningParts(meaning: string): { partOfSpeech: string | null; gloss: string } {
-  const [maybePartOfSpeech, ...rest] = meaning.split('·').map((part) => part.trim());
-  if (rest.length === 0) {
-    return { partOfSpeech: null, gloss: meaning };
-  }
-  return { partOfSpeech: maybePartOfSpeech, gloss: rest.join(' · ') };
-}
-
 type TodayProps = {
   dayNumber: number;
   settings: Settings;
@@ -176,10 +165,13 @@ function TodayRouteBody({
   const [warmUpOpen, setWarmUpOpen] = useState(false);
   const [paragraphSpeaking, setParagraphSpeaking] = useState(false);
   const [activeWordId, setActiveWordId] = useState<string | null>(null);
+  const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [selectedWordId, setSelectedWordId] = useState<string | null>(null);
-  const [focusWords, setFocusWords] = useState<HardWord[]>([]);
-  const [collectionSaveError, setCollectionSaveError] = useState<StorageError | null>(null);
   const [showTips, setShowTips] = useState(false);
+  const collection = useCollection();
+  const savedWords = collection ? new Set(collection.map((r) => r.word)) : undefined;
+  const { isSaving: isSavingWord, error: saveWordError, saveWord } = useSaveWord();
+  const hardWords = paragraph ? filterValidHardWords(paragraph.hardWords) : [];
   const [recordingAnalysis, setRecordingAnalysis] = useState<RecordingAnalysis | null>(null);
   const warmUpLauncherRef = useRef<HTMLButtonElement>(null);
   const offlinePackCount = useLiveQuery(() => db.offlinePack.count(), LIVE_QUERY_EMPTY_DEPS, undefined);
@@ -248,41 +240,31 @@ function TodayRouteBody({
     });
   }, [activeWordId]);
 
-  const handleAddFocusWord = useCallback((word: HardWord) => {
-    setFocusWords((current) => {
-      if (current.some((entry) => entry.word.toLowerCase() === word.word.toLowerCase())) {
-        return current;
-      }
-      return [...current, word];
-    });
-  }, []);
+  const handleSelectWord = useCallback(
+    (token: string) => {
+      const rowId = resolveWordRowId(token, hardWords);
+      setSelectedToken(token);
+      setSelectedWordId(rowId);
+      toggleWordTts(rowId, findHardWordForToken(token, hardWords)?.word ?? token);
+    },
+    [hardWords, toggleWordTts],
+  );
 
-  const handleSaveSelectedWord = useCallback(async (word: HardWord) => {
-    setCollectionSaveError(null);
-    const existing = await db.collection.where('word').equals(word.word).first();
-    if (existing) return;
+  const handleSelectHardWord = useCallback(
+    (_rowId: string, word: string) => {
+      handleSelectWord(word);
+    },
+    [handleSelectWord],
+  );
 
-    const draft = collectionWordSchema.parse({
-      id: crypto.randomUUID(),
-      word: word.word,
-      ipa: word.ipa,
-      pronunciationGuide: word.pronunciationGuide || word.word,
-      meaning: word.meaning,
-      exampleSentence: word.exampleSentence,
-      savedAt: new Date().toISOString(),
-      sourceParagraphId: null,
-      reviewCount: 0,
-      lastReviewedAt: null,
-      difficultyRating: 1,
-    });
-    const write = await safeWrite(async () => {
-      await db.collection.add(draft);
-      return draft;
-    });
-    if (!write.ok) {
-      setCollectionSaveError(write.error);
+  const handleCloseWordDetail = useCallback(() => {
+    if (activeWordId === selectedWordId && typeof window !== 'undefined') {
+      window.speechSynthesis.cancel();
+      setActiveWordId(null);
     }
-  }, []);
+    setSelectedToken(null);
+    setSelectedWordId(null);
+  }, [activeWordId, selectedWordId]);
 
   const handleGenerate = useCallback(
     (opts?: { nextParagraph?: boolean }) => {
@@ -318,24 +300,11 @@ function TodayRouteBody({
   const canGenerate =
     llmError === null && offlinePackError === null && !paragraphCacheLoading;
   const showParagraphControls = canGenerate;
-  const generatedHardWords = paragraph ? filterValidHardWords(paragraph.hardWords) : [];
-  const hardWords = [
-    ...generatedHardWords,
-    ...focusWords.filter(
-      (focusWord) =>
-        !generatedHardWords.some(
-          (generatedWord) => generatedWord.word.toLowerCase() === focusWord.word.toLowerCase(),
-        ),
-    ),
-  ];
   const selectedWord =
-    hardWords.find((word) => `${word.word}-${word.ipa}` === selectedWordId) ??
-    (selectedWordId && paragraph
-      ? makeAdHocHardWord(selectedWordId, paragraph.paragraph)
-      : hardWords[0] ?? null);
-  const focusWordKeys = new Set(hardWords.map((word) => word.word.toLowerCase()));
-  const paragraphParts = paragraph ? paragraph.paragraph.split(/(\b[\w'-]+\b)/g) : [];
-  const selectedMeaning = selectedWord ? getMeaningParts(selectedWord.meaning) : null;
+    selectedToken && paragraph
+      ? resolveWordEntry(selectedToken, hardWords, paragraph.paragraph)
+      : null;
+  const paragraphParts = paragraph ? splitParagraphTokens(paragraph.paragraph) : [];
 
   return (
     <div className="py-4">
@@ -398,9 +367,7 @@ function TodayRouteBody({
             isUsingOfflinePack={isApplyingOfflinePack}
             hasOfflinePack={hasOfflinePack}
             onRetry={() => void handleGenerate()}
-            onOpenSettings={() =>
-              router.push(isApiStorageBackend() ? '/settings' : '/settings?focus=provider')
-            }
+            onOpenSettings={() => router.push('/settings/advanced')}
             onUseOfflinePack={() => void handleApplyOfflinePack()}
           />
         ) : null}
@@ -454,31 +421,28 @@ function TodayRouteBody({
             >
               <p className="text-paragraph-hero text-foreground">
                 {paragraphParts.map((part, index) => {
-                  const isWord = /\b[\w'-]+\b/.test(part);
-                  if (!isWord) {
+                  if (!isWordToken(part)) {
                     return <span key={`${part}-${index}`}>{part}</span>;
                   }
-                  const hardWord = hardWords.find(
-                    (word) => word.word.toLowerCase() === part.toLowerCase(),
-                  );
-                  const rowId = hardWord ? `${hardWord.word}-${hardWord.ipa}` : part;
-                  const isFocusWord = focusWordKeys.has(part.toLowerCase());
+                  const hardWord = findHardWordForToken(part, hardWords);
+                  const isSelected =
+                    selectedToken !== null &&
+                    normalizeWordKey(selectedToken) === normalizeWordKey(part);
                   return (
                     <button
                       key={`${part}-${index}`}
                       type="button"
                       className={cn(
-                        'rounded-sm px-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
-                        isFocusWord
-                          ? 'bg-surface-elevated text-primary hover:bg-primary-soft'
-                          : 'text-foreground hover:bg-surface-elevated hover:text-primary',
+                        'rounded-sm px-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
+                        isSelected
+                          ? 'bg-primary-soft text-primary'
+                          : hardWord
+                            ? 'bg-surface-elevated text-primary hover:bg-primary-soft'
+                            : 'text-foreground underline decoration-transparent decoration-1 underline-offset-4 hover:bg-surface-elevated hover:decoration-divider',
                       )}
-                      onClick={() => {
-                        setSelectedWordId(rowId);
-                        if (hardWord) {
-                          toggleWordTts(rowId, hardWord.word);
-                        }
-                      }}
+                      onClick={() => handleSelectWord(part)}
+                      aria-pressed={isSelected}
+                      aria-label={`${part}${hardWord ? ', difficult word' : ''}`}
                     >
                       {part}
                     </button>
@@ -492,74 +456,32 @@ function TodayRouteBody({
                 </div>
                 <span className="inline-flex items-center gap-2">
                   <span className="size-2 rounded-full bg-primary" aria-hidden />
-                  {hardWords.length} focus words
+                  {hardWords.length} difficult {hardWords.length === 1 ? 'word' : 'words'}
                 </span>
               </div>
             </article>
 
-            {selectedWord && selectedMeaning ? (
-              <section
-                className="rounded-lg border border-divider bg-surface px-5 py-4"
-                aria-label="Selected word"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-caption text-primary">Selected word</p>
-                    <h2 className="mt-2 text-headline-3 text-primary">{selectedWord.word}</h2>
-                    <p className="mt-1 text-ui-sm text-secondary">
-                      Pronounce &quot;{selectedWord.word}&quot; as{' '}
-                      <span className="font-semibold text-foreground">
-                        {selectedWord.pronunciationGuide || buildPronunciationGuide(selectedWord.word)}
-                      </span>
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label="Close selected word"
-                    className="rounded-sm text-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-                    onClick={() => setSelectedWordId(null)}
-                  >
-                    <X className="size-5" strokeWidth={1.6} />
-                  </button>
-                </div>
-                <div className="mt-5 space-y-4 text-caption text-secondary">
-                  <div>
-                    <p className="text-micro-label text-tertiary">Meaning</p>
-                    <p className="mt-1 text-ui-sm text-foreground">
-                      {selectedMeaning.partOfSpeech ? (
-                        <span className="text-secondary">{selectedMeaning.partOfSpeech} · </span>
-                      ) : null}
-                      {selectedMeaning.gloss}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-micro-label text-tertiary">Use in a sentence</p>
-                    <p className="mt-1 text-ui-sm text-foreground">
-                      &quot;{selectedWord.exampleSentence}&quot;
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <Button type="button" size="sm" onClick={() => handleAddFocusWord(selectedWord)}>
-                      Add to Focus Words
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => void handleSaveSelectedWord(selectedWord)}
-                    >
-                      Save to Collection
-                    </Button>
-                  </div>
-                  {collectionSaveError ? (
-                    <InlineErrorSurface
-                      variant="storage"
-                      error={collectionSaveError}
-                      onOpenSettings={() => router.push('/settings')}
-                    />
-                  ) : null}
-                </div>
-              </section>
+            {selectedWord ? (
+              <TodayWordDetailCard
+                word={selectedWord}
+                isPlainWord={isPlainWordEntry(selectedWord)}
+                isSpeaking={activeWordId === selectedWordId}
+                onSpeak={() => handleSelectHardWord(selectedWordId ?? '', selectedWord.word)}
+                onClose={handleCloseWordDetail}
+                onSaveToCollection={() => {
+                  void saveWord({ entry: selectedWord, sourceParagraphId: paragraphId });
+                }}
+                isSaving={isSavingWord}
+                isSaved={
+                  savedWords
+                    ? [...savedWords].some(
+                        (w) => normalizeWordKey(w) === normalizeWordKey(selectedWord.word),
+                      )
+                    : false
+                }
+                saveError={saveWordError}
+                onOpenSettings={() => router.push('/settings')}
+              />
             ) : null}
 
             {!hasReadIt ? (
@@ -625,7 +547,7 @@ function TodayRouteBody({
                   <span className="size-2 rounded-full bg-primary" aria-hidden />
                   Ready to record
                 </span>
-                <span>0:00 / 1:00</span>
+                <span>0:00</span>
               </div>
               <RecordPanel
                 paragraphId={paragraphId}
@@ -638,48 +560,55 @@ function TodayRouteBody({
             </div>
           </section>
 
-          <section className="rounded-lg border border-divider bg-surface px-5 py-5" aria-label="Live feedback">
-            <h2 className="text-ui font-semibold text-foreground">Reading analysis</h2>
-            {recordingAnalysis?.status === 'ready' ? (
-              <div className="mt-4 grid grid-cols-3 gap-3">
-                <div className="rounded-lg border border-divider px-3 py-3">
-                  <p className="text-caption text-secondary">Pace</p>
-                  <p className="mt-2 text-ui-sm font-semibold text-primary">
-                    {recordingAnalysis.paceWpm} WPM
-                  </p>
-                </div>
-                <div className="rounded-lg border border-divider px-3 py-3">
-                  <p className="text-caption text-secondary">Accuracy</p>
-                  <p className="mt-2 text-ui-sm font-semibold text-primary">
-                    {recordingAnalysis.accuracyPercent}%
-                  </p>
-                </div>
-                <div className="rounded-lg border border-divider px-3 py-3">
-                  <p className="text-caption text-secondary">Missed</p>
-                  <p className="mt-2 text-ui-sm font-semibold text-primary">
-                    {recordingAnalysis.missedWords.length}
-                  </p>
-                </div>
-                {recordingAnalysis.missedWords.length > 0 ? (
-                  <p className="col-span-3 text-caption text-secondary">
-                    Review: {recordingAnalysis.missedWords.join(', ')}
-                  </p>
-                ) : null}
-              </div>
+            {isStretchUiEnabled() ? (
+              <TodayLiveFeedbackStretch />
             ) : (
-              <p className="mt-3 text-caption text-secondary">
-                {recordingAnalysis?.status === 'unsupported'
-                  ? recordingAnalysis.message
-                  : 'Record a take to see transcript-based pace and accuracy.'}
-              </p>
+              <section
+                className="rounded-lg border border-divider bg-surface px-5 py-5"
+                aria-label="Reading analysis"
+              >
+                <h2 className="text-ui font-semibold text-foreground">Reading analysis</h2>
+                {recordingAnalysis?.status === 'ready' ? (
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    <div className="rounded-lg border border-divider px-3 py-3">
+                      <p className="text-caption text-secondary">Pace</p>
+                      <p className="mt-2 text-ui-sm font-semibold text-primary">
+                        {recordingAnalysis.paceWpm} WPM
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-divider px-3 py-3">
+                      <p className="text-caption text-secondary">Accuracy</p>
+                      <p className="mt-2 text-ui-sm font-semibold text-primary">
+                        {recordingAnalysis.accuracyPercent}%
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-divider px-3 py-3">
+                      <p className="text-caption text-secondary">Missed</p>
+                      <p className="mt-2 text-ui-sm font-semibold text-primary">
+                        {recordingAnalysis.missedWords.length}
+                      </p>
+                    </div>
+                    {recordingAnalysis.missedWords.length > 0 ? (
+                      <p className="col-span-3 text-caption text-secondary">
+                        Review: {recordingAnalysis.missedWords.join(', ')}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-caption text-secondary">
+                    {recordingAnalysis?.status === 'unsupported'
+                      ? recordingAnalysis.message
+                      : 'Record a take to see transcript-based pace and accuracy.'}
+                  </p>
+                )}
+              </section>
             )}
-          </section>
 
           {paragraph && hardWords.length > 0 ? (
-            <section className="rounded-lg border border-divider bg-surface px-5 py-5" aria-label="Focus Words">
+            <section className="rounded-lg border border-divider bg-surface px-5 py-5" aria-label="Difficult Words">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 className="text-ui font-semibold text-foreground">
-                  Focus Words{' '}
+                  Difficult Words{' '}
                   <span className="ml-1 rounded-full bg-surface-elevated px-2 py-0.5 text-caption text-secondary">
                     {hardWords.length}
                   </span>
@@ -695,10 +624,8 @@ function TodayRouteBody({
               <HardWordsList
                 entries={hardWords}
                 activeWordId={activeWordId}
-                onToggleWord={(rowId, word) => {
-                  setSelectedWordId(rowId);
-                  toggleWordTts(rowId, word);
-                }}
+                selectedWordId={selectedWordId}
+                onToggleWord={handleSelectHardWord}
                 sourceParagraphId={paragraphId}
                 recycledWordKeys={recycledWordKeys}
                 variant="compact"
@@ -728,8 +655,18 @@ export function TodayApp() {
     settingsSchema.parse({}),
     settingsSchema,
   );
+  const [practicePrefs] = useLocalStorage(
+    'audiblytics.practicePrefs',
+    practicePrefsSchema.parse({}),
+    practicePrefsSchema,
+  );
   const [apiSettings, setApiSettings] = useState<ApiSettings | null>(null);
   const [settingsReady, setSettingsReady] = useState(!apiMode);
+  const lastUsedAppliedRef = useRef(false);
+  const [practiceOverlay, setPracticeOverlay] = useState<Pick<
+    Settings,
+    'theme' | 'persona' | 'length'
+  > | null>(null);
 
   useEffect(() => {
     if (!apiMode) return;
@@ -745,11 +682,20 @@ export function TodayApp() {
     })();
   }, [apiMode]);
 
-  const settings = apiMode ? (apiSettings ?? settingsSchema.parse({})) : localSettings;
+  const baseSettings = apiMode
+    ? (apiSettings ?? settingsSchema.parse({}))
+    : localSettings;
+  const settings =
+    practiceOverlay !== null ? { ...baseSettings, ...practiceOverlay } : baseSettings;
   const activeProvider = apiMode ? (apiSettings?.activeProvider ?? 'gemini') : localActiveProvider;
 
   const handleSettingsChange = useCallback(
     (next: Settings) => {
+      setPracticeOverlay({
+        theme: next.theme,
+        persona: next.persona,
+        length: next.length,
+      });
       if (!apiMode) {
         setLocalSettings(next);
         return;
@@ -765,6 +711,22 @@ export function TodayApp() {
     },
     [apiMode, setLocalSettings],
   );
+
+  useEffect(() => {
+    if (!settingsReady || lastUsedAppliedRef.current) return;
+    lastUsedAppliedRef.current = true;
+    if (!shouldApplyLastUsedOverlay(baseSettings, practicePrefs)) return;
+    const merged = applyLastUsedPractice(baseSettings, practicePrefs);
+    if (apiMode) {
+      setPracticeOverlay({
+        theme: merged.theme,
+        persona: merged.persona,
+        length: merged.length,
+      });
+      return;
+    }
+    setLocalSettings(merged);
+  }, [settingsReady, apiMode, baseSettings, practicePrefs, setLocalSettings]);
   const distinctDays = useDistinctDayOfUse();
   const paragraphOfTheDay = useParagraphOfTheDay();
   const cacheHit = paragraphOfTheDay.status === 'hit';

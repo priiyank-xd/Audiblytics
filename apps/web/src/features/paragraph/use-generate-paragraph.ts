@@ -15,6 +15,8 @@ import type { Settings } from '@/lib/schemas/settings.schema';
 import { db } from '@/lib/storage/db';
 import { useLocalStorage } from '@/lib/storage/use-local-storage';
 
+import { notifyParagraphDatesMutated } from '@/features/calendar/paragraph-dates-mutated';
+
 import { persistParagraphToCache } from './persist-paragraph-cache';
 import type { GenerateParagraphHookResult, ParagraphGeneratePayload } from './paragraph-generate-payload';
 import { selectRecycleWords } from './select-recycle-words';
@@ -66,6 +68,7 @@ export function useGenerateParagraph({
           recycleWords,
         });
         if (out.ok) {
+          notifyParagraphDatesMutated();
           setLastLlmCallStatus({
             ok: true,
             lastProvider: 'gemini',

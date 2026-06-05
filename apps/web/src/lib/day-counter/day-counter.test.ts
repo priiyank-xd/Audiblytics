@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, test } from 'node:test';
 
 import {
+  appendServerDaysOfUseCache,
+  getCachedServerDaysOfUse,
+  invalidateServerDaysOfUseCache,
+} from '@/lib/day-counter/days-of-use-server-cache';
+import {
   currentStreak,
   dayOfUseAtRecordingSave,
   distinctDaysOfUse,
@@ -126,4 +131,50 @@ test('distinctDaysOfUse: counts unique stored dates', () => {
     '2026-01-14',
   ]);
   assert.equal(distinctDaysOfUse(), 14);
+});
+
+test('distinctDaysOfUse: merges local and server cache in api mode', () => {
+  const prevBackend = process.env.NEXT_PUBLIC_STORAGE_BACKEND;
+  process.env.NEXT_PUBLIC_STORAGE_BACKEND = 'api';
+  invalidateServerDaysOfUseCache();
+
+  try {
+    appendServerDaysOfUseCache('2026-05-01');
+    writeDaysOfUse(['2026-05-02']);
+    assert.equal(distinctDaysOfUse(), 2);
+  } finally {
+    process.env.NEXT_PUBLIC_STORAGE_BACKEND = prevBackend;
+    invalidateServerDaysOfUseCache();
+  }
+});
+
+test('recordDayOfUse: stamps server and updates cache in api mode', async () => {
+  const prevBackend = process.env.NEXT_PUBLIC_STORAGE_BACKEND;
+  process.env.NEXT_PUBLIC_STORAGE_BACKEND = 'api';
+  invalidateServerDaysOfUseCache();
+
+  let postCount = 0;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    if (init?.method === 'POST' && String(input).includes('/days-of-use')) {
+      postCount += 1;
+      return new Response(JSON.stringify({ utcDate: '2026-05-04' }), { status: 201 });
+    }
+    return new Response(JSON.stringify([]), { status: 200 });
+  };
+
+  try {
+    recordDayOfUse(new Date('2026-05-04T12:00:00.000Z'));
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0);
+    });
+    assert.equal(postCount, 1);
+    assert.deepEqual(readDaysOfUse(), ['2026-05-04']);
+    assert.ok(getCachedServerDaysOfUse().includes('2026-05-04'));
+    assert.equal(distinctDaysOfUse(), 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_STORAGE_BACKEND = prevBackend;
+    invalidateServerDaysOfUseCache();
+  }
 });

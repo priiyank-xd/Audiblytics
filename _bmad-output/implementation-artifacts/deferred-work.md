@@ -1,5 +1,47 @@
 # Deferred work
 
+## Deferred from: code review of 15-5-documentation-and-sprint-tracking-hygiene (2026-06-01)
+
+- **UX spec cross-link to v2 addendum** — standalone addendum satisfies AC3; optional `referenceArtifacts` entry in `ux-design-specification.md` frontmatter.
+- **Retroactive Epic 9–10 story File Lists** — AC4 met with story + AC copy; implementation file lists optional for retroactive traceability.
+
+## Deferred from: code review of 15-4-stats-route-implement-or-remove-nav (2026-06-01)
+
+- **`hasParagraphForTodayOnScreen` off Today route** — Stats (and Journey) may undercount today’s session when paragraph is only visible on Today; StatStreakSurface semantics pre-date 15.4.
+- **Stats page `max-w-3xl` vs Journey full width** — optional polish to align stat grid width with Journey layout.
+
+## Deferred from: code review (14-6-review-session-v2) — 2026-05-31
+
+- **`useReviewQueue` Dexie-only in API mode** — review batch may be empty while server collection has words; follow-up when review sync lands.
+- **Global keyboard shortcuts 1–4** — active window-wide when card revealed; optional card-focus scoping in polish pass.
+
+## Deferred from: code review (14-5-collection-master-detail) — 2026-05-31
+
+- **`useCollectionSourceMeta` Dexie-only** — API mode source labels fall back to saved date until paragraph cache syncs server-side.
+- **Collection list responsive layout** — 4-column grid on narrow screens; stack columns below `sm` in polish pass.
+
+## Deferred from: code review (14-4-voice-journal-page-v2) — 2026-05-31
+
+- **API-mode download without blob** — `triggerRecordingDownload` no-op when `row.blob` missing; presign-then-download follow-up.
+- **RecordPanel waveform DRY** — share `WAVEFORM_BAR_HEIGHT_CLASSES` with `RecordingWaveformPlaceholder`.
+
+## Deferred from: code review (14-3-today-session-three-column-layout) — 2026-05-31
+
+- **Stale `selectedWordId` after New paragraph** — clear `selectedWordId` / `activeWordId` when `handleGenerate` swaps paragraph id.
+- **`ParagraphHero.tsx` orphaned** — no imports in `apps/web`; safe to delete in cleanup pass.
+
+## Deferred from: code review (14-2-home-dashboard) — 2026-05-31
+
+- **Featured streak duplicate copy when streak > 0** — headline and body both repeat day count; hide subtitle when streak > 0 except zero-state encouragement.
+- **Greeting hour phrase fixed at mount** — `getHours()` evaluated once per render cycle; long-lived tab won't update phrase at noon boundary.
+
+## Deferred from: code review (14-1-design-tokens-and-app-shell-v2) — 2026-05-31
+
+- **`/calendar` unreachable from nav** — Stats→`/stats` stub, Journey→`/journey` stub; direct URL still works until 14.8 merges calendar into Journey.
+- **HomeDashboard hardcoded "Neal"** — out of 14.1 scope (AC10); address in 14.2 home dashboard.
+- **`TopNav.tsx` orphaned** — removed from `layout.tsx`; file kept; optional delete in cleanup.
+- **Logout failure silent** — sidebar `void logout()`; no inline error; matches existing auth-context pattern.
+
 ## Deferred from: code review (13-3-architecture-adrs-3-minimum) — 2026-05-31
 
 - **BV9 formal storage ports not implemented** — `isApiStorageBackend()` + feature hooks carry strangler flag; ADR describes BV9 target pattern.
@@ -41,7 +83,7 @@
 ## Deferred from: code review (11-4-frontend-save-recording-via-api) — 2026-05-31
 
 - **`enrichRecordingsWithTheme` Dexie-only paragraph cache** — API mode theme labels "Unknown" until paragraph cache syncs server-side.
-- **`useArchivedDay` Dexie-only recordings** — calendar archived-day drill-in broken in API mode; follow-up story.
+- ~~**`useArchivedDay` Dexie-only recordings**~~ — **Resolved:** Story 15.2 (`GET /paragraphs/by-date`, API archived snapshot).
 - **RecordPanel replacement skipped in API mode** — needs DELETE /recordings route.
 - **`fetchRecordings` load failure → empty list** — no inline error on voice journal list fetch fail.
 - **PUT ok / complete fail pending orphan** — idempotent POST retry path; same as 11.2.
@@ -59,9 +101,27 @@
 - **No pytest for POST 422 validation** — Pydantic boundary enforced; optional defense-in-depth test.
 - **API-mode `useSaveWord` skips client word dedup** — server idempotent 200; acceptable extra POST for n=1.
 
+## Deferred from: code review (15-3-days-of-use-server-sync-day-14-parity) — 2026-06-01
+
+- **Day14 `hasDay1Recording` Dexie-only in API mode** — `use-day-14-trigger.ts`; needs API recording query for full parity.
+- **Server stamp failure → local-only until reload** — acceptable per AC local fallback.
+
+## Deferred from: code review (15-2-archived-day-detail-in-api-mode) — 2026-06-01
+
+- **Full `fetchRecordings()` per archived day** — client UTC filter; server `?date=` if list grows.
+- **Archived API load failure → empty snapshot** — partial data not shown on mixed failure; matches completions degrade.
+- **`/calendar?day=` 404** — route absent; Journey detail is canonical; link polish optional.
+
+## Deferred from: code review (15-1-server-paragraph-dates-for-calendar-and-streak) — 2026-06-01
+
+- **`_parse_query_utc_date` duplicated** — `paragraphs.py` / `completions.py`; extract shared util in hygiene pass.
+- **Paragraph dates API fail → Dexie-only** — `load-paragraph-cache-utc-date-set.ts`; same silent-degrade as completions fetch.
+- **No vitest for API merge branch** — `loadParagraphCacheUtcDateSet`; merge helper covered.
+- **Unbounded dates query + no window params from hooks** — n=1 OK; optimize if history grows.
+
 ## Deferred from: code review (12-2-day-completions-api) — 2026-05-31
 
-- **`loadParagraphCacheUtcDateSet` Dexie-only in API mode** — streak/calendar `hasParagraphForDate` ignores server paragraph cache; completions sync alone insufficient for full cross-device calendar.
+- ~~**`loadParagraphCacheUtcDateSet` Dexie-only in API mode**~~ — **Resolved:** Story 15.1 (`GET /paragraphs/dates` + Dexie ∪ server merge).
 - **`fetchCompletions` load failure → empty map** — same defer as 12.1 collection; no inline error on calendar/streak fetch fail.
 - **Upsert failure silent in markReadIt / recording stamp** — PUT fail leaves UI stale; no inline error surface.
 - **No pytest for GET `from`/`to` range query params** — optional filter coverage.

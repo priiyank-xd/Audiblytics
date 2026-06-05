@@ -1,4 +1,5 @@
 import type { RecordingWithTheme } from '@/features/voice-journal/use-recordings';
+import type { CachedParagraph } from '@/lib/schemas/paragraph-cache.schema';
 import type { RecordingListItem } from '@/lib/schemas/recording.schema';
 import { db } from '@/lib/storage/db';
 import { themeKeyToLabel } from '@/lib/ui/theme-key-label';
@@ -31,6 +32,23 @@ export async function enrichRecordingsWithTheme(
     const cached = cacheById.get(r.paragraphId);
     const themeLabel = cached ? themeKeyToLabel(cached.theme) : 'Unknown';
     const ttsFallbackWord = cached?.ttsFallbackWord ?? null;
+    return { ...r, themeLabel, ttsFallbackWord };
+  });
+}
+
+/** Theme labels from a single archived-day paragraph (API mode). */
+export function enrichRecordingsForArchivedDay(
+  rows: RecordingListItem[],
+  cached: CachedParagraph | null,
+): RecordingWithTheme[] {
+  const themeLabel = cached ? themeKeyToLabel(cached.theme) : 'Unknown';
+  const w = cached?.hardWords[0]?.word;
+  const ttsFallbackWord = typeof w === 'string' && w.length > 0 ? w : null;
+
+  return rows.map((r) => {
+    if (isWarmupRecordingParagraphId(r.paragraphId)) {
+      return { ...r, themeLabel: 'Warm-up', ttsFallbackWord: null };
+    }
     return { ...r, themeLabel, ttsFallbackWord };
   });
 }

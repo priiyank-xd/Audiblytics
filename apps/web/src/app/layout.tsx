@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import localFont from "next/font/local";
 import { Day14Gate } from "@/app/_internal/Day14Gate";
-import { AppSidebar } from "@/components/audiblytics/AppSidebar";
+import { AppSidebar, MobileAppNav } from "@/components/audiblytics/AppSidebar";
+import { AppColumn, MainArea } from "@/components/audiblytics/MainArea";
 import { HonestyFooter } from "@/components/audiblytics/HonestyFooter";
 import { RetentionPruneOnMount } from "@/components/audiblytics/RetentionPruneOnMount";
 import { AppShell } from "@/components/audiblytics/AppShell";
-import { TopNav } from "@/components/audiblytics/TopNav";
 import { StatStreakSurfaceProvider } from "@/features/calendar/stat-streak-surface-context";
 import { AppProviders } from "@/app/providers";
 import { AppGate } from "@/components/audiblytics/AppGate";
@@ -53,25 +53,25 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fontSerif.variable} ${fontSans.variable} ${fontMono.variable} h-full antialiased`}
+      className={`${fontSerif.variable} ${fontSans.variable} ${fontMono.variable} h-dvh antialiased`}
     >
-      <body className="flex min-h-screen flex-col overflow-x-hidden bg-surface text-foreground">
+      <body className="flex h-dvh flex-col overflow-hidden bg-surface text-foreground">
         <AppProviders>
           <Day14Gate>
-            <div className="flex min-h-screen min-w-0">
+            <div className="flex h-dvh min-h-0 min-w-0 overflow-hidden">
               <AppSidebar />
-              <div className="flex min-w-0 flex-1 flex-col">
-                <TopNav />
+              <AppColumn>
+                <MobileAppNav />
                 <StatStreakSurfaceProvider>
-                  <main className="min-w-0 flex-1 px-5 pb-12 pt-8 md:px-8 lg:px-14 lg:pb-16">
+                  <MainArea>
                     <AppShell>
                       <RetentionPruneOnMount />
                       <AppGate>{children}</AppGate>
                     </AppShell>
-                  </main>
+                  </MainArea>
                 </StatStreakSurfaceProvider>
                 <HonestyFooter />
-              </div>
+              </AppColumn>
             </div>
           </Day14Gate>
         </AppProviders>
