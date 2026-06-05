@@ -30,7 +30,7 @@ This folder gives you **editable vector wireframes** you can import and rearrang
 
 If you want pixels from `localhost:3000` instead of wireframes:
 
-1. Run `pnpm dev`.
+1. Run `cd apps/web && pnpm dev`.
 2. Install the Figma plugin **html.to.design** (or **Anima**).
 3. Capture `/`, `/today`, `/review`, `/collection`, `/settings`.
 4. Align captures with the **PROPOSED** wireframes.

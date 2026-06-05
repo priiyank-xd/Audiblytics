@@ -2,13 +2,5 @@
   "name": "audiblytics",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "pnpm --filter @audiblytics/web dev",
-    "dev:web": "pnpm --filter @audiblytics/web dev",
-    "build": "pnpm --filter @audiblytics/web build",
-    "start": "pnpm --filter @audiblytics/web start",
-    "lint": "pnpm --filter @audiblytics/web lint",
-    "typecheck": "pnpm --filter @audiblytics/web typecheck",
-    "test": "pnpm --filter @audiblytics/web test"
-  }
+  "description": "Monorepo workspace root — install dependencies here; run app commands from apps/web or apps/api."
 }

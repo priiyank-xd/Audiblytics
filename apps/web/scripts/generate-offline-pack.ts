@@ -6,7 +6,7 @@
  *   pnpm tsx scripts/generate-offline-pack.ts --dry --limit=3
  *
  * Requirements:
- *   - Loads OFFLINE_PACK_PROVIDER_KEY from .env.local at repo root.
+ *   - Loads OFFLINE_PACK_PROVIDER_KEY from apps/web/.env.local.
  *   - Generates ~1000 paragraphs across theme × persona combinations.
  *   - Uses Gemini model literal `gemini-2.5-flash-lite`.
  *   - Rate-limits to ≤10 requests/min by enforcing ≥6s spacing between submit starts.

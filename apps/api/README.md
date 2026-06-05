@@ -61,6 +61,7 @@ API_URL=http://localhost:8000
 ```
 
 ```bash
+cd apps/web
 pnpm dev
 ```
 

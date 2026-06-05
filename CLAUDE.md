@@ -2,7 +2,7 @@
 
 **Repo identity:** Audiblytics is an **n=1 personal-use** browser app. API keys live in `localStorage`. Do not treat this as a production multi-tenant product without an explicit architecture change.
 
-**Repo layout:** Monorepo — Next.js frontend in `apps/web/` (`@audiblytics/web`); FastAPI backend in `apps/api/`. Backend spec: `architecture-v2-fastapi-backend.md`.
+**Repo layout:** Monorepo — Next.js frontend in `apps/web/` (`@audiblytics/web`); FastAPI backend in `apps/api/`. Run `pnpm install` at repo root; run `pnpm dev` from `apps/web` and `uvicorn` from `apps/api`. Backend spec: `architecture-v2-fastapi-backend.md`.
 
 **Canonical doc:** `_bmad-output/planning-artifacts/architecture.md`
 

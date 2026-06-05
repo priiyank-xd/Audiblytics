@@ -5,57 +5,46 @@ Monorepo for **Audiblytics** — daily voice-journal and paragraph companion.
 ```
 Audiblytics/
   apps/
-    web/          # Next.js 16 frontend (@audiblytics/web)
-    api/          # FastAPI backend (audiblytics-api)
+    web/          # Next.js 16 frontend — run `pnpm dev` here
+    api/          # FastAPI backend — run `uvicorn` here
+  docs/           # ADRs
   _bmad-output/   # PRD, architecture, stories
+  docker-compose.yml   # local Postgres (API mode)
 ```
 
 ## Development
 
-From the repo root:
+**Install once** from the repo root (pnpm workspace):
 
 ```bash
 pnpm install
-pnpm dev          # Next.js at http://localhost:3000 (local storage mode by default)
 ```
 
-### Phase 2 — API paragraph generation
+**Run each app from its own folder** — same pattern for web and API:
 
-Set `GEMINI_API_KEY` in `apps/api/.env`. With API mode enabled, the Today page calls `POST /api/v1/paragraphs/generate` instead of the browser LLM client.
+| App | Folder | Start |
+|-----|--------|-------|
+| Web | `apps/web` | `pnpm dev` → http://localhost:3000 |
+| API | `apps/api` | `uvicorn app.main:app --reload --port 8000` |
 
-```bash
-cd apps/api && alembic upgrade head   # adds paragraph_cache
-```
-
-### Phase 1 — API mode (auth + Postgres settings)
-
-```bash
-docker compose up -d postgres
-cd apps/api && cp .env.example .env && pip install -e ".[dev]"
-uvicorn app.main:app --reload --port 8000
-```
-
-In `apps/web/.env.local` set `NEXT_PUBLIC_STORAGE_BACKEND=api` and `API_URL=http://localhost:8000`, then `pnpm dev` and visit `/login`.
-
-Apply DB migrations once (or `alembic stamp head` if tables already exist from `init_db()`):
-
-```bash
-cd apps/api && alembic upgrade head
-```
-
-See `apps/api/README.md` for seed user and tests.
+| Guide | Scope |
+|-------|-------|
+| **[apps/web/README.md](apps/web/README.md)** | Local mode, API mode env, scripts, deploy |
+| **[apps/api/README.md](apps/api/README.md)** | Postgres, migrations, seed user, tests, deploy |
 
 ## Architecture
 
 | Document | Scope |
-|----------|--------|
+|----------|-------|
 | `_bmad-output/planning-artifacts/architecture.md` | Client app (Dexie / localStorage era) |
 | `_bmad-output/planning-artifacts/architecture-v2-fastapi-backend.md` | Backend v2 — FastAPI, Neon, R2 |
+| `_bmad-output/planning-artifacts/ux-design-specification.md` | Client UX spec (Direction A) |
+| `_bmad-output/planning-artifacts/ux-v2-mockups-addendum.md` | UI refresh mockups (Epic 14) + API-mode notes |
 | [`docs/decisions/`](docs/decisions/) | ADRs (auth, R2 blobs, strangler migration) — BV4, BV6, BV9 |
 
 ## Personal-use boundary
 
-The **web** app still supports n=1 client-only mode (`localStorage` + IndexedDB). Public deployment with browser-held API keys remains gated until `NEXT_PUBLIC_STORAGE_BACKEND=api` and the FastAPI proxy are fully wired. See `architecture.md` § Hard-Scope-Boundary (AR15).
+The **web** app supports n=1 **local mode** (`localStorage` + IndexedDB, browser LLM keys) and **API mode** (`NEXT_PUBLIC_STORAGE_BACKEND=api` with FastAPI, Postgres, and server-side Gemini). Public deployment with browser-held API keys in local mode remains gated per `architecture.md` § Hard-Scope-Boundary (AR15).
 
 ## Deploy (BV15)
 
@@ -66,6 +55,4 @@ The **web** app still supports n=1 client-only mode (`localStorage` + IndexedDB)
 | Postgres | Neon |
 | Audio blobs | Cloudflare R2 |
 
-Full API env vars, Docker build/run, and migration steps: **[apps/api/README.md § Deploy](apps/api/README.md#deploy)**.
-
-In API mode, set `NEXT_PUBLIC_STORAGE_BACKEND=api` on Vercel and point `API_URL` at your deployed API origin (or use the Next.js rewrite proxy per your setup).
+See app READMEs for env vars and platform steps.
