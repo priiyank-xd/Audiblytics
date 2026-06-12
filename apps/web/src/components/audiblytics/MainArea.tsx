@@ -21,7 +21,7 @@ export function MainArea({ children }: { children: ReactNode }) {
       className={cn(
         'min-h-0 min-w-0 flex-1',
         isHome
-          ? 'overflow-y-auto px-home-page py-home-page'
+          ? 'flex h-full flex-col overflow-hidden px-home-page py-home-page'
           : 'overflow-y-auto px-5 pb-12 pt-8 md:px-8 lg:px-14 lg:pb-16',
       )}
     >

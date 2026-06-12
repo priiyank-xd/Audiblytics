@@ -78,3 +78,6 @@ apps/web/public/offline-pack.json
 
 # legacy root artifacts (pre-monorepo)
 /.next/
+
+# local dev orchestration (./dev)
+.dev-api.pid

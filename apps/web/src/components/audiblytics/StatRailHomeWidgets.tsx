@@ -38,7 +38,7 @@ export function TodaysFocusCard({ compact = false }: { compact?: boolean }) {
       aria-label="Today's focus: Clarity over speed"
       className={cn(
         'relative min-h-0 overflow-hidden rounded-home-card border border-divider bg-surface-card shadow-sm',
-        compact ? 'flex h-home-focus p-home-card' : 'p-5',
+        compact ? 'flex h-full min-h-0 p-home-card' : 'p-5',
       )}
     >
       <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
@@ -73,7 +73,7 @@ export function MonthlyProgressCard({ compact = false }: { compact?: boolean }) 
       aria-label="Progress this month"
       className={cn(
         'min-h-0 overflow-hidden rounded-home-card border border-divider bg-surface-card shadow-sm',
-        compact ? 'flex h-home-progress flex-col p-home-card' : 'p-5',
+        compact ? 'flex h-full min-h-0 flex-col p-home-card' : 'p-5',
       )}
     >
       <h2 className="inline-flex items-center gap-2 font-sans text-ui-sm text-foreground">

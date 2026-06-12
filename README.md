@@ -5,8 +5,8 @@ Monorepo for **Audiblytics** — daily voice-journal and paragraph companion.
 ```
 Audiblytics/
   apps/
-    web/          # Next.js 16 frontend — run `pnpm dev` here
-    api/          # FastAPI backend — run `uvicorn` here
+    web/          # Next.js 16 — pnpm install && pnpm dev here
+    api/          # FastAPI — uvicorn here
   docs/           # ADRs
   _bmad-output/   # PRD, architecture, stories
   docker-compose.yml   # local Postgres (API mode)
@@ -14,18 +14,21 @@ Audiblytics/
 
 ## Development
 
-**Install once** from the repo root (pnpm workspace):
+**Web — one command from repo root:**
 
 ```bash
-pnpm install
+./dev          # start → http://localhost:3000 (installs deps on first run)
+                 # when NEXT_PUBLIC_STORAGE_BACKEND=api in apps/web/.env.local,
+                 # also starts Postgres (Docker) and FastAPI on :8000
+./dev stop     # stop the dev server (and API when started by ./dev)
 ```
 
-**Run each app from its own folder** — same pattern for web and API:
+**Or run each app from its folder:**
 
-| App | Folder | Start |
-|-----|--------|-------|
-| Web | `apps/web` | `pnpm dev` → http://localhost:3000 |
-| API | `apps/api` | `uvicorn app.main:app --reload --port 8000` |
+| App | Folder | Install | Start |
+|-----|--------|---------|-------|
+| Web | `apps/web` | `pnpm install` | `pnpm dev` → http://localhost:3000 |
+| API | `apps/api` | `pip install -e ".[dev]"` | `uvicorn app.main:app --reload --port 8000` |
 
 | Guide | Scope |
 |-------|-------|

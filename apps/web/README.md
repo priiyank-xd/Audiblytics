@@ -6,17 +6,18 @@ Next.js 16 frontend (`@audiblytics/web`). Client spec: `_bmad-output/planning-ar
 
 Local storage + IndexedDB; LLM keys in browser `localStorage`.
 
-**1. Install (once, from repo root)**
+From repo root:
 
 ```bash
-cd ../..   # repo root, if you are in apps/web
-pnpm install
+./dev          # start (cleans up stale server if needed)
+./dev stop     # stop
 ```
 
-**2. Web**
+Or from this folder:
 
 ```bash
 cd apps/web
+pnpm install
 cp .env.example .env.local   # optional — defaults are fine for local mode
 pnpm dev
 ```

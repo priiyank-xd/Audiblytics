@@ -1,4 +1,5 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "../**/*.{js,ts,jsx,tsx,mdx}";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
@@ -399,10 +400,16 @@
 
 @utility grid-home-rail-rows {
   grid-template-rows:
-    var(--home-calendar-height)
-    var(--home-streak-height)
-    var(--home-focus-height)
-    var(--home-progress-height);
+    minmax(0, 1.35fr)
+    minmax(0, 0.65fr)
+    minmax(0, 0.75fr)
+    minmax(0, 1fr);
+}
+
+@utility max-h-home-continue-section {
+  max-height: calc(
+    var(--home-continue-card-height) + var(--home-section-gap) + 2.5rem
+  );
 }
 
 @utility mt-home-section {

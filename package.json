@@ -1,6 +1,0 @@
-{
-  "name": "audiblytics",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Monorepo workspace root — install dependencies here; run app commands from apps/web or apps/api."
-}

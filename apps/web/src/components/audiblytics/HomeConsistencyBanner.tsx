@@ -6,7 +6,7 @@ export function HomeConsistencyBanner() {
   return (
     <Link
       href="/journey"
-      className="group mt-home-section flex h-home-banner shrink-0 items-center justify-between gap-4 rounded-home-banner bg-surface-elevated px-home-banner transition-colors hover:bg-cream-dim focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+      className="group mt-home-section flex h-home-banner shrink-0 items-center justify-between gap-4 overflow-hidden rounded-home-banner bg-surface-elevated px-home-banner transition-colors hover:bg-cream-dim focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
     >
       <span className="flex items-center gap-4">
         <span className="flex size-10 items-center justify-center rounded-full bg-primary-soft text-primary">

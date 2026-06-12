@@ -44,7 +44,7 @@ export function StreakStatCard({ className, variant = 'default', compact = false
         aria-label={`Current streak: ${streakLabel}. ${body}`}
         className={cn(
           'flex items-center justify-between gap-4 rounded-home-card bg-home-streak-gradient text-on-primary shadow-sm',
-          compact ? 'h-home-streak min-h-0 p-home-card' : 'gap-4 p-5',
+          compact ? 'h-full min-h-0 p-home-card' : 'gap-4 p-5',
           className,
         )}
       >

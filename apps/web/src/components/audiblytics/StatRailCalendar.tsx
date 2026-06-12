@@ -117,7 +117,7 @@ export function StatRailCalendar({
       className={cn(
         'min-w-0 cursor-pointer outline-none',
         homeCard &&
-          'flex h-home-calendar min-h-0 w-home-rail flex-col overflow-hidden rounded-home-card border border-divider bg-surface-card p-home-card shadow-sm',
+          'flex h-full min-h-0 w-home-rail flex-col overflow-hidden rounded-home-card border border-divider bg-surface-card p-home-card shadow-sm',
         !homeCard && 'rounded-lg',
         className,
       )}

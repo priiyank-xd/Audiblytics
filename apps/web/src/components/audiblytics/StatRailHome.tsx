@@ -11,7 +11,7 @@ export type StatRailHomeProps = {
 export function StatRailHome({ compact = false }: StatRailHomeProps) {
   if (compact) {
     return (
-      <div className="grid min-h-0 w-full grid-home-rail-rows gap-home-rail">
+      <div className="grid h-full min-h-0 w-full grid-home-rail-rows gap-home-rail overflow-hidden">
         <StatRailCalendar compact showWeekSummary={false} showTodayDot homeCard />
         <StreakStatCard variant="featured" compact />
         <TodaysFocusCard compact />

@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import {
@@ -61,7 +60,7 @@ function HomeContinueCard({
   return (
     <Link
       href={href}
-      className="group flex h-home-continue-card flex-col rounded-home-card border border-divider bg-surface-card p-home-card transition-shadow hover:border-primary/15 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+      className="group flex h-full max-h-home-continue-card min-h-0 flex-col rounded-home-card border border-divider bg-surface-card p-home-card transition-shadow hover:border-primary/15 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
     >
       <div className="flex items-center gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
@@ -89,24 +88,6 @@ function HomeContinueCard({
         <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
       </p>
     </Link>
-  );
-}
-
-function HomeHeroIllustration() {
-  return (
-    <div
-      className="pointer-events-none relative z-0 flex h-full min-h-0 max-h-home-hero items-end justify-center md:col-span-2"
-      aria-hidden="true"
-    >
-      <Image
-        src="/images/home-hero-illustration.png"
-        alt=""
-        width={320}
-        height={400}
-        priority
-        className="h-full max-h-home-hero w-auto max-w-none object-contain object-bottom"
-      />
-    </div>
   );
 }
 
@@ -151,10 +132,10 @@ export function HomeDashboard() {
         : `${queue.length} cards — up to ${REVIEW_BATCH_SIZE} per batch`;
 
   return (
-    <div className="flex min-h-0 flex-col">
-      <section aria-labelledby="home-today-heading">
-        <div className="grid min-h-home-hero grid-cols-1 items-end gap-8 md:grid-cols-5">
-          <div className="relative z-10 md:col-span-3">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <section aria-labelledby="home-today-heading" className="flex min-h-0 flex-1 flex-col justify-end overflow-hidden">
+        <div className="max-w-2xl">
+          <div>
             <p className="text-home-greeting">{greeting}</p>
             <h1 id="home-today-heading" className="mt-4 text-home-headline text-foreground">
               Let&apos;s build your confidence today.
@@ -176,16 +157,15 @@ export function HomeDashboard() {
               Estimated time: 3 min
             </div>
           </div>
-          <HomeHeroIllustration />
         </div>
       </section>
 
       <section
-        className="mt-home-section shrink-0 border-t border-divider pt-8"
+        className="mt-home-section shrink-0 border-t border-divider pt-8 lg:max-h-home-continue-section"
         aria-label="Continue where you left off"
       >
         <h2 className="font-serif text-headline-3 text-foreground">Continue where you left off</h2>
-        <div className="mt-6 grid grid-cols-1 gap-home-continue sm:grid-cols-3">
+        <div className="mt-6 grid min-h-0 grid-cols-1 gap-home-continue sm:grid-cols-3 lg:h-home-continue-card">
           <HomeContinueCard
             href={collectionCount === 0 ? '/today' : '/review'}
             icon={<NotebookText className="size-4" strokeWidth={1.5} />}

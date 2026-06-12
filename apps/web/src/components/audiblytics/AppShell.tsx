@@ -7,9 +7,6 @@ import { HomeConsistencyBanner } from '@/components/audiblytics/HomeConsistencyB
 import { MainContentShell } from '@/components/audiblytics/MainContentShell';
 import { StatRail } from '@/components/audiblytics/StatRail';
 import { StatRailHome } from '@/components/audiblytics/StatRailHome';
-import { StatRailCalendar } from '@/components/audiblytics/StatRailCalendar';
-import { StatRailCards } from '@/components/audiblytics/StatRailCards';
-import { cn } from '@/lib/utils';
 
 export type AppShellProps = {
   children: ReactNode;
@@ -17,8 +14,8 @@ export type AppShellProps = {
 
 function HomeAppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-home-content flex-col">
-      <div className="grid grid-cols-1 items-start lg:grid-cols-[minmax(0,1fr)_var(--home-rail-width)] lg:gap-home-section">
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-home-content flex-col overflow-hidden">
+      <div className="grid min-h-0 flex-1 grid-cols-1 items-stretch overflow-hidden lg:grid-cols-[minmax(0,1fr)_var(--home-rail-width)] lg:gap-home-section">
         <MainContentShell>{children}</MainContentShell>
         <StatRail homeFixed>
           <StatRailHome compact />
@@ -29,32 +26,18 @@ function HomeAppShell({ children }: { children: ReactNode }) {
   );
 }
 
-/** Two-column shell: main · statistics rail. Home uses a fixed viewport grid (no scroll). */
+/** Home includes the calendar statistics rail; other routes are main content only. */
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname() ?? '';
-  const isToday = pathname === '/today';
-  const isReview = pathname === '/review';
   const isHome = pathname === '/';
-  const showStatRail = !isToday && !isReview;
 
   if (isHome) {
     return <HomeAppShell>{children}</HomeAppShell>;
   }
 
   return (
-    <div
-      className={cn(
-        'grid min-w-0 w-full grid-cols-1 items-start',
-        showStatRail && 'gap-8 xl:grid-cols-3 xl:gap-10',
-      )}
-    >
+    <div className="grid min-w-0 w-full grid-cols-1 items-start">
       <MainContentShell>{children}</MainContentShell>
-      {showStatRail ? (
-        <StatRail>
-          <StatRailCalendar />
-          <StatRailCards />
-        </StatRail>
-      ) : null}
     </div>
   );
 }

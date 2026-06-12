@@ -2,6 +2,27 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 const API_ORIGIN = (process.env.API_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '');
 
+function apiUnreachableMessage(origin: string): string {
+  return `API is not running at ${origin}. From repo root: docker compose up -d postgres && cd apps/api && source .venv/bin/activate && uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 — or run ./dev (starts API when NEXT_PUBLIC_STORAGE_BACKEND=api).`;
+}
+
+function networkErrorMessage(cause: unknown): string {
+  if (!(cause instanceof Error)) {
+    return 'Could not reach the API.';
+  }
+  const nested =
+    cause.cause instanceof Error
+      ? cause.cause.message
+      : typeof cause.cause === 'string'
+        ? cause.cause
+        : '';
+  const combined = `${cause.message} ${nested}`.toLowerCase();
+  if (/fetch failed|failed to fetch|econnrefused|connection refused/.test(combined)) {
+    return apiUnreachableMessage(API_ORIGIN);
+  }
+  return cause.message;
+}
+
 /**
  * Proxies /api/v1/* to FastAPI so session cookies are forwarded on every request.
  * (next.config rewrites alone do not reliably pass Set-Cookie / Cookie in dev.)
@@ -31,12 +52,7 @@ async function proxyToApi(request: NextRequest, pathSegments: string[]): Promise
   try {
     upstream = await fetch(target, init);
   } catch (cause) {
-    const message =
-      cause instanceof Error && cause.message.includes('ECONNREFUSED')
-        ? `API is not running at ${API_ORIGIN}. Start it: cd apps/api && source .venv/bin/activate && uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`
-        : cause instanceof Error
-          ? cause.message
-          : 'Could not reach the API.';
+    const message = networkErrorMessage(cause);
     return NextResponse.json(
       { error: { kind: 'network', message } },
       { status: 503 },
