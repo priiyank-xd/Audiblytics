@@ -14,7 +14,7 @@ export function getApiBaseUrl(): string {
 }
 
 const API_UNREACHABLE_MESSAGE =
-  'API is not running. From repo root run ./dev (API mode) or start manually: docker compose up -d postgres && cd apps/api && source .venv/bin/activate && uvicorn app.main:app --reload --port 8000';
+  'API is not running. From repo root run ./ax start (API mode; ports in .env) or start manually: docker compose up -d postgres && cd apps/api && source .venv/bin/activate && uvicorn app.main:app --reload --port 8000';
 
 function isNetworkFetchError(error: unknown): boolean {
   if (!(error instanceof Error)) {

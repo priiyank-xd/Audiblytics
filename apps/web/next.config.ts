@@ -52,6 +52,7 @@ if (
 }
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // API proxy: apps/web/src/app/api/v1/[...path]/route.ts (forwards session cookies)
 };
 

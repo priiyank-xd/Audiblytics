@@ -6,11 +6,11 @@ Next.js 16 frontend (`@audiblytics/web`). Client spec: `_bmad-output/planning-ar
 
 Local storage + IndexedDB; LLM keys in browser `localStorage`.
 
-From repo root:
+From repo root (ports from `.env` — see root [README](../../README.md#development)):
 
 ```bash
-./dev          # start (cleans up stale server if needed)
-./dev stop     # stop
+./ax           # start (cleans up stale server if needed)
+./ax stop      # stop
 ```
 
 Or from this folder:

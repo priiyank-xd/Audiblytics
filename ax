@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Audiblytics repo CLI — local dev orchestration.
+#
+# Usage: ./ax [start|stop|help]
+# Command modules live in lib/ax/ and are sourced on demand.
+set -euo pipefail
+
+AX_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AX_WEB="$AX_ROOT/apps/web"
+AX_API="$AX_ROOT/apps/api"
+AX_API_PID_FILE="$AX_ROOT/.dev-api.pid"  # tracks background uvicorn from ./ax start
+AX_LIB="$AX_ROOT/lib/ax"
+
+# shellcheck source=lib/ax/config.sh
+source "$AX_LIB/config.sh"
+ax_load_config
+
+ax_usage() {
+  cat <<EOF
+Usage: ./ax [start|stop|help]
+
+  ./ax              Start the web app (and API + Postgres when NEXT_PUBLIC_STORAGE_BACKEND=api)
+  ./ax start        Same as ./ax
+  ./ax stop         Stop the web dev server (and API when started by ./ax start)
+  ./ax help         Show this help
+
+Ports and URLs: repo root .env (see .env.example). Defaults: web :3000, api :8000, postgres :5432.
+EOF
+}
+
+ax_dispatch() {
+  local cmd="${1:-start}"
+
+  case "$cmd" in
+    start)
+      # services.sh must load before start.sh (command calls into service helpers).
+      # shellcheck source=lib/ax/services.sh
+      source "$AX_LIB/services.sh"
+      # shellcheck source=lib/ax/start.sh
+      source "$AX_LIB/start.sh"
+      ax_start
+      ;;
+    stop)
+      # shellcheck source=lib/ax/services.sh
+      source "$AX_LIB/services.sh"
+      # shellcheck source=lib/ax/stop.sh
+      source "$AX_LIB/stop.sh"
+      ax_stop
+      ;;
+    help|-h|--help)
+      ax_usage
+      ;;
+    *)
+      echo "Unknown command: $cmd" >&2
+      echo
+      ax_usage >&2
+      exit 1
+      ;;
+  esac
+}
+
+ax_dispatch "$@"

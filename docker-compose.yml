@@ -6,9 +6,85 @@ services:
       POSTGRES_PASSWORD: audiblytics
       POSTGRES_DB: audiblytics
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - audiblytics_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U audiblytics -d audiblytics"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build: apps/api
+    command: python -m alembic upgrade head
+    environment:
+      DATABASE_URL: postgresql+asyncpg://audiblytics:audiblytics@postgres:5432/audiblytics
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build: apps/api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://audiblytics:audiblytics@postgres:5432/audiblytics
+      JWT_SECRET: ${JWT_SECRET:-change-me-use-openssl-rand-hex-32}
+      JWT_EXPIRE_MINUTES: "10080"
+      COOKIE_SECURE: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      ENVIRONMENT: production
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET: ${R2_BUCKET:-audiblytics-recordings}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  web:
+    build:
+      context: apps/web
+      args:
+        NEXT_PUBLIC_STORAGE_BACKEND: api
+        NEXT_PUBLIC_AUDIBLYTICS_PERSONAL_USE: "true"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      API_URL: http://api:8000
+      NEXT_PUBLIC_STORAGE_BACKEND: api
+    depends_on:
+      api:
+        condition: service_healthy
+
+  seed:
+    profiles: [setup]
+    build: apps/api
+    command:
+      - python
+      - scripts/seed_user.py
+      - --email
+      - ${SEED_EMAIL:-you@example.com}
+      - --password
+      - ${SEED_PASSWORD:-changeme}
+    environment:
+      DATABASE_URL: postgresql+asyncpg://audiblytics:audiblytics@postgres:5432/audiblytics
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
 
 volumes:
   audiblytics_pg:

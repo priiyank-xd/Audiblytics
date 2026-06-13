@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 const API_ORIGIN = (process.env.API_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '');
 
 function apiUnreachableMessage(origin: string): string {
-  return `API is not running at ${origin}. From repo root: docker compose up -d postgres && cd apps/api && source .venv/bin/activate && uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 — or run ./dev (starts API when NEXT_PUBLIC_STORAGE_BACKEND=api).`;
+  return `API is not running at ${origin}. From repo root: docker compose up -d postgres && cd apps/api && source .venv/bin/activate && uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 — or run ./ax start (ports in .env; starts API when NEXT_PUBLIC_STORAGE_BACKEND=api).`;
 }
 
 function networkErrorMessage(cause: unknown): string {
