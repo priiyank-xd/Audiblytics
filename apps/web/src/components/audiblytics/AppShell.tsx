@@ -13,8 +13,8 @@ export type AppShellProps = {
 
 function HomeAppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-home-content flex-col overflow-hidden">
-      <div className="grid min-h-0 flex-1 grid-cols-1 items-stretch overflow-hidden lg:grid-cols-[minmax(0,1fr)_var(--home-rail-width)] lg:gap-home-section">
+    <div className="flex h-full min-h-0 w-full overflow-hidden">
+      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_var(--home-rail-width)]">
         <MainContentShell>{children}</MainContentShell>
         <StatRail homeFixed>
           <StatRailHome compact />

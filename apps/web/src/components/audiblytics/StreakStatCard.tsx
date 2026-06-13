@@ -21,38 +21,48 @@ export type StreakStatCardProps = {
   className?: string;
   variant?: 'default' | 'featured';
   compact?: boolean;
+  flat?: boolean;
 };
 
-export function StreakStatCard({ className, variant = 'default', compact = false }: StreakStatCardProps) {
+export function StreakStatCard({
+  className,
+  variant = 'default',
+  flat = false,
+}: StreakStatCardProps) {
   const streak = useStreak();
   const body = formatFeaturedStreakBody(streak);
 
   if (variant === 'featured') {
-    const streakLabel =
-      streak === 0 ? '0 day' : streak === 1 ? '1 day' : `${streak} days`;
+    const streakCount =
+      streak === 0 ? '0' : streak === 1 ? '1' : String(streak);
+    const streakUnit = streak === 1 ? ' day' : streak === 0 ? ' day' : ' days';
 
     return (
       <article
-        aria-label={`Current streak: ${streakLabel}. ${body}`}
+        aria-label={`Current streak: ${streakCount}${streakUnit}. ${body}`}
         className={cn(
-          'flex h-home-streak min-h-0 items-center justify-between gap-4 rounded-home-card border border-divider bg-surface-card p-home-rail-card',
-          compact ? 'h-full' : 'p-home-rail-card',
+          'relative px-1.5 py-1',
+          flat && 'min-h-0',
+          !flat && 'flex items-center justify-between gap-4 rounded-lg border border-divider bg-surface-card p-5',
           className,
         )}
       >
         <div className="min-w-0">
-          <p className="inline-flex items-center gap-2 font-sans text-ui-sm text-secondary">
-            <Flame className="size-3.5 shrink-0" strokeWidth={1.5} />
+          <p className="inline-flex items-center gap-2 font-sans text-caption text-home-ink-muted">
+            <Flame className="size-4 shrink-0 text-primary" strokeWidth={1.6} />
             Current streak
           </p>
-          <p className="mt-6 text-home-streak-number text-foreground">{streakLabel}</p>
-          <p className="mt-4 font-sans text-ui-sm text-tertiary">{body}</p>
+          <p className="mt-4 text-home-streak-number">
+            {streakCount}
+            <span className="text-home-streak-unit">{streakUnit}</span>
+          </p>
+          <p className="mt-2 font-sans text-caption text-home-ink-muted">{body}</p>
         </div>
         <div
-          className="flex size-home-streak-ring shrink-0 items-center justify-center rounded-full border border-divider"
+          className="absolute right-home-streak-ring top-home-streak-ring flex size-home-streak-ring items-center justify-center rounded-full border-2 border-divider"
           aria-hidden="true"
         >
-          <Flame className="size-8 text-divider" strokeWidth={1.5} />
+          <Flame className="size-[1.375rem] text-home-avatar" strokeWidth={1.6} />
         </div>
       </article>
     );

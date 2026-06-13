@@ -17,7 +17,7 @@ type RailDayProps = {
   isToday: boolean;
   showTodayDot?: boolean;
   compact?: boolean;
-  homeCard?: boolean;
+  homeFlat?: boolean;
   onSelectComplete?: () => void;
 };
 
@@ -27,30 +27,27 @@ function RailDay({
   isToday,
   showTodayDot,
   compact,
-  homeCard,
+  homeFlat,
   onSelectComplete,
 }: RailDayProps) {
-  if (homeCard) {
-    const todayInner = (
-      <span className="flex size-8 flex-col items-center justify-center gap-0.5 rounded-md bg-primary text-on-primary">
-        {showTodayDot ? (
-          <span className="size-0.5 rounded-full bg-on-primary" aria-hidden="true" />
-        ) : null}
-        <span className="font-serif text-caption leading-none">{day}</span>
-      </span>
+  if (homeFlat) {
+    const dayClassName = cn(
+      'flex aspect-square w-full items-center justify-center rounded-lg font-mono text-caption tabular-nums',
+      isToday && 'relative bg-primary text-on-primary',
+      !isToday && complete && 'font-medium text-foreground',
+      !isToday && !complete && 'text-home-ink-muted',
     );
 
-    const dayInner = (
-      <span
-        className={cn(
-          'flex size-home-calendar-cell items-center justify-center font-serif text-caption tabular-nums',
-          isToday && 'text-foreground',
-          !isToday && complete && 'font-medium text-foreground',
-          !isToday && !complete && 'text-tertiary',
-        )}
-      >
-        {isToday ? todayInner : day}
-      </span>
+    const dayContent = (
+      <>
+        {isToday && showTodayDot ? (
+          <span
+            className="absolute top-1.5 size-0.5 rounded-full bg-on-primary"
+            aria-hidden="true"
+          />
+        ) : null}
+        {day}
+      </>
     );
 
     if (complete && onSelectComplete) {
@@ -61,17 +58,17 @@ function RailDay({
             e.stopPropagation();
             onSelectComplete();
           }}
-          className="flex w-full items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1"
+          className={cn(dayClassName, 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1')}
           aria-label={`Day ${day}, completed. Open archived day.`}
         >
-          {dayInner}
+          {dayContent}
         </button>
       );
     }
 
     return (
-      <span className="flex items-center justify-center" aria-label={`Day ${day}${isToday ? ', today' : ''}`}>
-        {dayInner}
+      <span className={dayClassName} aria-label={`Day ${day}${isToday ? ', today' : ''}`}>
+        {dayContent}
       </span>
     );
   }
@@ -128,8 +125,8 @@ export type StatRailCalendarProps = {
   showWeekSummary?: boolean;
   showTodayDot?: boolean;
   compact?: boolean;
-  /** Home rail: fixed card dimensions per UX-V2 mockup. */
-  homeCard?: boolean;
+  /** Home rail: flat section matching Emergent HTML. */
+  homeFlat?: boolean;
 };
 
 /** Editorial month grid for the statistics rail (UTC month, app tokens). */
@@ -138,7 +135,7 @@ export function StatRailCalendar({
   showWeekSummary = true,
   showTodayDot = false,
   compact = false,
-  homeCard = false,
+  homeFlat = false,
 }: StatRailCalendarProps) {
   const router = useRouter();
   const { monthLabel, slots, isReady } = useMonthCalendarCells();
@@ -171,9 +168,8 @@ export function StatRailCalendar({
       aria-label={`Calendar for ${monthLabel}. Open full calendar.`}
       className={cn(
         'min-w-0 cursor-pointer outline-none',
-        homeCard &&
-          'flex h-home-calendar min-h-0 w-full flex-col overflow-hidden rounded-home-card border border-divider bg-surface-card p-home-rail-card',
-        !homeCard && 'rounded-lg',
+        homeFlat && 'px-1.5 py-1',
+        !homeFlat && 'rounded-lg',
         className,
       )}
       role="button"
@@ -186,35 +182,37 @@ export function StatRailCalendar({
         }
       }}
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className={cn('mb-4 flex items-center justify-between gap-2', !homeFlat && 'gap-2')}>
         <h2
           className={cn(
             'text-foreground',
-            homeCard ? 'font-serif text-headline-3' : compact ? 'text-ui-sm' : 'text-headline-3',
+            homeFlat ? 'font-serif text-headline-3' : compact ? 'text-ui-sm' : 'text-headline-3',
           )}
         >
           {monthName}
         </h2>
-        <div className="flex items-center gap-3 text-tertiary" aria-hidden="true">
-          <ChevronLeft className="size-4" strokeWidth={1.75} />
-          <ChevronRight className="size-4" strokeWidth={1.75} />
+        <div
+          className={cn('flex items-center text-tertiary', homeFlat ? 'gap-3.5 text-home-ink-muted' : 'gap-3')}
+          aria-hidden="true"
+        >
+          <ChevronLeft className="size-4" strokeWidth={homeFlat ? 1.8 : 1.5} />
+          <ChevronRight className="size-4" strokeWidth={homeFlat ? 1.8 : 1.5} />
         </div>
       </div>
       <p className="sr-only">{monthLabel}</p>
 
       <div
-        className={cn(
-          'grid grid-cols-7 text-center',
-          homeCard ? 'mt-6 gap-home-calendar-cell' : compact ? 'mt-2 gap-y-0' : 'mt-5 gap-y-1',
-        )}
+        className={cn('grid grid-cols-7 text-center', !homeFlat && (compact ? 'mt-2 gap-y-0' : 'mt-5 gap-y-1'))}
         role="presentation"
       >
         {WEEKDAY_SHORT.map((label) => (
           <span
             key={label}
             className={cn(
-              'text-micro-label text-tertiary',
-              compact && !homeCard ? 'pb-1' : homeCard ? 'pb-0' : 'pb-2',
+              homeFlat
+                ? 'pb-2.5 pt-1.5 text-[0.625rem] font-medium uppercase tracking-[0.05rem] text-home-ink-dow'
+                : 'text-micro-label text-tertiary',
+              !homeFlat && (compact ? 'pb-1' : 'pb-2'),
             )}
           >
             {label}
@@ -226,8 +224,7 @@ export function StatRailCalendar({
         <div
           className={cn(
             'grid grid-cols-7 bg-cream-dim',
-            homeCard && 'mt-2 min-h-0 flex-1 gap-home-calendar-cell',
-            !homeCard && (compact ? 'min-h-28 gap-y-0' : 'min-h-36 gap-y-2'),
+            homeFlat ? 'min-h-28' : compact ? 'min-h-28 gap-y-0' : 'min-h-36 gap-y-2',
           )}
           aria-busy="true"
           aria-label="Loading calendar"
@@ -236,32 +233,22 @@ export function StatRailCalendar({
         <ul
           role="list"
           aria-label={`Month calendar for ${monthLabel}`}
-          className={cn(
-            'grid grid-cols-7',
-            homeCard && 'mt-2 min-h-0 flex-1 content-start gap-home-calendar-cell',
-            !homeCard && (compact ? 'gap-y-0' : 'gap-y-1'),
-          )}
+          className={cn('grid grid-cols-7', !homeFlat && (compact ? 'gap-y-0' : 'gap-y-1'))}
         >
           {slots.map((slot, idx) => {
             if (slot.kind === 'pad') {
-              return (
-                <li
-                  key={`pad-${idx}`}
-                  aria-hidden
-                  className={homeCard ? 'size-home-calendar-cell' : compact ? 'min-h-7' : 'min-h-8'}
-                />
-              );
+              return <li key={`pad-${idx}`} aria-hidden className="aspect-square" />;
             }
             const day = Number(slot.utcDate.split('-')[2]);
             return (
-              <li key={slot.utcDate} className="flex min-w-0 items-center justify-center">
+              <li key={slot.utcDate} className="min-w-0">
                 <RailDay
                   day={day}
                   complete={slot.complete}
                   isToday={slot.utcDate === todayUtc}
                   showTodayDot={showTodayDot}
                   compact={compact}
-                  homeCard={homeCard}
+                  homeFlat={homeFlat}
                   onSelectComplete={
                     slot.complete ? () => openArchivedDay(slot.utcDate) : undefined
                   }
@@ -272,7 +259,7 @@ export function StatRailCalendar({
         </ul>
       )}
 
-      {showWeekSummary ? (
+      {showWeekSummary && !homeFlat ? (
         <div className="mt-8">
           <h2 className="text-headline-3 text-foreground">This week</h2>
           <div className="mt-4 grid grid-cols-7 text-center">

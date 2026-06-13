@@ -76,13 +76,15 @@ function SidebarNavLink({ item, pathname, isExpanded, onNavigate }: SidebarNavLi
       title={isExpanded ? undefined : item.label}
       onClick={onNavigate}
       className={cn(
-        'flex h-sidebar-nav-item items-center gap-3 font-sans text-ui-sm text-foreground transition-colors',
-        'hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
-        isExpanded ? (isHomeRoute ? 'mx-2 px-4' : 'px-4') : 'justify-center px-0',
-        isActive &&
-          (isHomeRoute
-            ? 'rounded-sidebar-nav-active bg-cream-shade-2'
-            : 'rounded-xl bg-surface-elevated text-primary shadow-sm'),
+        'flex items-center gap-3 py-2.5 font-sans text-ui-sm transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
+        isExpanded ? (isHomeRoute ? 'mx-2 px-3' : 'px-4') : 'justify-center px-0',
+        isHomeRoute && !isActive && 'text-home-ink-nav',
+        isHomeRoute && isActive && 'rounded-sidebar-nav-active bg-cream-shade-2 font-medium text-foreground',
+        !isHomeRoute && 'text-foreground hover:bg-surface-elevated',
+        !isHomeRoute &&
+          isActive &&
+          'rounded-xl bg-surface-elevated text-primary shadow-sm',
       )}
     >
       <Icon className="size-[1.125rem] shrink-0" strokeWidth={1.5} />
@@ -120,14 +122,16 @@ function SidebarProfileFooter({
     <div className={cn('mt-auto space-y-8', !isExpanded && 'hidden')}>
       <p
         className={cn(
-          'font-sans text-caption leading-relaxed text-secondary',
-          isHomeFooter && 'border-l-2 border-primary pl-4',
+          'font-sans text-caption leading-relaxed',
+          isHomeFooter
+            ? 'mx-2 mb-7 border-l-2 border-primary pl-3.5 text-home-ink-muted'
+            : 'text-secondary',
         )}
       >
         Small steps today, confident voice tomorrow.
       </p>
 
-      <div className="space-y-3 border-t border-divider pt-6">
+      <div className={cn('space-y-3', !isHomeFooter && 'border-t border-divider pt-6')}>
         {!hideSettingsLink ? (
           <Link
             href="/settings"
@@ -154,7 +158,7 @@ function SidebarProfileFooter({
               settingsActive && 'text-primary',
             )}
           >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-cream-shade-2 font-sans text-caption text-secondary">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-home-avatar font-sans text-caption text-on-primary">
               {profileInitial}
             </span>
             <span className="truncate font-sans text-ui-sm text-foreground">{profileLabel}</span>
@@ -211,7 +215,7 @@ export function AppSidebar() {
     <aside
       className={cn(
         'hidden h-dvh shrink-0 flex-col overflow-hidden bg-surface transition-all duration-200 lg:flex',
-        isHome && 'w-home-sidebar border-r-0 pt-sidebar pb-sidebar px-sidebar',
+        isHome && 'w-home-sidebar border-r border-divider pt-sidebar pb-sidebar px-sidebar',
         !isHome &&
           'border-r border-divider ' +
             (isExpanded ? 'w-52 px-6 py-8' : 'w-20 px-4 py-8'),
@@ -219,19 +223,20 @@ export function AppSidebar() {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className={cn('flex items-center justify-between gap-3', isHome && 'mb-sidebar-brand px-2')}>
         <Link
           href="/"
           aria-label="Audiblytics home"
           className={cn(
-            'inline-flex min-w-0 items-center gap-3 text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
+            'inline-flex min-w-0 items-center gap-2.5 text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
             !isExpanded && 'mx-auto',
           )}
         >
-          <BookOpen className="size-7 shrink-0 text-primary" strokeWidth={1.5} />
+          <BookOpen className={cn('shrink-0 text-primary', isHome ? 'size-[1.375rem]' : 'size-7')} strokeWidth={1.5} />
           <span
             className={cn(
-              'truncate font-serif text-ui text-foreground transition-opacity',
+              'truncate text-foreground transition-opacity',
+              isHome ? 'text-home-brand' : 'font-serif text-headline-3',
               isExpanded ? 'opacity-100' : 'sr-only opacity-0',
             )}
           >
@@ -260,10 +265,7 @@ export function AppSidebar() {
 
       <nav
         aria-label="Primary navigation"
-        className={cn(
-          'flex min-h-0 flex-1 flex-col gap-sidebar-nav',
-          isHome ? 'mt-sidebar-logo-nav' : 'mt-14',
-        )}
+        className={cn('flex min-h-0 flex-1 flex-col gap-sidebar-nav', !isHome && 'mt-14')}
       >
         <SidebarNavLinks pathname={pathname} isExpanded={isExpanded} />
       </nav>

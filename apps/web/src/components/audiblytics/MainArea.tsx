@@ -11,7 +11,7 @@ export function AppColumn({ children }: { children: ReactNode }) {
   );
 }
 
-/** Scrollable main on feature routes; fixed viewport on home (lg+). */
+/** Scrollable main on feature routes; home fills viewport with Emergent flat layout. */
 export function MainArea({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? '';
   const isHome = pathname === '/';
@@ -21,7 +21,7 @@ export function MainArea({ children }: { children: ReactNode }) {
       className={cn(
         'min-h-0 min-w-0 flex-1',
         isHome
-          ? 'flex h-full flex-col overflow-hidden px-home-page py-home-page'
+          ? 'flex h-full flex-col overflow-hidden p-0'
           : 'overflow-y-auto px-5 pb-12 pt-8 md:px-8 lg:px-14 lg:pb-16',
       )}
     >

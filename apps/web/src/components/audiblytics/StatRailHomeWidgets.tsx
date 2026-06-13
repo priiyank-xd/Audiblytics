@@ -13,10 +13,8 @@ const JOURNEY_DAYS = 30;
 
 function HomeConsistencyInlineBanner() {
   return (
-    <div className="mt-6 rounded-lg border-l-[3px] border-primary bg-cream-shade-2 px-4 py-3.5">
-      <p className="font-sans text-caption font-medium text-foreground">
-        Consistency is the key to fluency.
-      </p>
+    <div className="mt-3.5 rounded-md border-l-2 border-home-overview-quote bg-home-overview-quote px-3.5 py-3 font-sans text-caption text-home-ink-muted">
+      Consistency is the key to fluency.
     </div>
   );
 }
@@ -29,9 +27,9 @@ type OverviewRowProps = {
 
 function OverviewRow({ icon, label, value }: OverviewRowProps) {
   return (
-    <div className="flex h-home-overview-row items-center justify-between gap-3">
-      <span className="inline-flex min-w-0 items-center gap-3 font-sans text-ui-sm text-foreground">
-        <span className="shrink-0 text-secondary">{icon}</span>
+    <div className="flex items-center py-2.5 font-sans text-ui-sm text-foreground">
+      <span className="inline-flex min-w-0 flex-1 items-center gap-3 text-home-ink-nav">
+        <span className="shrink-0 text-home-ink-muted">{icon}</span>
         <span className="truncate">{label}</span>
       </span>
       <span className="shrink-0 font-mono text-data text-foreground">{value}</span>
@@ -39,7 +37,7 @@ function OverviewRow({ icon, label, value }: OverviewRowProps) {
   );
 }
 
-export function HomeOverviewCard({ compact = false }: { compact?: boolean }) {
+export function HomeOverviewCard({ flat = false }: { flat?: boolean }) {
   const entries = useCollection();
   const recordings = useRecordings();
   const distinctDays = useDistinctDayOfUse();
@@ -49,38 +47,35 @@ export function HomeOverviewCard({ compact = false }: { compact?: boolean }) {
   const recordingCount = recordings?.length;
   const dayOfJourney = Math.min(distinctDays, JOURNEY_DAYS);
   const journeyPct = Math.round((dayOfJourney / JOURNEY_DAYS) * 100);
+  const longestLabel =
+    longestStreak === 1 ? '1 day' : isReady ? `${longestStreak} days` : '—';
 
   return (
     <section
       aria-label="Overview"
-      className={cn(
-        'flex min-h-0 flex-col overflow-hidden rounded-home-card border border-divider bg-surface-card p-home-rail-card',
-        compact && 'h-full',
-      )}
+      className={cn('px-1.5 py-1', flat ? 'min-h-0' : 'rounded-lg border border-divider bg-surface-card p-5')}
     >
-      <h2 className="font-serif text-headline-3 text-foreground">Overview</h2>
-      <div className="mt-7 flex flex-col gap-home-overview-row">
-        <OverviewRow
-          icon={<Mic className="size-4" strokeWidth={1.5} />}
-          label="Recordings"
-          value={recordingCount === undefined ? '—' : String(recordingCount)}
-        />
-        <OverviewRow
-          icon={<Bookmark className="size-4" strokeWidth={1.5} />}
-          label="Words in collection"
-          value={wordCount === undefined ? '—' : String(wordCount)}
-        />
-        <OverviewRow
-          icon={<CalendarDays className="size-4" strokeWidth={1.5} />}
-          label="Day progress"
-          value={`${dayOfJourney} / ${JOURNEY_DAYS} (${journeyPct}%)`}
-        />
-        <OverviewRow
-          icon={<Flame className="size-4" strokeWidth={1.5} />}
-          label="Longest streak"
-          value={isReady ? String(longestStreak) : '—'}
-        />
-      </div>
+      <h2 className="mb-4 font-serif text-headline-3 text-foreground">Overview</h2>
+      <OverviewRow
+        icon={<Mic className="size-4" strokeWidth={1.6} />}
+        label="Recordings"
+        value={recordingCount === undefined ? '—' : String(recordingCount)}
+      />
+      <OverviewRow
+        icon={<Bookmark className="size-4" strokeWidth={1.6} />}
+        label="Words in collection"
+        value={wordCount === undefined ? '—' : String(wordCount)}
+      />
+      <OverviewRow
+        icon={<CalendarDays className="size-4" strokeWidth={1.6} />}
+        label="Day progress"
+        value={`${dayOfJourney} / ${JOURNEY_DAYS} (${journeyPct}%)`}
+      />
+      <OverviewRow
+        icon={<Flame className="size-4" strokeWidth={1.6} />}
+        label="Longest streak"
+        value={isReady ? longestLabel : '—'}
+      />
       <HomeConsistencyInlineBanner />
     </section>
   );

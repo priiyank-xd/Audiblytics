@@ -11,10 +11,14 @@ export type StatRailHomeProps = {
 export function StatRailHome({ compact = false }: StatRailHomeProps) {
   if (compact) {
     return (
-      <div className="grid h-full min-h-0 w-full grid-home-rail-rows gap-home-rail overflow-hidden">
-        <StatRailCalendar compact showWeekSummary={false} showTodayDot homeCard />
-        <StreakStatCard variant="featured" compact />
-        <HomeOverviewCard compact />
+      <div className="flex min-h-0 w-full flex-col">
+        <StatRailCalendar compact showWeekSummary={false} showTodayDot homeFlat />
+        <div className="mt-home-rail-section border-t border-divider pt-home-rail-section">
+          <StreakStatCard variant="featured" flat />
+        </div>
+        <div className="mt-home-rail-section border-t border-divider pt-home-rail-section">
+          <HomeOverviewCard flat />
+        </div>
       </div>
     );
   }

@@ -67,52 +67,50 @@
   --stat-rail-heading-calendar-gap: 6.25rem;
   --stat-rail-calendar-metrics-gap: 6.25rem;
 
-  /** Home dashboard — Emergent spec @ 1440px; no arbitrary values in components. */
-  --home-sidebar-width: 15rem;
-  --home-content-max-width: 90rem;
-  --home-main-max-width: 45rem;
-  --home-page-padding-left: 6rem;
-  --home-page-padding-right: 4rem;
-  --home-page-padding-top: 3.5rem;
-  --home-page-padding-bottom: 5rem;
-  --home-page-padding-x: 4rem;
-  --home-page-padding-y: 3.5rem;
-  --home-section-gap: 4rem;
-  --home-divider-gap-top: 3.5rem;
-  --home-divider-gap-bottom: 4rem;
+  /** Home dashboard — Emergent static HTML reference; no arbitrary values in components. */
+  --home-sidebar-width: 14.375rem;
+  --home-rail-width: 28.125rem;
+  --home-main-pad-x: 3.5rem;
+  --home-main-pad-top: 1.75rem;
+  --home-main-pad-bottom: 3.5rem;
+  --home-rail-pad-x: 2rem;
+  --home-rail-pad-y: 1.75rem;
+  --home-rail-section-gap: 1.375rem;
+  --home-rail-section-pad-top: 1.625rem;
+  --home-hero-greeting-offset: 5.75rem;
   --home-hero-greeting-size: 0.9375rem;
-  --home-hero-title-size: 4rem;
-  --home-hero-desc-size: 1rem;
-  --home-section-title-size: 1.5rem;
-  --home-btn-height: 3.25rem;
-  --home-btn-padding-x: 1.75rem;
+  --home-hero-title-size: 3.375rem;
+  --home-hero-sub-offset: 4.125rem;
+  --home-hero-desc-size: 0.9375rem;
+  --home-cta-offset: 2rem;
+  --home-meta-offset: 1.375rem;
+  --home-meta-gap: 1.75rem;
+  --home-divider-margin-top: 5rem;
+  --home-divider-margin-bottom: 1.25rem;
   --home-btn-radius: 0.625rem;
-  --home-card-radius: 0.875rem;
-  --home-continue-card-padding: 1.5rem;
-  --home-rail-card-padding: 1.75rem;
-  --home-card-padding: 1.5rem;
-  --home-continue-card-height: 16.25rem;
-  --home-continue-card-gap: 1rem;
-  --home-continue-number-size: 2.5rem;
-  --home-rail-width: 25rem;
-  --home-rail-pad-right: 2rem;
-  --home-rail-gap: 1.5rem;
-  --home-calendar-height: 20.5rem;
-  --home-calendar-cell-size: 2.5rem;
-  --home-calendar-cell-gap: 0.25rem;
-  --home-streak-height: 13.75rem;
+  --home-continue-gap: 1.375rem;
+  --home-continue-big-size: 1.625rem;
+  --home-continue-eyebrow-tracking: 0.075rem;
   --home-streak-number-size: 2.25rem;
-  --home-streak-ring-size: 5.5rem;
-  --sidebar-pad-top: 2rem;
-  --sidebar-pad-bottom: 2rem;
-  --sidebar-pad-left: 1.5rem;
+  --home-streak-unit-size: 1.375rem;
+  --home-streak-ring-size: 4rem;
+  --home-streak-ring-offset: 1.375rem;
+  --home-cta-pad-x: 1.375rem;
+  --home-brand-size: 1.375rem;
+  --home-ink-muted: #6b665c;
+  --home-ink-nav: #444038;
+  --home-ink-dow: #9a958a;
+  --home-avatar: #b9b3a6;
+  --home-overview-quote-bg: #f3eee4;
+  --home-overview-quote-border: #cfc7b5;
+  --sidebar-pad-top: 1.75rem;
+  --sidebar-pad-bottom: 1.5rem;
+  --sidebar-pad-left: 0.625rem;
   --sidebar-pad-right: 1.25rem;
-  --sidebar-nav-item-height: 2.75rem;
-  --sidebar-nav-gap: 0.5rem;
-  --sidebar-logo-nav-gap: 5rem;
+  --sidebar-brand-gap: 2.5rem;
+  --sidebar-nav-gap: 0.25rem;
   --sidebar-nav-active-radius: 0.625rem;
-  --home-overview-row-height: 2.25rem;
-  --home-overview-row-gap: 0.75rem;
+  --home-content-max-width: none;
 
   /* shadcn / Radix bridge (maps to editorial tokens) */
   --background: var(--surface);
@@ -177,6 +175,12 @@
   --color-cream: var(--cream);
   --color-cream-dim: var(--cream-dim);
   --color-cream-shade-2: var(--cream-shade-2);
+  --color-home-ink-muted: var(--home-ink-muted);
+  --color-home-ink-nav: var(--home-ink-nav);
+  --color-home-ink-dow: var(--home-ink-dow);
+  --color-home-avatar: var(--home-avatar);
+  --color-home-overview-quote-bg: var(--home-overview-quote-bg);
+  --color-home-overview-quote-border: var(--home-overview-quote-border);
   --color-border: var(--border);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
@@ -373,10 +377,9 @@
 
 @utility text-home-greeting {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  font-weight: 500;
+  font-weight: 400;
   font-size: var(--home-hero-greeting-size);
   line-height: 1.4;
-  letter-spacing: -0.005em;
   color: var(--ink);
 }
 
@@ -384,42 +387,33 @@
   font-family: var(--font-serif), Georgia, serif;
   font-weight: 500;
   font-size: var(--home-hero-title-size);
-  line-height: 1.12;
-  letter-spacing: -0.02em;
+  line-height: 1.1;
+  letter-spacing: -0.03125rem;
 }
 
 @utility text-home-description {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
   font-size: var(--home-hero-desc-size);
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-
-@utility text-home-section-title {
-  font-family: var(--font-serif), Georgia, serif;
-  font-weight: 500;
-  font-size: var(--home-section-title-size);
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  line-height: 1.4;
+  color: var(--home-ink-muted);
 }
 
 @utility text-home-continue-eyebrow {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 0.6875rem;
   line-height: 1;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--home-continue-eyebrow-tracking);
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--ink) 80%, transparent);
+  color: var(--home-ink-muted);
 }
 
 @utility text-home-continue-number {
   font-family: var(--font-serif), Georgia, serif;
   font-weight: 500;
-  font-size: var(--home-continue-number-size);
+  font-size: var(--home-continue-big-size);
   line-height: 1;
-  letter-spacing: -0.01em;
 }
 
 @utility text-home-streak-number {
@@ -427,39 +421,19 @@
   font-weight: 500;
   font-size: var(--home-streak-number-size);
   line-height: 1;
+  color: var(--ink);
 }
 
-@utility h-home-continue-card {
-  height: var(--home-continue-card-height);
+@utility text-home-streak-unit {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 500;
+  font-size: var(--home-streak-unit-size);
+  line-height: 1;
+  color: var(--ink);
 }
 
 @utility gap-home-continue {
-  gap: var(--home-continue-card-gap);
-}
-
-@utility gap-home-rail {
-  gap: var(--home-rail-gap);
-}
-
-@utility gap-home-section {
-  gap: var(--home-section-gap);
-}
-
-@utility grid-home-rail-rows {
-  grid-template-rows:
-    var(--home-calendar-height)
-    var(--home-streak-height)
-    minmax(0, 1fr);
-}
-
-@utility max-h-home-continue-section {
-  max-height: calc(
-    var(--home-continue-card-height) + var(--home-section-gap) + 2.5rem
-  );
-}
-
-@utility mt-home-section {
-  margin-top: var(--home-section-gap);
+  gap: var(--home-continue-gap);
 }
 
 @utility w-home-rail {
@@ -470,22 +444,61 @@
   width: var(--home-sidebar-width);
 }
 
-@utility max-w-home-content {
-  max-width: var(--home-content-max-width);
+@utility px-home-main {
+  padding-left: var(--home-main-pad-x);
+  padding-right: var(--home-main-pad-x);
 }
 
-@utility px-home-page {
-  padding-left: var(--home-page-padding-left);
-  padding-right: var(--home-page-padding-right);
+@utility py-home-main {
+  padding-top: var(--home-main-pad-top);
+  padding-bottom: var(--home-main-pad-bottom);
 }
 
-@utility py-home-page {
-  padding-top: var(--home-page-padding-top);
-  padding-bottom: var(--home-page-padding-bottom);
+@utility px-home-rail {
+  padding-left: var(--home-rail-pad-x);
+  padding-right: var(--home-rail-pad-x);
 }
 
-@utility max-w-home-main {
-  max-width: var(--home-main-max-width);
+@utility py-home-rail {
+  padding-top: var(--home-rail-pad-y);
+  padding-bottom: var(--home-rail-pad-y);
+}
+
+@utility mt-home-rail-section {
+  margin-top: var(--home-rail-section-gap);
+}
+
+@utility pt-home-rail-section {
+  padding-top: var(--home-rail-section-pad-top);
+}
+
+@utility mt-home-greeting {
+  margin-top: var(--home-hero-greeting-offset);
+}
+
+@utility mt-home-hero-sub {
+  margin-top: var(--home-hero-sub-offset);
+}
+
+@utility mt-home-cta {
+  margin-top: var(--home-cta-offset);
+}
+
+@utility mt-home-meta {
+  margin-top: var(--home-meta-offset);
+}
+
+@utility gap-home-meta {
+  gap: var(--home-meta-gap);
+}
+
+@utility my-home-divider {
+  margin-top: var(--home-divider-margin-top);
+  margin-bottom: var(--home-divider-margin-bottom);
+}
+
+@utility rounded-home-btn {
+  border-radius: var(--home-btn-radius);
 }
 
 @utility pt-sidebar {
@@ -501,49 +514,16 @@
   padding-right: var(--sidebar-pad-right);
 }
 
-@utility mt-sidebar-logo-nav {
-  margin-top: var(--sidebar-logo-nav-gap);
+@utility mb-sidebar-brand {
+  margin-bottom: var(--sidebar-brand-gap);
 }
 
 @utility gap-sidebar-nav {
   gap: var(--sidebar-nav-gap);
 }
 
-@utility h-sidebar-nav-item {
-  height: var(--sidebar-nav-item-height);
-}
-
 @utility rounded-sidebar-nav-active {
   border-radius: var(--sidebar-nav-active-radius);
-}
-
-@utility p-home-continue-card {
-  padding: var(--home-continue-card-padding);
-}
-
-@utility p-home-rail-card {
-  padding: var(--home-rail-card-padding);
-}
-
-@utility pr-home-rail {
-  padding-right: var(--home-rail-pad-right);
-}
-
-@utility pt-home-divider {
-  padding-top: var(--home-divider-gap-top);
-}
-
-@utility pb-home-divider {
-  padding-bottom: var(--home-divider-gap-bottom);
-}
-
-@utility gap-home-calendar-cell {
-  gap: var(--home-calendar-cell-gap);
-}
-
-@utility size-home-calendar-cell {
-  width: var(--home-calendar-cell-size);
-  height: var(--home-calendar-cell-size);
 }
 
 @utility size-home-streak-ring {
@@ -551,41 +531,40 @@
   height: var(--home-streak-ring-size);
 }
 
-@utility gap-home-overview-row {
-  gap: var(--home-overview-row-gap);
+@utility bg-home-overview-quote {
+  background: var(--home-overview-quote-bg);
 }
 
-@utility h-home-overview-row {
-  height: var(--home-overview-row-height);
+@utility border-home-overview-quote {
+  border-color: var(--home-overview-quote-border);
 }
 
-@utility rounded-home-card {
-  border-radius: var(--home-card-radius);
+@utility top-home-main {
+  top: var(--home-main-pad-top);
 }
 
-@utility p-home-card {
-  padding: var(--home-card-padding);
+@utility right-home-main {
+  right: var(--home-main-pad-x);
 }
 
-@utility h-home-btn {
-  height: var(--home-btn-height);
+@utility px-home-cta {
+  padding-left: var(--home-cta-pad-x);
+  padding-right: var(--home-cta-pad-x);
 }
 
-@utility px-home-btn {
-  padding-left: var(--home-btn-padding-x);
-  padding-right: var(--home-btn-padding-x);
+@utility text-home-brand {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: var(--home-brand-size);
+  font-weight: 500;
+  letter-spacing: 0.0125rem;
 }
 
-@utility rounded-home-btn {
-  border-radius: var(--home-btn-radius);
+@utility top-home-streak-ring {
+  top: var(--home-streak-ring-offset);
 }
 
-@utility h-home-calendar {
-  height: var(--home-calendar-height);
-}
-
-@utility h-home-streak {
-  height: var(--home-streak-height);
+@utility right-home-streak-ring {
+  right: var(--home-streak-ring-offset);
 }
 
 @layer base {
