@@ -10,6 +10,8 @@
   /* Surface (UX-V2 reference) */
   --cream: #f8f6f2;
   --cream-dim: #f0ece4;
+  /** Active nav pill, consistency banner (Emergent home spec). */
+  --cream-shade-2: #efece4;
   --border: #e9e4dc;
   --surface-card: #fcfbf8;
 
@@ -65,34 +67,52 @@
   --stat-rail-heading-calendar-gap: 6.25rem;
   --stat-rail-calendar-metrics-gap: 6.25rem;
 
-  /** Home dashboard — fixed viewport (UX-V2-UI2); no arbitrary values in components. */
-  --home-sidebar-width: 12.8125rem;
+  /** Home dashboard — Emergent spec @ 1440px; no arbitrary values in components. */
+  --home-sidebar-width: 15rem;
   --home-content-max-width: 90rem;
+  --home-main-max-width: 45rem;
+  --home-page-padding-left: 6rem;
+  --home-page-padding-right: 4rem;
+  --home-page-padding-top: 3.5rem;
+  --home-page-padding-bottom: 5rem;
   --home-page-padding-x: 4rem;
-  --home-page-padding-y: 3.375rem;
+  --home-page-padding-y: 3.5rem;
   --home-section-gap: 4rem;
-  --home-hero-min-height: min(46vh, 24rem);
-  --home-hero-max-height: 22.5rem;
-  --home-hero-greeting-size: 1.25rem;
-  --home-hero-title-size: 4.5rem;
-  --home-hero-desc-size: 1.375rem;
-  --home-btn-height: 4rem;
-  --home-btn-padding-x: 2rem;
-  --home-btn-radius: 1rem;
-  --home-card-radius: 1.5rem;
-  --home-card-padding: 2rem;
+  --home-divider-gap-top: 3.5rem;
+  --home-divider-gap-bottom: 4rem;
+  --home-hero-greeting-size: 0.9375rem;
+  --home-hero-title-size: 4rem;
+  --home-hero-desc-size: 1rem;
+  --home-section-title-size: 1.5rem;
+  --home-btn-height: 3.25rem;
+  --home-btn-padding-x: 1.75rem;
+  --home-btn-radius: 0.625rem;
+  --home-card-radius: 0.875rem;
+  --home-continue-card-padding: 1.5rem;
+  --home-rail-card-padding: 1.75rem;
+  --home-card-padding: 1.5rem;
   --home-continue-card-height: 16.25rem;
-  --home-continue-card-gap: 1.5rem;
+  --home-continue-card-gap: 1rem;
+  --home-continue-number-size: 2.5rem;
   --home-rail-width: 25rem;
+  --home-rail-pad-right: 2rem;
   --home-rail-gap: 1.5rem;
-  --home-calendar-height: 20rem;
-  --home-streak-height: 9.375rem;
-  --home-streak-gradient: linear-gradient(135deg, #3a7a52 0%, #2f6b47 45%, #1f4a30 100%);
-  --home-focus-height: 11.25rem;
-  --home-progress-height: 15rem;
-  --home-banner-height: 6.25rem;
-  --home-banner-radius: 1.5rem;
-  --home-banner-padding: 2rem;
+  --home-calendar-height: 20.5rem;
+  --home-calendar-cell-size: 2.5rem;
+  --home-calendar-cell-gap: 0.25rem;
+  --home-streak-height: 13.75rem;
+  --home-streak-number-size: 2.25rem;
+  --home-streak-ring-size: 5.5rem;
+  --sidebar-pad-top: 2rem;
+  --sidebar-pad-bottom: 2rem;
+  --sidebar-pad-left: 1.5rem;
+  --sidebar-pad-right: 1.25rem;
+  --sidebar-nav-item-height: 2.75rem;
+  --sidebar-nav-gap: 0.5rem;
+  --sidebar-logo-nav-gap: 5rem;
+  --sidebar-nav-active-radius: 0.625rem;
+  --home-overview-row-height: 2.25rem;
+  --home-overview-row-gap: 0.75rem;
 
   /* shadcn / Radix bridge (maps to editorial tokens) */
   --background: var(--surface);
@@ -156,6 +176,7 @@
 
   --color-cream: var(--cream);
   --color-cream-dim: var(--cream-dim);
+  --color-cream-shade-2: var(--cream-shade-2);
   --color-border: var(--border);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
@@ -355,31 +376,57 @@
   font-weight: 500;
   font-size: var(--home-hero-greeting-size);
   line-height: 1.4;
-  color: var(--primary);
+  letter-spacing: -0.005em;
+  color: var(--ink);
 }
 
 @utility text-home-headline {
   font-family: var(--font-serif), Georgia, serif;
-  font-weight: 400;
+  font-weight: 500;
   font-size: var(--home-hero-title-size);
-  line-height: 1.05;
-  letter-spacing: -0.03em;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
 }
 
 @utility text-home-description {
-  font-family: var(--font-serif), Georgia, serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
   font-size: var(--home-hero-desc-size);
-  line-height: 1.6;
-  color: var(--ink-subtle);
+  line-height: 1.5;
+  color: var(--ink-soft);
 }
 
-@utility min-h-home-hero {
-  min-height: var(--home-hero-min-height);
+@utility text-home-section-title {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 500;
+  font-size: var(--home-section-title-size);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 
-@utility max-h-home-hero {
-  max-height: var(--home-hero-max-height);
+@utility text-home-continue-eyebrow {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
+}
+
+@utility text-home-continue-number {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 500;
+  font-size: var(--home-continue-number-size);
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+@utility text-home-streak-number {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 500;
+  font-size: var(--home-streak-number-size);
+  line-height: 1;
 }
 
 @utility h-home-continue-card {
@@ -400,9 +447,8 @@
 
 @utility grid-home-rail-rows {
   grid-template-rows:
-    minmax(0, 1.35fr)
-    minmax(0, 0.65fr)
-    minmax(0, 0.75fr)
+    var(--home-calendar-height)
+    var(--home-streak-height)
     minmax(0, 1fr);
 }
 
@@ -414,10 +460,6 @@
 
 @utility mt-home-section {
   margin-top: var(--home-section-gap);
-}
-
-@utility h-home-banner {
-  height: var(--home-banner-height);
 }
 
 @utility w-home-rail {
@@ -433,13 +475,88 @@
 }
 
 @utility px-home-page {
-  padding-left: var(--home-page-padding-x);
-  padding-right: var(--home-page-padding-x);
+  padding-left: var(--home-page-padding-left);
+  padding-right: var(--home-page-padding-right);
 }
 
 @utility py-home-page {
-  padding-top: var(--home-page-padding-y);
-  padding-bottom: var(--home-page-padding-y);
+  padding-top: var(--home-page-padding-top);
+  padding-bottom: var(--home-page-padding-bottom);
+}
+
+@utility max-w-home-main {
+  max-width: var(--home-main-max-width);
+}
+
+@utility pt-sidebar {
+  padding-top: var(--sidebar-pad-top);
+}
+
+@utility pb-sidebar {
+  padding-bottom: var(--sidebar-pad-bottom);
+}
+
+@utility px-sidebar {
+  padding-left: var(--sidebar-pad-left);
+  padding-right: var(--sidebar-pad-right);
+}
+
+@utility mt-sidebar-logo-nav {
+  margin-top: var(--sidebar-logo-nav-gap);
+}
+
+@utility gap-sidebar-nav {
+  gap: var(--sidebar-nav-gap);
+}
+
+@utility h-sidebar-nav-item {
+  height: var(--sidebar-nav-item-height);
+}
+
+@utility rounded-sidebar-nav-active {
+  border-radius: var(--sidebar-nav-active-radius);
+}
+
+@utility p-home-continue-card {
+  padding: var(--home-continue-card-padding);
+}
+
+@utility p-home-rail-card {
+  padding: var(--home-rail-card-padding);
+}
+
+@utility pr-home-rail {
+  padding-right: var(--home-rail-pad-right);
+}
+
+@utility pt-home-divider {
+  padding-top: var(--home-divider-gap-top);
+}
+
+@utility pb-home-divider {
+  padding-bottom: var(--home-divider-gap-bottom);
+}
+
+@utility gap-home-calendar-cell {
+  gap: var(--home-calendar-cell-gap);
+}
+
+@utility size-home-calendar-cell {
+  width: var(--home-calendar-cell-size);
+  height: var(--home-calendar-cell-size);
+}
+
+@utility size-home-streak-ring {
+  width: var(--home-streak-ring-size);
+  height: var(--home-streak-ring-size);
+}
+
+@utility gap-home-overview-row {
+  gap: var(--home-overview-row-gap);
+}
+
+@utility h-home-overview-row {
+  height: var(--home-overview-row-height);
 }
 
 @utility rounded-home-card {
@@ -469,27 +586,6 @@
 
 @utility h-home-streak {
   height: var(--home-streak-height);
-}
-
-@utility h-home-focus {
-  height: var(--home-focus-height);
-}
-
-@utility h-home-progress {
-  height: var(--home-progress-height);
-}
-
-@utility rounded-home-banner {
-  border-radius: var(--home-banner-radius);
-}
-
-@utility px-home-banner {
-  padding-left: var(--home-banner-padding);
-  padding-right: var(--home-banner-padding);
-}
-
-@utility bg-home-streak-gradient {
-  background: var(--home-streak-gradient);
 }
 
 @layer base {

@@ -18,7 +18,7 @@ export function StatRail({ children, innerClassName, homeFixed }: StatRailProps)
       className={cn(
         'min-w-0 shrink-0',
         homeFixed
-          ? 'hidden h-full min-h-0 w-home-rail overflow-hidden lg:block'
+          ? 'hidden h-full min-h-0 w-home-rail overflow-hidden pr-home-rail lg:sticky lg:top-0 lg:block lg:self-start'
           : 'xl:col-span-1 xl:sticky xl:top-8 xl:self-start',
       )}
     >

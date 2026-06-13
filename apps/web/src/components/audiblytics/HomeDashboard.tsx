@@ -6,9 +6,12 @@ import {
   ArrowRight,
   Bookmark,
   Clock3,
+  Flame,
   Mic,
   NotebookText,
   Play,
+  Settings,
+  Sun,
 } from 'lucide-react';
 
 import { useAuth } from '@/features/auth/auth-context';
@@ -60,17 +63,15 @@ function HomeContinueCard({
   return (
     <Link
       href={href}
-      className="group flex h-full max-h-home-continue-card min-h-0 flex-col rounded-home-card border border-divider bg-surface-card p-home-card transition-shadow hover:border-primary/15 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+      className="group flex h-home-continue-card min-h-0 flex-col rounded-home-card border border-divider bg-surface-card p-home-continue-card transition-colors hover:border-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
     >
-      <div className="flex items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-          {icon}
-        </span>
-        <span className="font-sans text-ui-sm text-foreground">{label}</span>
+      <div className="flex items-center gap-2.5">
+        <span className="shrink-0 text-foreground">{icon}</span>
+        <span className="text-home-continue-eyebrow">{label}</span>
       </div>
-      <div className="mt-5 text-foreground">{metric}</div>
+      <div className="mt-9 text-foreground">{metric}</div>
       {progressPct !== undefined ? (
-        <div className="mt-3 h-1 overflow-hidden rounded-full bg-surface-elevated">
+        <div className="mt-2 h-1 overflow-hidden rounded-full bg-surface-elevated">
           <div
             className="h-full rounded-full bg-primary transition-all"
             style={{ width: `${progressPct}%` }}
@@ -82,10 +83,12 @@ function HomeContinueCard({
           />
         </div>
       ) : null}
-      {caption ? <p className="mt-2 font-sans text-caption text-secondary">{caption}</p> : null}
+      {caption ? (
+        <p className="mt-2 font-sans text-caption text-tertiary">{caption}</p>
+      ) : null}
       <p className="mt-auto inline-flex items-center gap-2 font-sans text-ui-sm text-primary">
         {actionLabel}
-        <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+        <ArrowRight className="size-3.5" strokeWidth={1.75} />
       </p>
     </Link>
   );
@@ -129,43 +132,56 @@ export function HomeDashboard() {
       ? undefined
       : collectionCount === 0
         ? 'Save words from today’s paragraph first'
-        : `${queue.length} cards — up to ${REVIEW_BATCH_SIZE} per batch`;
+        : `${queue.length} cards · up to ${REVIEW_BATCH_SIZE} per batch`;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <section aria-labelledby="home-today-heading" className="flex min-h-0 flex-1 flex-col justify-end overflow-hidden">
-        <div className="max-w-2xl">
-          <div>
-            <p className="text-home-greeting">{greeting}</p>
-            <h1 id="home-today-heading" className="mt-4 text-home-headline text-foreground">
-              Let&apos;s build your confidence today.
-            </h1>
-            <p className="mt-4 max-w-lg text-home-description">
-              A few minutes of focused practice can create a big difference.
-            </p>
-            <Link
-              href="/today"
-              className={cn(
-                'mt-8 inline-flex h-home-btn items-center gap-3 rounded-home-btn bg-primary px-home-btn font-sans text-ui text-on-primary shadow-sm transition-colors hover:bg-primary-hover hover:text-on-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
-              )}
-            >
-              <Play className="size-5" strokeWidth={1.8} fill="currentColor" />
-              Start Today&apos;s Session
-            </Link>
-            <div className="mt-4 flex items-center gap-2 font-sans text-caption text-secondary">
-              <Clock3 className="size-4" strokeWidth={1.6} />
-              Estimated time: 3 min
-            </div>
-          </div>
+    <div className="relative flex h-full min-h-0 flex-col overflow-y-auto overflow-x-hidden lg:overflow-hidden">
+      <Link
+        href="/settings"
+        className="absolute right-0 top-0 z-10 inline-flex items-center gap-2 font-sans text-ui-sm text-secondary transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+      >
+        <Settings className="size-4" strokeWidth={1.5} />
+        Settings
+      </Link>
+
+      <section aria-labelledby="home-today-heading" className="max-w-home-main shrink-0">
+        <div className="inline-flex items-center gap-2.5">
+          <Sun className="size-4 shrink-0 text-foreground" strokeWidth={1.5} aria-hidden="true" />
+          <p className="text-home-greeting">{greeting}</p>
+        </div>
+        <h1 id="home-today-heading" className="mt-6 text-home-headline text-foreground">
+          Let&apos;s strengthen your reading and speaking today.
+        </h1>
+        <p className="mt-7 text-home-description">
+          Just 3 minutes of practice keeps your progress alive.
+        </p>
+        <Link
+          href="/today"
+          className={cn(
+            'mt-7 inline-flex h-home-btn items-center gap-3 rounded-home-btn bg-primary px-home-btn font-sans text-ui-sm text-on-primary transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
+          )}
+        >
+          <Play className="size-4" strokeWidth={1.75} />
+          Start Today&apos;s Session
+        </Link>
+        <div className="mt-7 flex flex-wrap items-center gap-8 font-sans text-caption text-secondary">
+          <span className="inline-flex items-center gap-2">
+            <Clock3 className="size-3.5" strokeWidth={1.5} />
+            Estimated 3 min
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <Flame className="size-3.5" strokeWidth={1.5} />
+            Keep your streak going!
+          </span>
         </div>
       </section>
 
       <section
-        className="mt-home-section shrink-0 border-t border-divider pt-8 lg:max-h-home-continue-section"
+        className="mt-home-section shrink-0 border-t border-divider pt-home-divider pb-home-divider lg:max-h-home-continue-section"
         aria-label="Continue where you left off"
       >
-        <h2 className="font-serif text-headline-3 text-foreground">Continue where you left off</h2>
-        <div className="mt-6 grid min-h-0 grid-cols-1 gap-home-continue sm:grid-cols-3 lg:h-home-continue-card">
+        <h2 className="text-home-section-title text-foreground">Continue where you left off</h2>
+        <div className="mt-7 grid min-h-0 grid-cols-1 gap-home-continue sm:grid-cols-3">
           <HomeContinueCard
             href={collectionCount === 0 ? '/today' : '/review'}
             icon={<NotebookText className="size-4" strokeWidth={1.5} />}
@@ -175,13 +191,13 @@ export function HomeDashboard() {
                 <p className="font-sans text-ui-sm">Loading…</p>
               ) : (
                 <p className="font-sans text-ui-sm">
-                  <span className="mr-2 font-serif text-headline-2">{queue.length}</span>
+                  <span className="mr-2 text-home-continue-number">{queue.length}</span>
                   cards waiting
                 </p>
               )
             }
             caption={reviewCaption}
-            actionLabel="Continue"
+            actionLabel="Continue Review"
             progressPct={reviewProgressPct}
           />
 
@@ -194,7 +210,7 @@ export function HomeDashboard() {
                 <p className="font-sans text-ui-sm">Loading…</p>
               ) : (
                 <p className="font-sans text-ui-sm">
-                  <span className="mr-2 font-serif text-headline-2">{wordCount}</span>
+                  <span className="mr-2 text-home-continue-number">{wordCount}</span>
                   saved words
                 </p>
               )
@@ -208,7 +224,7 @@ export function HomeDashboard() {
             icon={<Mic className="size-4" strokeWidth={1.5} />}
             label="Voice Journal"
             metric={
-              <p className="font-sans text-ui-sm">
+              <p className="font-sans text-ui-sm font-medium">
                 {formatLastRecording(recordings?.[0]?.recordingDate)}
               </p>
             }

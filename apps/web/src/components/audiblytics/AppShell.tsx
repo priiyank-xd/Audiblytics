@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-import { HomeConsistencyBanner } from '@/components/audiblytics/HomeConsistencyBanner';
 import { MainContentShell } from '@/components/audiblytics/MainContentShell';
 import { StatRail } from '@/components/audiblytics/StatRail';
 import { StatRailHome } from '@/components/audiblytics/StatRailHome';
@@ -21,7 +20,6 @@ function HomeAppShell({ children }: { children: ReactNode }) {
           <StatRailHome compact />
         </StatRail>
       </div>
-      <HomeConsistencyBanner />
     </div>
   );
 }

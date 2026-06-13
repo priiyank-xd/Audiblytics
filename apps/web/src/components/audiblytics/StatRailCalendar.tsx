@@ -17,10 +17,65 @@ type RailDayProps = {
   isToday: boolean;
   showTodayDot?: boolean;
   compact?: boolean;
+  homeCard?: boolean;
   onSelectComplete?: () => void;
 };
 
-function RailDay({ day, complete, isToday, showTodayDot, compact, onSelectComplete }: RailDayProps) {
+function RailDay({
+  day,
+  complete,
+  isToday,
+  showTodayDot,
+  compact,
+  homeCard,
+  onSelectComplete,
+}: RailDayProps) {
+  if (homeCard) {
+    const todayInner = (
+      <span className="flex size-8 flex-col items-center justify-center gap-0.5 rounded-md bg-primary text-on-primary">
+        {showTodayDot ? (
+          <span className="size-0.5 rounded-full bg-on-primary" aria-hidden="true" />
+        ) : null}
+        <span className="font-serif text-caption leading-none">{day}</span>
+      </span>
+    );
+
+    const dayInner = (
+      <span
+        className={cn(
+          'flex size-home-calendar-cell items-center justify-center font-serif text-caption tabular-nums',
+          isToday && 'text-foreground',
+          !isToday && complete && 'font-medium text-foreground',
+          !isToday && !complete && 'text-tertiary',
+        )}
+      >
+        {isToday ? todayInner : day}
+      </span>
+    );
+
+    if (complete && onSelectComplete) {
+      return (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectComplete();
+          }}
+          className="flex w-full items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1"
+          aria-label={`Day ${day}, completed. Open archived day.`}
+        >
+          {dayInner}
+        </button>
+      );
+    }
+
+    return (
+      <span className="flex items-center justify-center" aria-label={`Day ${day}${isToday ? ', today' : ''}`}>
+        {dayInner}
+      </span>
+    );
+  }
+
   const dayClassName = cn(
     'flex items-center justify-center rounded-full tabular-nums',
     compact ? 'min-h-7 min-w-7 text-caption' : 'min-h-8 min-w-8 text-caption',
@@ -117,7 +172,7 @@ export function StatRailCalendar({
       className={cn(
         'min-w-0 cursor-pointer outline-none',
         homeCard &&
-          'flex h-full min-h-0 w-home-rail flex-col overflow-hidden rounded-home-card border border-divider bg-surface-card p-home-card shadow-sm',
+          'flex h-home-calendar min-h-0 w-full flex-col overflow-hidden rounded-home-card border border-divider bg-surface-card p-home-rail-card',
         !homeCard && 'rounded-lg',
         className,
       )}
@@ -141,8 +196,8 @@ export function StatRailCalendar({
           {monthName}
         </h2>
         <div className="flex items-center gap-3 text-tertiary" aria-hidden="true">
-          <ChevronLeft className={compact ? 'size-4' : 'size-5'} strokeWidth={1.5} />
-          <ChevronRight className={compact ? 'size-4' : 'size-5'} strokeWidth={1.5} />
+          <ChevronLeft className="size-4" strokeWidth={1.75} />
+          <ChevronRight className="size-4" strokeWidth={1.75} />
         </div>
       </div>
       <p className="sr-only">{monthLabel}</p>
@@ -150,7 +205,7 @@ export function StatRailCalendar({
       <div
         className={cn(
           'grid grid-cols-7 text-center',
-          homeCard ? 'mt-4 gap-y-1' : compact ? 'mt-2 gap-y-0' : 'mt-5 gap-y-1',
+          homeCard ? 'mt-6 gap-home-calendar-cell' : compact ? 'mt-2 gap-y-0' : 'mt-5 gap-y-1',
         )}
         role="presentation"
       >
@@ -158,8 +213,8 @@ export function StatRailCalendar({
           <span
             key={label}
             className={cn(
-              'text-micro-label text-secondary',
-              compact ? 'pb-1' : 'pb-2',
+              'text-micro-label text-tertiary',
+              compact && !homeCard ? 'pb-1' : homeCard ? 'pb-0' : 'pb-2',
             )}
           >
             {label}
@@ -171,7 +226,8 @@ export function StatRailCalendar({
         <div
           className={cn(
             'grid grid-cols-7 bg-cream-dim',
-            compact ? 'min-h-28 gap-y-0' : 'min-h-36 gap-y-2',
+            homeCard && 'mt-2 min-h-0 flex-1 gap-home-calendar-cell',
+            !homeCard && (compact ? 'min-h-28 gap-y-0' : 'min-h-36 gap-y-2'),
           )}
           aria-busy="true"
           aria-label="Loading calendar"
@@ -182,8 +238,8 @@ export function StatRailCalendar({
           aria-label={`Month calendar for ${monthLabel}`}
           className={cn(
             'grid grid-cols-7',
-            homeCard && 'min-h-0 flex-1 content-start',
-            compact ? 'gap-y-0' : 'gap-y-1',
+            homeCard && 'mt-2 min-h-0 flex-1 content-start gap-home-calendar-cell',
+            !homeCard && (compact ? 'gap-y-0' : 'gap-y-1'),
           )}
         >
           {slots.map((slot, idx) => {
@@ -192,19 +248,20 @@ export function StatRailCalendar({
                 <li
                   key={`pad-${idx}`}
                   aria-hidden
-                  className={compact ? 'min-h-7' : 'min-h-8'}
+                  className={homeCard ? 'size-home-calendar-cell' : compact ? 'min-h-7' : 'min-h-8'}
                 />
               );
             }
             const day = Number(slot.utcDate.split('-')[2]);
             return (
-              <li key={slot.utcDate} className="min-w-0">
+              <li key={slot.utcDate} className="flex min-w-0 items-center justify-center">
                 <RailDay
                   day={day}
                   complete={slot.complete}
                   isToday={slot.utcDate === todayUtc}
                   showTodayDot={showTodayDot}
                   compact={compact}
+                  homeCard={homeCard}
                   onSelectComplete={
                     slot.complete ? () => openArchivedDay(slot.utcDate) : undefined
                   }

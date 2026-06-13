@@ -3,16 +3,8 @@
 import { Flame } from 'lucide-react';
 
 import { StatCardLight } from '@/components/audiblytics/StatCardLight';
-import { StreakProgressRing } from '@/components/audiblytics/StreakProgressRing';
 import { useStreak } from '@/features/calendar/use-streak';
 import { cn } from '@/lib/utils';
-
-const STREAK_RING_GOAL_DAYS = 7;
-
-function streakRingPercent(streak: number): number {
-  if (streak <= 0) return 8;
-  return Math.round((Math.min(streak, STREAK_RING_GOAL_DAYS) / STREAK_RING_GOAL_DAYS) * 100);
-}
 
 function formatFeaturedStreakBody(streak: number): string {
   if (streak === 0) return 'Start your streak today!';
@@ -43,27 +35,25 @@ export function StreakStatCard({ className, variant = 'default', compact = false
       <article
         aria-label={`Current streak: ${streakLabel}. ${body}`}
         className={cn(
-          'flex items-center justify-between gap-4 rounded-home-card bg-home-streak-gradient text-on-primary shadow-sm',
-          compact ? 'h-full min-h-0 p-home-card' : 'gap-4 p-5',
+          'flex h-home-streak min-h-0 items-center justify-between gap-4 rounded-home-card border border-divider bg-surface-card p-home-rail-card',
+          compact ? 'h-full' : 'p-home-rail-card',
           className,
         )}
       >
-        <div className="flex items-start gap-3">
-          <Flame
-            className={cn('shrink-0 text-on-primary', compact ? 'mt-0.5 size-5' : 'mt-1 size-5')}
-            strokeWidth={1.6}
-          />
-          <div>
-            <p className="font-sans text-caption text-on-primary/90">Current streak</p>
-            <p className="mt-1 font-serif text-headline-2 text-on-primary">{streakLabel}</p>
-            <p className="mt-1 font-sans text-caption text-on-primary/90">{body}</p>
-          </div>
+        <div className="min-w-0">
+          <p className="inline-flex items-center gap-2 font-sans text-ui-sm text-secondary">
+            <Flame className="size-3.5 shrink-0" strokeWidth={1.5} />
+            Current streak
+          </p>
+          <p className="mt-6 text-home-streak-number text-foreground">{streakLabel}</p>
+          <p className="mt-4 font-sans text-ui-sm text-tertiary">{body}</p>
         </div>
-        <StreakProgressRing
-          percent={streakRingPercent(streak)}
-          size={compact ? 'sm' : 'md'}
-          showFlame={compact}
-        />
+        <div
+          className="flex size-home-streak-ring shrink-0 items-center justify-center rounded-full border border-divider"
+          aria-hidden="true"
+        >
+          <Flame className="size-8 text-divider" strokeWidth={1.5} />
+        </div>
       </article>
     );
   }

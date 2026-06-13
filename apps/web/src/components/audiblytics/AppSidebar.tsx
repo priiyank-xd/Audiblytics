@@ -67,6 +67,7 @@ type SidebarNavLinkProps = {
 function SidebarNavLink({ item, pathname, isExpanded, onNavigate }: SidebarNavLinkProps) {
   const Icon = item.icon;
   const isActive = isSidebarNavActive(pathname, item.href);
+  const isHomeRoute = pathname === '/';
 
   return (
     <Link
@@ -75,14 +76,16 @@ function SidebarNavLink({ item, pathname, isExpanded, onNavigate }: SidebarNavLi
       title={isExpanded ? undefined : item.label}
       onClick={onNavigate}
       className={cn(
-        'flex min-h-12 items-center gap-4 rounded-xl font-sans text-ui-sm text-foreground transition-colors',
+        'flex h-sidebar-nav-item items-center gap-3 font-sans text-ui-sm text-foreground transition-colors',
         'hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
-        isExpanded ? 'px-4' : 'justify-center px-0',
+        isExpanded ? (isHomeRoute ? 'mx-2 px-4' : 'px-4') : 'justify-center px-0',
         isActive &&
-          'bg-surface-elevated text-primary shadow-sm',
+          (isHomeRoute
+            ? 'rounded-sidebar-nav-active bg-cream-shade-2'
+            : 'rounded-xl bg-surface-elevated text-primary shadow-sm'),
       )}
     >
-      <Icon className="size-4 shrink-0" strokeWidth={1.7} />
+      <Icon className="size-[1.125rem] shrink-0" strokeWidth={1.5} />
       <span className={cn(isExpanded ? 'inline' : 'sr-only')}>{item.label}</span>
     </Link>
   );
@@ -118,7 +121,7 @@ function SidebarProfileFooter({
       <p
         className={cn(
           'font-sans text-caption leading-relaxed text-secondary',
-          isHomeFooter && 'border-l border-primary pl-4',
+          isHomeFooter && 'border-l-2 border-primary pl-4',
         )}
       >
         Small steps today, confident voice tomorrow.
@@ -151,7 +154,7 @@ function SidebarProfileFooter({
               settingsActive && 'text-primary',
             )}
           >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-divider bg-surface-card font-sans text-caption text-secondary shadow-sm">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-cream-shade-2 font-sans text-caption text-secondary">
               {profileInitial}
             </span>
             <span className="truncate font-sans text-ui-sm text-foreground">{profileLabel}</span>
@@ -207,9 +210,11 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        'hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-divider bg-surface transition-all duration-200 lg:flex',
-        isHome && 'w-home-sidebar px-6 py-home-page',
-        !isHome && (isExpanded ? 'w-52 px-6 py-8' : 'w-20 px-4 py-8'),
+        'hidden h-dvh shrink-0 flex-col overflow-hidden bg-surface transition-all duration-200 lg:flex',
+        isHome && 'w-home-sidebar border-r-0 pt-sidebar pb-sidebar px-sidebar',
+        !isHome &&
+          'border-r border-divider ' +
+            (isExpanded ? 'w-52 px-6 py-8' : 'w-20 px-4 py-8'),
       )}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
@@ -223,10 +228,10 @@ export function AppSidebar() {
             !isExpanded && 'mx-auto',
           )}
         >
-          <BookOpen className="size-7 shrink-0" strokeWidth={1.7} />
+          <BookOpen className="size-7 shrink-0 text-primary" strokeWidth={1.5} />
           <span
             className={cn(
-              'truncate text-headline-3 text-foreground transition-opacity',
+              'truncate font-serif text-ui text-foreground transition-opacity',
               isExpanded ? 'opacity-100' : 'sr-only opacity-0',
             )}
           >
@@ -255,7 +260,10 @@ export function AppSidebar() {
 
       <nav
         aria-label="Primary navigation"
-        className={cn('flex min-h-0 flex-1 flex-col gap-2', isHome ? 'mt-home-section' : 'mt-14')}
+        className={cn(
+          'flex min-h-0 flex-1 flex-col gap-sidebar-nav',
+          isHome ? 'mt-sidebar-logo-nav' : 'mt-14',
+        )}
       >
         <SidebarNavLinks pathname={pathname} isExpanded={isExpanded} />
       </nav>
