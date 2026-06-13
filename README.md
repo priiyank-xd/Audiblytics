@@ -1,67 +1,73 @@
 # Audiblytics
 
-Monorepo for **Audiblytics** — daily voice-journal and paragraph companion.
+voice journal and paragraph companion;
+Monorepo: Next.js (`apps/web`) + FastAPI (`apps/api`).
 
 ```
 Audiblytics/
   apps/
-    web/          # Next.js 16 — pnpm install && pnpm dev here
-    api/          # FastAPI — uvicorn here
-  docs/           # ADRs
-  _bmad-output/   # PRD, architecture, stories
-  docker-compose.yml   # Path B: postgres + api + web (see below)
-  .env.example         # ports + secrets for ./ax and docker compose
+    web/                # Next.js 16 — pnpm install && pnpm dev here
+    api/                # FastAPI — uvicorn here
+  docs/                 # ADRs
+  _bmad-output/         # PRD, architecture, stories
+  docker-compose.yml    # Path 2: postgres + api + web (see Development)
+  .env.example          # ports + secrets for ./ax and docker compose
 ```
 
 ## Development
 
-**Ports** — repo root `.env` (copy from `.env.example`) is the single source for local dev:
+Pick one way to run the stack. All paths read ports from repo root `.env` (auto-created from `.env.example` on first `./ax` run).
+
+App-specific env, scripts, and deploy: **[apps/web/README.md](apps/web/README.md)** · **[apps/api/README.md](apps/api/README.md)**
+
+### Configuration
 
 | Variable | Default | Used by |
 |----------|---------|---------|
-| `WEB_PORT` | `3000` | `./ax start`, docker compose web |
-| `API_PORT` | `8000` | `./ax start`, docker compose api |
-| `POSTGRES_PORT` | `5432` | `./ax start` (Postgres container), `apps/api/.env` on first create |
+| `WEB_PORT` | `3000` | `./ax`, docker compose web |
+| `API_PORT` | `8000` | `./ax`, docker compose api |
+| `POSTGRES_PORT` | `5432` | `./ax`, docker compose postgres |
 | `API_URL` | `http://127.0.0.1:8000` | Next.js API proxy (`apps/web`) |
 | `CORS_ORIGINS` | `http://localhost:3000` | FastAPI CORS |
 
-Changing `WEB_PORT`? Update `CORS_ORIGINS` to match (e.g. `http://localhost:3001`). `./ax start` syncs `API_URL` and `CORS_ORIGINS` into app env files.
+If you change `WEB_PORT`, set `CORS_ORIGINS` to match (e.g. `http://localhost:3001`). `./ax start` syncs `API_URL` and `CORS_ORIGINS` into app env files when present.
 
-**Web — one command from repo root:**
+### Path 1 — `./ax`
 
-```bash
-./ax           # start → http://localhost:3000 (installs deps on first run)
-                 # when NEXT_PUBLIC_STORAGE_BACKEND=api in apps/web/.env.local,
-                 # also starts Postgres (Docker) and FastAPI on :8000
-./ax stop      # stop the dev server (and API when started by ./ax start)
+From repo root. Installs web deps on first run. Set in `apps/web/.env.local`:
+
+```env
+NEXT_PUBLIC_STORAGE_BACKEND=api
 ```
 
-**Full local stack in Docker (Path B — API mode):**
+```bash
+./ax start   # Postgres + API (:8000) + web → http://localhost:3000/login
+./ax stop
+```
+
+Requires **pnpm**, **Docker** (Postgres), and **Python 3.12+**.
+
+### Path 2 — Docker Compose (full stack)
+
+Everything in containers — good for parity with deploy or when you do not want local Python/Node processes beyond Docker.
 
 ```bash
-cp .env.example .env          # ports + JWT_SECRET, R2_*, GEMINI_API_KEY (optional)
-docker compose up -d --build  # postgres → migrate → api → web
+cp .env.example .env            # ports + JWT_SECRET, R2_*, GEMINI_API_KEY 
+
+docker compose up -d --build    # postgres → migrate → api → web
 docker compose --profile setup run --rm seed   # first time only
 ```
 
 Open http://localhost:3000/login (default seed: `you@example.com` / `changeme`). Configure R2 bucket CORS for `http://localhost:3000` (see `apps/api/README.md`).
 
-**Test the stack:**
+**Verify:**
 
 ```bash
-docker compose ps -a                    # migrate=Exited(0), api=healthy, web=Up
-curl -f http://localhost:8000/api/v1/health
-curl -f -o /dev/null -w '%{http_code}\n' http://localhost:3000/login
-
-# Login through Next.js proxy (cookie auth)
-curl -X POST http://localhost:3000/api/v1/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"you@example.com","password":"changeme"}' \
-  -c /tmp/cookies.txt
-curl -b /tmp/cookies.txt http://localhost:3000/api/v1/auth/me
+docker compose ps -a
+curl -f http://localhost:8000/api/v1/health 
 ```
 
-**Reset (wipe DB volume)** — use if migrate fails with “relation already exists” from an old Postgres volume created by `./ax start` or local `init_db()`:
+**Reset DB** (e.g. migrate fails with “relation already exists” from an old volume shared with `./ax start`):
 
 ```bash
 docker compose down -v
@@ -69,31 +75,48 @@ docker compose up -d --build
 docker compose --profile setup run --rm seed
 ```
 
-**Or run each app from its folder:**
+### Path 3 — Manual (per app)
+
+Run each service yourself — useful when debugging one layer.
 
 | App | Folder | Install | Start |
 |-----|--------|---------|-------|
 | Web | `apps/web` | `pnpm install` | `pnpm dev` → http://localhost:3000 |
 | API | `apps/api` | `pip install -e ".[dev]"` | `uvicorn app.main:app --reload --port 8000` |
 
-| Guide | Scope |
-|-------|-------|
-| **[apps/web/README.md](apps/web/README.md)** | Local mode, API mode env, scripts, deploy |
-| **[apps/api/README.md](apps/api/README.md)** | Postgres, migrations, seed user, tests, deploy |
+Start Postgres from repo root (`docker compose up -d postgres`), run the API from `apps/api`, set `NEXT_PUBLIC_STORAGE_BACKEND=api` and `API_URL` in `apps/web/.env.local`, then `pnpm dev`. Step-by-step: **[apps/web/README.md](apps/web/README.md)** · **[apps/api/README.md](apps/api/README.md)**.
 
 ## Architecture
 
-| Document | Scope |
-|----------|-------|
-| `_bmad-output/planning-artifacts/architecture.md` | Client app (Dexie / localStorage era) |
-| `_bmad-output/planning-artifacts/architecture-v2-fastapi-backend.md` | Backend v2 — FastAPI, Neon, R2 |
-| `_bmad-output/planning-artifacts/ux-design-specification.md` | Client UX spec (Direction A) |
-| `_bmad-output/planning-artifacts/ux-v2-mockups-addendum.md` | UI refresh mockups (Epic 14) + API-mode notes |
-| [`docs/decisions/`](docs/decisions/) | ADRs (auth, R2 blobs, strangler migration) — BV4, BV6, BV9 |
+### Stack (at a glance)
 
-## Personal-use boundary
+```
+Browser
+   │
+   ▼
+Next.js (apps/web)     UI, login, /api/v1/* proxy
+   │
+   ▼
+FastAPI (apps/api)     REST API + JWT session cookie
+   ├── Postgres        users, settings, words, completions, paragraphs
+   ├── Cloudflare R2   voice journal recordings
+   └── Gemini          paragraph generation (key on server)
+```
 
-The **web** app supports n=1 **local mode** (`localStorage` + IndexedDB, browser LLM keys) and **API mode** (`NEXT_PUBLIC_STORAGE_BACKEND=api` with FastAPI, Postgres, and server-side Gemini). Public deployment with browser-held API keys in local mode remains gated per `architecture.md` § Hard-Scope-Boundary (AR15).
+Auth: httpOnly cookie. The web app never talks to Postgres or R2 directly — only through the API.
+
+### Planning docs
+
+| Doc | What it covers |
+|-----|----------------|
+| [`architecture-v2-fastapi-backend.md`](_bmad-output/planning-artifacts/architecture-v2-fastapi-backend.md) | System design, API routes, data model, deploy |
+| [`ux-v2-mockups-addendum.md`](_bmad-output/planning-artifacts/ux-v2-mockups-addendum.md) | Current UI — sidebar shell, soft-card layout, screen mockups |
+
+### ADRs
+
+Short decision records in [`docs/decisions/`](docs/decisions/): JWT cookie auth (BV4), audio in R2 not Postgres (BV6), storage migration flag (BV9).
+
+
 
 ## Deploy (BV15)
 
