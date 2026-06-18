@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: audiblytics-api-config
+  namespace: audiblytics
+data:
+  JWT_EXPIRE_MINUTES: "10080"
+  COOKIE_SECURE: "false"
+  CORS_ORIGINS: "http://localhost:3000"
+  ENVIRONMENT: "production"
+  GEMINI_MODEL: "gemini-2.5-flash"
+  R2_BUCKET: "audiblytics-recordings"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: audiblytics-web-config
+  namespace: audiblytics
+data:
+  API_URL: "http://audiblytics-api:8000"
+  NEXT_PUBLIC_STORAGE_BACKEND: "api"

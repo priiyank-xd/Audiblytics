@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: audiblytics-seed
+  namespace: audiblytics
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seed
+          image: audiblytics-api:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - python scripts/seed_user.py --email "$SEED_EMAIL" --password "$SEED_PASSWORD"
+          envFrom:
+            - secretRef:
+                name: audiblytics-api-secrets
+            - secretRef:
+                name: audiblytics-seed-secrets

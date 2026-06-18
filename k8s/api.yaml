@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audiblytics-api
+  namespace: audiblytics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audiblytics-api
+  template:
+    metadata:
+      labels:
+        app: audiblytics-api
+    spec:
+      initContainers:
+        - name: migrate
+          image: audiblytics-api:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - -m
+            - alembic
+            - upgrade
+            - head
+          envFrom:
+            - configMapRef:
+                name: audiblytics-api-config
+            - secretRef:
+                name: audiblytics-api-secrets
+      containers:
+        - name: api
+          image: audiblytics-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: audiblytics-api-config
+            - secretRef:
+                name: audiblytics-api-secrets
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audiblytics-api
+  namespace: audiblytics
+spec:
+  selector:
+    app: audiblytics-api
+  ports:
+    - port: 8000
+      targetPort: 8000
