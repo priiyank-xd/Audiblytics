@@ -15,6 +15,7 @@ def _build_engine() -> AsyncEngine:
     return create_async_engine(
         settings.database_url,
         echo=settings.environment == "development",
+        connect_args=settings.database_connect_args,
     )
 
 

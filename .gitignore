@@ -81,3 +81,6 @@ apps/web/public/offline-pack.json
 
 # local dev orchestration (./ax)
 .dev-api.pid
+
+# k8s — local secrets (copy structure from .env; never commit)
+k8s/secrets.yaml

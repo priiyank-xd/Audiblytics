@@ -1,22 +1,30 @@
 from functools import lru_cache
+from typing import Any
 
-from pydantic import field_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.core.database_url import normalize_async_database_url
+from app.core.database_url import prepare_async_database_url
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     database_url: str = "postgresql+asyncpg://audiblytics:audiblytics@localhost:5432/audiblytics"
+    database_connect_args: dict[str, Any] = Field(default_factory=dict, exclude=True)
 
-    @field_validator("database_url", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def _normalize_database_url(cls, value: str) -> str:
-        if not isinstance(value, str):
-            return value
-        return normalize_async_database_url(value)
+    def _prepare_database_url(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        raw_url = data.get("database_url")
+        if isinstance(raw_url, str):
+            url, connect_args = prepare_async_database_url(raw_url)
+            data["database_url"] = url
+            data["database_connect_args"] = connect_args
+        return data
+
     jwt_secret: str = "change-me-in-production"
     jwt_expire_minutes: int = 60 * 24 * 7
     cookie_name: str = "audiblytics_session"
