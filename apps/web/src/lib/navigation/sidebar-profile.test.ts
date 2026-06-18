@@ -15,7 +15,7 @@ test('resolveSidebarProfileLabel: dexie mode', () => {
 });
 
 test('formatEmailLocalAsDisplayName: strips digits and capitalizes', () => {
-  assert.equal(formatEmailLocalAsDisplayName('priyankpatel0268'), 'Priyank');
+  assert.equal(formatEmailLocalAsDisplayName('admin'), 'Admin');
   assert.equal(formatEmailLocalAsDisplayName('neal.smith'), 'Neal');
   assert.equal(formatEmailLocalAsDisplayName('priyankpatel'), 'Priyank');
 });
