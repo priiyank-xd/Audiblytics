@@ -15,7 +15,7 @@ spec:
     spec:
       initContainers:
         - name: migrate
-          image: audiblytics-api:latest
+          image: audiblytics-api
           imagePullPolicy: IfNotPresent
           command:
             - python
@@ -30,7 +30,7 @@ spec:
                 name: audiblytics-api-secrets
       containers:
         - name: api
-          image: audiblytics-api:latest
+          image: audiblytics-api
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

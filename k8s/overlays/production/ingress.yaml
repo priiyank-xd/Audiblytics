@@ -1,0 +1,28 @@
+# Replace YOUR_DOMAIN with your public hostname (no scheme), e.g. audiblytics.example.com
+# Must match the host in CORS_ORIGINS (https://YOUR_DOMAIN) in configmap-patch.yaml.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: audiblytics
+  namespace: audiblytics
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - YOUR_DOMAIN
+      secretName: audiblytics-tls
+  rules:
+    - host: YOUR_DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: audiblytics-web
+                port:
+                  number: 3000

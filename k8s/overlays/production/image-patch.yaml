@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audiblytics-api
+  namespace: audiblytics
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      initContainers:
+        - name: migrate
+          imagePullPolicy: Always
+      containers:
+        - name: api
+          imagePullPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audiblytics-web
+  namespace: audiblytics
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      containers:
+        - name: web
+          imagePullPolicy: Always

@@ -1,9 +1,5 @@
+# Convenience entrypoint — same as: kubectl apply -k k8s/overlays/production
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: audiblytics
 resources:
-  - namespace.yaml
-  - configmap.yaml
-  - api.yaml
-  - web.yaml
-  - seed-job.yaml
+  - overlays/production

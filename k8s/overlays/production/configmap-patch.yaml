@@ -1,0 +1,18 @@
+# Replace YOUR_DOMAIN with your public HTTPS origin before first deploy (e.g. https://audiblytics.example.com).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: audiblytics-api-config
+  namespace: audiblytics
+data:
+  COOKIE_SECURE: "true"
+  CORS_ORIGINS: "https://YOUR_DOMAIN"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: audiblytics-web-config
+  namespace: audiblytics
+data:
+  API_URL: "http://audiblytics-api:8000"
+  NEXT_PUBLIC_STORAGE_BACKEND: "api"

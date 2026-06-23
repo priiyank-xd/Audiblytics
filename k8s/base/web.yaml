@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: audiblytics-web:latest
+          image: audiblytics-web
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
@@ -41,10 +41,9 @@ metadata:
   name: audiblytics-web
   namespace: audiblytics
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: audiblytics-web
   ports:
     - port: 3000
       targetPort: 3000
-      nodePort: 30080

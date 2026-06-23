@@ -1,3 +1,4 @@
+# Base defaults for local/kind. Production overrides live in overlays/production/configmap-patch.yaml.
 apiVersion: v1
 kind: ConfigMap
 metadata:

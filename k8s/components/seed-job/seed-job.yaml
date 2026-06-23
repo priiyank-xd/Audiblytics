@@ -10,7 +10,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: seed
-          image: audiblytics-api:latest
+          image: audiblytics-api
           imagePullPolicy: IfNotPresent
           command:
             - sh
