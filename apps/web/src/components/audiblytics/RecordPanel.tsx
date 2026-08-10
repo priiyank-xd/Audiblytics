@@ -7,6 +7,7 @@ import { Mic, Pause, Play, Square } from 'lucide-react';
 
 import { CompositePlayer } from '@/components/audiblytics/CompositePlayer';
 import { InlineErrorSurface } from '@/components/audiblytics/InlineErrorSurface';
+import { RecordingPrivacyNotice } from '@/components/audiblytics/RecordingPrivacyNotice';
 import { Button } from '@/components/ui/button';
 import { saveRecording } from '@/features/voice-journal/use-save-recording';
 import { RECORDINGS_MUTATED_EVENT } from '@/features/voice-journal/recordings-mutated';
@@ -14,9 +15,15 @@ import { fetchRecordingPlaybackUrl, fetchRecordings } from '@/lib/api/recordings
 import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import { playRecordingItem } from '@/lib/audio/play-recording';
 import { createRecorder, type RecorderError } from '@/lib/audio/recorder';
+import {
+  RECORDING_DISCLOSURE_STORAGE_KEY,
+  recordingDisclosureSchema,
+} from '@/lib/schemas/recording-disclosure.schema';
 import type { RecordingListItem } from '@/lib/schemas/recording.schema';
+import { settingsSchema, type RetentionPolicy } from '@/lib/schemas/settings.schema';
 import type { StorageError } from '@/lib/storage/db';
 import { db } from '@/lib/storage/db';
+import { useLocalStorage } from '@/lib/storage/use-local-storage';
 import { cn } from '@/lib/utils';
 
 const MIC_DENIED_COPY =
@@ -94,6 +101,8 @@ export type RecordPanelProps = {
   className?: string;
   /** `rail` puts the record button left of today's recordings (Today side column). */
   layout?: 'default' | 'rail' | 'studio';
+  /** Retention shown in the pre-record disclosure. Falls back to the persisted local value. */
+  retention?: RetentionPolicy;
 };
 
 type PendingSave = {
@@ -111,6 +120,7 @@ export function RecordPanel({
   onAnalysis,
   className,
   layout = 'default',
+  retention,
 }: RecordPanelProps) {
   const [recorder] = useState(() => createRecorder());
 
@@ -141,6 +151,16 @@ export function RecordPanel({
   const [apiTodaysRecordings, setApiTodaysRecordings] = useState<RecordingListItem[] | undefined>(
     apiMode ? undefined : [],
   );
+
+  const [disclosure, setDisclosure] = useLocalStorage(
+    RECORDING_DISCLOSURE_STORAGE_KEY,
+    recordingDisclosureSchema.parse({}),
+    recordingDisclosureSchema,
+  );
+  const [localSettings] = useLocalStorage('audiblytics.settings', settingsSchema.parse({}), settingsSchema);
+  const acknowledgeDisclosure = useCallback(() => {
+    setDisclosure({ acknowledged: true });
+  }, [setDisclosure]);
 
   const dexieTodaysRecordings = useLiveQuery(
     async () => {
@@ -283,6 +303,7 @@ export function RecordPanel({
       }
 
       setPendingSave(null);
+      acknowledgeDisclosure();
       return;
     }
 
@@ -339,7 +360,17 @@ export function RecordPanel({
 
     recordingStartedAtRef.current = Date.now();
     setElapsedMs(0);
-  }, [onAnalysis, paragraphId, paragraphText, pendingSave, recState, recorder, syncRecorder, apiMode]);
+  }, [
+    acknowledgeDisclosure,
+    onAnalysis,
+    paragraphId,
+    paragraphText,
+    pendingSave,
+    recState,
+    recorder,
+    syncRecorder,
+    apiMode,
+  ]);
 
   const handleKeepPrevious = useCallback(() => {
     setReplacement(null);
@@ -560,6 +591,15 @@ export function RecordPanel({
       onKeyDown={handleKeyDown}
     >
       <audio ref={audioRef} className="hidden" onEnded={() => stopPlayback()} />
+
+      {disclosure.acknowledged ? null : (
+        <RecordingPrivacyNotice
+          location={apiMode ? 'account' : 'browser'}
+          retention={retention ?? localSettings.retention}
+          onAcknowledge={acknowledgeDisclosure}
+          className="mb-4"
+        />
+      )}
 
       {isStudio ? (
         <div className="space-y-5">

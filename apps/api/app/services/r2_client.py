@@ -119,3 +119,15 @@ def delete_object(
     resolved = settings or get_settings()
     client = _create_s3_client(resolved)
     client.delete_object(Bucket=resolved.r2_bucket.strip(), Key=storage_key)
+
+
+def get_object_bytes(
+    storage_key: str,
+    *,
+    settings: Settings | None = None,
+) -> bytes:
+    """Read one R2 object into memory. Used by data export (recordings are capped at 60s)."""
+    resolved = settings or get_settings()
+    client = _create_s3_client(resolved)
+    response = client.get_object(Bucket=resolved.r2_bucket.strip(), Key=storage_key)
+    return response["Body"].read()

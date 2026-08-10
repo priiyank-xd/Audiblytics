@@ -6,23 +6,20 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.core.deps import CurrentUser, DbSession
+from app.core.tenant_scope import get_owned_or_404
 from app.models.collection_word import CollectionWord
 from app.schemas.collection import CollectionWordCreate, CollectionWordResponse, datetime_from_iso
 
 router = APIRouter(prefix="/collection", tags=["collection"])
 
 
-async def _get_user_word(word_id: UUID, user_id: UUID, db: DbSession) -> CollectionWord | None:
-    result = await db.execute(
-        select(CollectionWord).where(CollectionWord.id == word_id, CollectionWord.user_id == user_id)
-    )
+async def _get_user_word(word_id: UUID, db: DbSession) -> CollectionWord | None:
+    result = await db.execute(select(CollectionWord).where(CollectionWord.id == word_id))
     return result.scalar_one_or_none()
 
 
-async def _get_user_word_by_text(word: str, user_id: UUID, db: DbSession) -> CollectionWord | None:
-    result = await db.execute(
-        select(CollectionWord).where(CollectionWord.user_id == user_id, CollectionWord.word == word)
-    )
+async def _get_user_word_by_text(word: str, db: DbSession) -> CollectionWord | None:
+    result = await db.execute(select(CollectionWord).where(CollectionWord.word == word))
     return result.scalar_one_or_none()
 
 
@@ -81,11 +78,7 @@ def _row_from_body(body: CollectionWordCreate, user_id: UUID) -> CollectionWord:
 
 @router.get("", response_model=list[CollectionWordResponse])
 async def list_collection_words(user: CurrentUser, db: DbSession) -> list[CollectionWordResponse]:
-    result = await db.execute(
-        select(CollectionWord)
-        .where(CollectionWord.user_id == user.id)
-        .order_by(CollectionWord.saved_at.desc())
-    )
+    result = await db.execute(select(CollectionWord).order_by(CollectionWord.saved_at.desc()))
     rows = result.scalars().all()
     return [CollectionWordResponse.from_row(row) for row in rows]
 
@@ -99,7 +92,7 @@ async def save_collection_word(
 ) -> CollectionWordResponse:
     word_id = UUID(body.id)
 
-    existing_by_id = await _get_user_word(word_id, user.id, db)
+    existing_by_id = await _get_user_word(word_id, db)
     if existing_by_id is not None:
         if not _metadata_matches(existing_by_id, body):
             raise HTTPException(
@@ -114,7 +107,7 @@ async def save_collection_word(
         response.status_code = status.HTTP_200_OK
         return CollectionWordResponse.from_row(existing_by_id)
 
-    existing_by_word = await _get_user_word_by_text(body.word, user.id, db)
+    existing_by_word = await _get_user_word_by_text(body.word, db)
     if existing_by_word is not None:
         response.status_code = status.HTTP_200_OK
         return CollectionWordResponse.from_row(existing_by_word)
@@ -125,7 +118,7 @@ async def save_collection_word(
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        existing_by_id = await _get_user_word(word_id, user.id, db)
+        existing_by_id = await _get_user_word(word_id, db)
         if existing_by_id is not None:
             if _metadata_matches(existing_by_id, body):
                 response.status_code = status.HTTP_200_OK
@@ -139,16 +132,17 @@ async def save_collection_word(
                     }
                 },
             )
-        existing_by_word = await _get_user_word_by_text(body.word, user.id, db)
+        existing_by_word = await _get_user_word_by_text(body.word, db)
         if existing_by_word is not None:
             response.status_code = status.HTTP_200_OK
             return CollectionWordResponse.from_row(existing_by_word)
+        # The id belongs to another account; say nothing that confirms it exists.
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={
                 "error": {
                     "kind": "conflict",
-                    "message": "Collection word could not be saved.",
+                    "message": "Collection word id unavailable.",
                 }
             },
         )
@@ -160,11 +154,6 @@ async def save_collection_word(
 
 @router.delete("/{word_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_collection_word(word_id: UUID, user: CurrentUser, db: DbSession) -> None:
-    row = await _get_user_word(word_id, user.id, db)
-    if row is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": {"kind": "not_found", "message": "Collection word not found."}},
-        )
+    row = await get_owned_or_404(db, CollectionWord, word_id, message="Collection word not found.")
     await db.delete(row)
     await db.commit()

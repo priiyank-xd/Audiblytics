@@ -556,6 +556,7 @@ function TodayRouteBody({
                 onAnalysis={setRecordingAnalysis}
                 layout="studio"
                 className="max-w-none"
+                retention={settings.retention}
               />
             </div>
           </section>

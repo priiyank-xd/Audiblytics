@@ -7,3 +7,4 @@ Short, interview-ready decisions for the Audiblytics v2 backend. Each ADR maps t
 | [0001](0001-jwt-httponly-cookie-auth.md) | JWT session in httpOnly cookie | BV4 |
 | [0002](0002-r2-presigned-blobs-not-postgres.md) | Audio blobs in R2 via presigned URLs | BV6, BV17 |
 | [0003](0003-strangler-storage-backend-flag.md) | Strangler migration via `STORAGE_BACKEND` | BV0, BV9 |
+| [0004](0004-orm-enforced-tenant-scoping.md) | ORM-enforced tenant scoping | BV4, BV7, BV17 |

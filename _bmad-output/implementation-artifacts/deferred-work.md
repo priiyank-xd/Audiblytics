@@ -1,5 +1,10 @@
 # Deferred work
 
+## Deferred from: 16-1-data-unreachable-by-any-other-account (2026-08-10)
+
+- **Composite `(user_id, id)` primary keys for `recordings` and `collection_words`** — both ids are client-supplied and globally unique, so a create that reuses another account's id still returns 409 rather than succeeding in the caller's own namespace. AC7 settles for a message that no longer confirms the id exists (`"Recording id unavailable."`). Re-keying needs an Alembic migration plus rework of the `recordings.storage_key` uniqueness constraint — out of scope for Story 16.1.
+- **Relationship loads are outside the tenant guard** — `User.<children>` traversal issues a relationship load, which the `do_orm_execute` listener skips. Safe today because the parent `users` row is always the caller, and pinned by a test. Revisit if a route ever needs to read a tenant entity through the `User` relationship.
+
 ## Deferred from: code review of 15-5-documentation-and-sprint-tracking-hygiene (2026-06-01)
 
 - **UX spec cross-link to v2 addendum** — standalone addendum satisfies AC3; optional `referenceArtifacts` entry in `ux-design-specification.md` frontmatter.

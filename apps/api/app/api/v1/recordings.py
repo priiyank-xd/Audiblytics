@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.core.deps import CurrentUser, DbSession
+from app.core.tenant_scope import get_owned_or_404
 from app.models.recording import Recording
 from app.schemas.recording import (
     RecordingCreateRequest,
@@ -24,10 +25,8 @@ from app.services.r2_client import (
 router = APIRouter(prefix="/recordings", tags=["recordings"])
 
 
-async def _get_user_recording(recording_id: UUID, user_id: UUID, db: DbSession) -> Recording | None:
-    result = await db.execute(
-        select(Recording).where(Recording.id == recording_id, Recording.user_id == user_id)
-    )
+async def _get_user_recording(recording_id: UUID, db: DbSession) -> Recording | None:
+    result = await db.execute(select(Recording).where(Recording.id == recording_id))
     return result.scalar_one_or_none()
 
 
@@ -51,7 +50,7 @@ def _metadata_matches(existing: Recording, body: RecordingCreateRequest) -> bool
 async def list_recordings(user: CurrentUser, db: DbSession) -> list[RecordingResponse]:
     result = await db.execute(
         select(Recording)
-        .where(Recording.user_id == user.id, Recording.storage_key.is_not(None))
+        .where(Recording.storage_key.is_not(None))
         .order_by(Recording.recording_date.desc())
     )
     rows = result.scalars().all()
@@ -65,10 +64,7 @@ async def start_recording_upload(
     db: DbSession,
 ) -> RecordingUploadStartResponse:
     recording_id = UUID(body.id)
-    result = await db.execute(
-        select(Recording).where(Recording.id == recording_id, Recording.user_id == user.id)
-    )
-    existing = result.scalar_one_or_none()
+    existing = await _get_user_recording(recording_id, db)
 
     if existing is not None:
         if existing.storage_key is not None:
@@ -108,12 +104,13 @@ async def start_recording_upload(
             await db.commit()
         except IntegrityError as exc:
             await db.rollback()
+            # The id belongs to another account; say nothing that confirms it exists.
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail={
                     "error": {
                         "kind": "conflict",
-                        "message": "Recording id already exists.",
+                        "message": "Recording id unavailable.",
                     }
                 },
             ) from exc
@@ -145,12 +142,7 @@ async def complete_recording_upload(
     user: CurrentUser,
     db: DbSession,
 ) -> RecordingResponse:
-    row = await _get_user_recording(recording_id, user.id, db)
-    if row is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": {"kind": "not_found", "message": "Recording not found."}},
-        )
+    row = await get_owned_or_404(db, Recording, recording_id, message="Recording not found.")
 
     if row.storage_key is None:
         try:
@@ -164,7 +156,7 @@ async def complete_recording_upload(
             await db.commit()
         except IntegrityError:
             await db.rollback()
-            row = await _get_user_recording(recording_id, user.id, db)
+            row = await _get_user_recording(recording_id, db)
             if row is None or row.storage_key is None:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
@@ -187,12 +179,7 @@ async def get_recording_playback_url(
     user: CurrentUser,
     db: DbSession,
 ) -> RecordingPlaybackUrlResponse:
-    row = await _get_user_recording(recording_id, user.id, db)
-    if row is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": {"kind": "not_found", "message": "Recording not found."}},
-        )
+    row = await get_owned_or_404(db, Recording, recording_id, message="Recording not found.")
 
     if row.storage_key is None:
         raise HTTPException(

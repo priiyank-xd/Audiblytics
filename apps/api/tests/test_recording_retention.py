@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_session_factory
+from app.core.tenant_scope import bind_tenant, unscoped
 from app.models.recording import Recording
 from app.models.user import User
 from app.models.user_settings import UserSettings
@@ -67,10 +68,30 @@ async def _get_user_id(email: str = "test@example.com") -> UUID:
 async def _set_retention(user_id: UUID, retention: str) -> None:
     factory = get_session_factory()
     async with factory() as session:
+        bind_tenant(session, user_id)
         result = await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
         settings = result.scalar_one()
         settings.retention = retention
         await session.commit()
+
+
+async def _recording_rows(user_id: UUID | None = None) -> list[Recording]:
+    """Assertion-only read outside any tenant binding."""
+    factory = get_session_factory()
+    async with factory() as session:
+        with unscoped(session):
+            stmt = select(Recording)
+            if user_id is not None:
+                stmt = stmt.where(Recording.user_id == user_id)
+            return list((await session.execute(stmt)).scalars().all())
+
+
+async def _load_user_for_prune(session, user_id: UUID) -> User:
+    bind_tenant(session, user_id)
+    result = await session.execute(
+        select(User).where(User.id == user_id).options(selectinload(User.settings))
+    )
+    return result.scalar_one()
 
 
 async def test_rolling_retention_cutoff_is_90_days_utc() -> None:
@@ -87,10 +108,7 @@ async def test_prune_deletes_old_completed_recordings(auth_client: AsyncClient) 
 
     factory = get_session_factory()
     async with factory() as session:
-        result = await session.execute(
-            select(User).where(User.id == user_id).options(selectinload(User.settings))
-        )
-        user = result.scalar_one()
+        user = await _load_user_for_prune(session, user_id)
 
         with patch("app.services.recording_retention.delete_object") as mock_delete:
             deleted = await prune_expired_recordings(session, user)
@@ -98,13 +116,9 @@ async def test_prune_deletes_old_completed_recordings(auth_client: AsyncClient) 
     assert deleted == 1
     mock_delete.assert_called_once_with(old.storage_key)
 
-    async with factory() as session:
-        remaining = (
-            await session.execute(select(Recording).where(Recording.user_id == user_id))
-        ).scalars().all()
-        remaining_ids = {row.id for row in remaining}
-        assert recent.id in remaining_ids
-        assert old.id not in remaining_ids
+    remaining_ids = {row.id for row in await _recording_rows(user_id)}
+    assert recent.id in remaining_ids
+    assert old.id not in remaining_ids
 
 
 @pytest.mark.asyncio
@@ -115,10 +129,7 @@ async def test_prune_skips_indefinite_policy(auth_client: AsyncClient) -> None:
 
     factory = get_session_factory()
     async with factory() as session:
-        result = await session.execute(
-            select(User).where(User.id == user_id).options(selectinload(User.settings))
-        )
-        user = result.scalar_one()
+        user = await _load_user_for_prune(session, user_id)
 
         with patch("app.services.recording_retention.delete_object") as mock_delete:
             deleted = await prune_expired_recordings(session, user)
@@ -126,11 +137,7 @@ async def test_prune_skips_indefinite_policy(auth_client: AsyncClient) -> None:
     assert deleted == 0
     mock_delete.assert_not_called()
 
-    async with factory() as session:
-        row = (
-            await session.execute(select(Recording).where(Recording.id == old.id))
-        ).scalar_one()
-        assert row.id == old.id
+    assert old.id in {row.id for row in await _recording_rows()}
 
 
 @pytest.mark.asyncio
@@ -144,10 +151,7 @@ async def test_prune_deletes_old_pending_without_r2(auth_client: AsyncClient) ->
 
     factory = get_session_factory()
     async with factory() as session:
-        result = await session.execute(
-            select(User).where(User.id == user_id).options(selectinload(User.settings))
-        )
-        user = result.scalar_one()
+        user = await _load_user_for_prune(session, user_id)
 
         with patch("app.services.recording_retention.delete_object") as mock_delete:
             deleted = await prune_expired_recordings(session, user)
@@ -155,11 +159,7 @@ async def test_prune_deletes_old_pending_without_r2(auth_client: AsyncClient) ->
     assert deleted == 1
     mock_delete.assert_not_called()
 
-    async with factory() as session:
-        row = (
-            await session.execute(select(Recording).where(Recording.id == old_pending.id))
-        ).scalar_one_or_none()
-        assert row is None
+    assert old_pending.id not in {row.id for row in await _recording_rows()}
 
 
 @pytest.mark.asyncio
@@ -178,13 +178,7 @@ async def test_login_prunes_old_recordings(client: AsyncClient) -> None:
         )
 
     assert response.status_code == 200
-
-    factory = get_session_factory()
-    async with factory() as session:
-        row = (
-            await session.execute(select(Recording).where(Recording.id == old.id))
-        ).scalar_one_or_none()
-        assert row is None
+    assert old.id not in {row.id for row in await _recording_rows()}
 
 
 @pytest.mark.asyncio
@@ -196,13 +190,7 @@ async def test_me_prunes_old_recordings(auth_client: AsyncClient) -> None:
         response = await auth_client.get("/api/v1/auth/me")
 
     assert response.status_code == 200
-
-    factory = get_session_factory()
-    async with factory() as session:
-        row = (
-            await session.execute(select(Recording).where(Recording.id == old.id))
-        ).scalar_one_or_none()
-        assert row is None
+    assert old.id not in {row.id for row in await _recording_rows()}
 
 
 @pytest.mark.asyncio
@@ -219,25 +207,16 @@ async def test_prune_does_not_touch_other_users(auth_client: AsyncClient, client
 
     factory = get_session_factory()
     async with factory() as session:
-        result = await session.execute(
-            select(User).where(User.id == user_a_id).options(selectinload(User.settings))
-        )
-        user_a = result.scalar_one()
+        user_a = await _load_user_for_prune(session, user_a_id)
 
         with patch("app.services.recording_retention.delete_object"):
             deleted = await prune_expired_recordings(session, user_a)
 
     assert deleted == 1
 
-    async with factory() as session:
-        row_b = (
-            await session.execute(select(Recording).where(Recording.id == old_b.id))
-        ).scalar_one()
-        row_a = (
-            await session.execute(select(Recording).where(Recording.id == old_a.id))
-        ).scalar_one_or_none()
-        assert row_a is None
-        assert row_b.id == old_b.id
+    remaining_ids = {row.id for row in await _recording_rows()}
+    assert old_a.id not in remaining_ids
+    assert old_b.id in remaining_ids
 
 
 @pytest.mark.asyncio

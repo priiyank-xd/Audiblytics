@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.security import decode_access_token
+from app.core.tenant_scope import bind_tenant
 from app.models.user import User
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
@@ -38,6 +39,7 @@ async def get_current_user_id(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"error": {"kind": "unauthorized", "message": "User not found."}},
         )
+    bind_tenant(db, user_id)
     return user_id
 
 

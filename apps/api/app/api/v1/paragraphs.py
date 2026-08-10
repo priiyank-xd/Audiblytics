@@ -56,7 +56,7 @@ async def list_paragraph_dates(
     from_date: str | None = Query(default=None, alias="from"),
     to_date: str | None = Query(default=None, alias="to"),
 ) -> list[str]:
-    stmt = select(ParagraphCache.generated_at).where(ParagraphCache.user_id == user.id)
+    stmt = select(ParagraphCache.generated_at)
     if from_date is not None:
         start, _ = _utc_day_bounds_for_date(_parse_query_utc_date(from_date, "from"))
         stmt = stmt.where(ParagraphCache.generated_at >= start)
@@ -81,7 +81,6 @@ async def get_paragraph_by_utc_date(
     start, end = _utc_day_bounds_for_date(parsed_date)
     result = await db.execute(
         select(ParagraphCache)
-        .where(ParagraphCache.user_id == user.id)
         .where(ParagraphCache.generated_at >= start)
         .where(ParagraphCache.generated_at <= end)
         .order_by(ParagraphCache.generated_at.desc())
@@ -101,7 +100,6 @@ async def get_paragraph_today(user: CurrentUser, db: DbSession) -> ParagraphCach
     start, end = _utc_day_bounds()
     result = await db.execute(
         select(ParagraphCache)
-        .where(ParagraphCache.user_id == user.id)
         .where(ParagraphCache.generated_at >= start)
         .where(ParagraphCache.generated_at <= end)
         .order_by(ParagraphCache.generated_at.desc())

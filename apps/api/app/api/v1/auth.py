@@ -1,16 +1,21 @@
 import logging
 from uuid import uuid4
 
+from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import APIRouter, HTTPException, Response, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import CurrentUser, DbSession, session_cookie_kwargs
 from app.core.security import create_access_token, hash_password, verify_password
+from app.core.tenant_scope import TENANT_MODELS, bind_tenant
+from app.models.recording import Recording
 from app.models.user import User
 from app.models.user_settings import UserSettings
+from app.schemas.account import AccountDeletionResponse
 from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse
+from app.services.r2_client import R2ConfigurationError, delete_object
 from app.services.recording_retention import prune_expired_recordings
 
 logger = logging.getLogger(__name__)
@@ -45,6 +50,7 @@ async def register(body: RegisterRequest, response: Response, db: DbSession) -> 
             status_code=status.HTTP_409_CONFLICT,
             detail={"error": {"kind": "conflict", "message": "Email already registered."}},
         ) from exc
+    bind_tenant(db, user.id)
     await db.refresh(user)
     token = create_access_token(user.id)
     response.set_cookie(value=token, **session_cookie_kwargs())
@@ -62,6 +68,7 @@ async def login(body: LoginRequest, response: Response, db: DbSession) -> UserRe
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"error": {"kind": "unauthorized", "message": "Invalid email or password."}},
         )
+    bind_tenant(db, user.id)
     token = create_access_token(user.id)
     response.set_cookie(value=token, **session_cookie_kwargs())
     await _prune_recordings_best_effort(db, user)
@@ -78,3 +85,41 @@ async def logout(response: Response) -> None:
 async def me(user: CurrentUser, db: DbSession) -> UserResponse:
     await _prune_recordings_best_effort(db, user)
     return user_to_response(user)
+
+
+@router.delete("/account", response_model=AccountDeletionResponse)
+async def delete_account(user: CurrentUser, db: DbSession, response: Response) -> AccountDeletionResponse:
+    """
+    Story 16.4 — remove every owned row and every owned R2 object, then invalidate the session.
+
+    Rows are deleted per table through the tenant guard rather than relying on the
+    database's ON DELETE CASCADE, so the outcome is identical on SQLite and Postgres.
+    Object deletion is attempted first: a key that cannot be removed is logged and
+    returned as orphaned, and deleting the same key again is a no-op, so the caller
+    can safely repeat the operation.
+    """
+    storage_keys = (
+        await db.execute(select(Recording.storage_key).where(Recording.storage_key.is_not(None)))
+    ).scalars().all()
+
+    orphaned: list[str] = []
+    for key in storage_keys:
+        try:
+            delete_object(key)
+        except (R2ConfigurationError, BotoCoreError, ClientError, ValueError):
+            logger.exception(
+                "Account deletion left an orphaned R2 object: key=%s user=%s", key, user.id
+            )
+            orphaned.append(key)
+
+    for model in TENANT_MODELS:
+        await db.execute(delete(model).execution_options(synchronize_session=False))
+    await db.execute(delete(User).where(User.id == user.id))
+    await db.commit()
+
+    kwargs = session_cookie_kwargs()
+    response.delete_cookie(key=kwargs["key"], path=kwargs["path"])
+    return AccountDeletionResponse(
+        deletedRecordings=len(storage_keys),
+        orphanedObjectKeys=orphaned,
+    )

@@ -5,6 +5,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 
+from app.core.tenant_scope import unscoped
 from app.models.recording import Recording
 from app.services.r2_client import PresignedGetPlayback, PresignedPutUpload
 
@@ -95,7 +96,10 @@ async def test_start_upload_persists_pending_row(auth_client: AsyncClient) -> No
 
     factory = get_session_factory()
     async with factory() as session:
-        result = await session.execute(select(Recording).where(Recording.id == UUID(recording_id)))
+        with unscoped(session):
+            result = await session.execute(
+                select(Recording).where(Recording.id == UUID(recording_id))
+            )
         row = result.scalar_one()
         assert row.storage_key is None
         assert row.duration_ms == 5000
@@ -132,7 +136,10 @@ async def test_start_upload_conflict_when_complete(auth_client: AsyncClient) -> 
 
     factory = get_session_factory()
     async with factory() as session:
-        result = await session.execute(select(Recording).where(Recording.id == UUID(recording_id)))
+        with unscoped(session):
+            result = await session.execute(
+                select(Recording).where(Recording.id == UUID(recording_id))
+            )
         row = result.scalar_one()
         row.storage_key = "recordings/u/r.webm"
         await session.commit()
@@ -248,7 +255,10 @@ async def test_complete_success(auth_client: AsyncClient) -> None:
 
     factory = get_session_factory()
     async with factory() as session:
-        result = await session.execute(select(Recording).where(Recording.id == UUID(recording_id)))
+        with unscoped(session):
+            result = await session.execute(
+                select(Recording).where(Recording.id == UUID(recording_id))
+            )
         row = result.scalar_one()
         assert row.storage_key is not None
         assert body["storageKey"] == row.storage_key
@@ -356,7 +366,10 @@ async def test_complete_validation_error_bad_mime(auth_client: AsyncClient) -> N
 
     factory = get_session_factory()
     async with factory() as session:
-        result = await session.execute(select(Recording).where(Recording.id == UUID(recording_id)))
+        with unscoped(session):
+            result = await session.execute(
+                select(Recording).where(Recording.id == UUID(recording_id))
+            )
         row = result.scalar_one()
         row.mime_type = "audio/bad"
         await session.commit()

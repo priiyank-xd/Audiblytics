@@ -41,7 +41,7 @@ async def list_completions(
     from_date: str | None = Query(default=None, alias="from"),
     to_date: str | None = Query(default=None, alias="to"),
 ) -> dict[str, DayCompletionBody]:
-    stmt = select(DayCompletion).where(DayCompletion.user_id == user.id)
+    stmt = select(DayCompletion)
     if from_date is not None:
         stmt = stmt.where(DayCompletion.utc_date >= _parse_query_utc_date(from_date, "from"))
     if to_date is not None:
@@ -76,10 +76,7 @@ async def upsert_completion(
         ) from exc
 
     result = await db.execute(
-        select(DayCompletion).where(
-            DayCompletion.user_id == user.id,
-            DayCompletion.utc_date == parsed_date,
-        )
+        select(DayCompletion).where(DayCompletion.utc_date == parsed_date)
     )
     existing = result.scalar_one_or_none()
 

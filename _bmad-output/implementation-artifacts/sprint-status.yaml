@@ -1,5 +1,5 @@
 # generated: 2026-05-04T14:32:00+05:30
-# last_updated: 2026-06-01T12:00:00+05:30
+# last_updated: 2026-08-10T16:59:00+05:30
 # project: Audiblytics
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-05-04T14:32:00+05:30
-last_updated: 2026-06-01T12:00:00+05:30
+last_updated: 2026-08-10T16:59:00+05:30
 project: Audiblytics
 project_key: NOKEY
 tracking_system: file-system
@@ -177,3 +177,11 @@ development_status:
   15-4-stats-route-implement-or-remove-nav: done
   15-5-documentation-and-sprint-tracking-hygiene: done
   epic-15-retrospective: optional
+
+  # Epic 16: My Data Is Mine Alone
+  epic-16: done
+  16-1-data-unreachable-by-any-other-account: done
+  16-2-told-what-happens-to-my-voice-before-i-record: done
+  16-3-take-a-copy-of-everything-i-have-made: done
+  16-4-delete-my-account-and-everything-in-it: done
+  epic-16-retrospective: optional

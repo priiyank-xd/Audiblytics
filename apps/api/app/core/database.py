@@ -3,8 +3,11 @@ from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import get_settings
+from app.core.tenant_scope import install_tenant_guard
 from app.models import CollectionWord, DayCompletion, DaysOfUse, ParagraphCache, Recording, User, UserSettings  # noqa: F401
 from app.models.base import Base
+
+install_tenant_guard()
 
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None
