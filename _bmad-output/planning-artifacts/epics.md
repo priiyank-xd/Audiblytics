@@ -1,5 +1,5 @@
 ---
-stepsCompleted: ['step-01-extract-requirements', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation', 'v2-backend-epics-9-13', 'ui-redesign-epic-14', 'epic-15-api-parity-pending']
+stepsCompleted: ['step-01-extract-requirements', 'step-02-design-epics', 'step-03-create-stories', 'step-04-final-validation', 'v2-backend-epics-9-13', 'ui-redesign-epic-14', 'epic-15-api-parity-pending', 'v3-retire-local-mode-requirements', 'v3-epic-design-16-21', 'v3-stories-16-21']
 inputDocuments:
   - '_bmad-output/planning-artifacts/prd.md'
   - '_bmad-output/planning-artifacts/architecture.md'
@@ -7,6 +7,10 @@ inputDocuments:
   - '_bmad-output/planning-artifacts/ux-design-specification.md'
   - '_bmad-output/planning-artifacts/implementation-readiness-report-2026-05-30.md'
   - '_bmad-output/design/ui-mockups-v2/index.md'
+  - 'docs/decisions/0001-jwt-httponly-cookie-auth.md'
+  - 'docs/decisions/0002-r2-presigned-blobs-not-postgres.md'
+  - 'docs/decisions/0003-strangler-storage-backend-flag.md'
+  - '_bmad-output/implementation-artifacts/deferred-work.md'
 ---
 
 # Audiblytics - Epic Breakdown
@@ -388,6 +392,90 @@ This document provides the complete epic and story breakdown for Audiblytics, de
 | BVR16–BVR18 | Epic 15 | API mode calendar/journey/history parity |
 | BVR19–BVR20 | Epic 15 | Stats + docs housekeeping |
 
+### v3 Coverage Map
+
+| Requirement | Epic | Story | Notes |
+|---|---|---|---|
+| NFR30 | Epic 16 | 16.1 | Enforced tenant scoping, not per-route convention |
+| NFR31 | Epic 16 | 16.2 | Voice-data disclosure before first recording |
+| FR71, NFR19 (rev) | Epic 16 | 16.3, 16.4 | Export and account deletion across Postgres and R2 |
+| FR10 (rev), NFR27 | Epic 17 | 17.1, 17.3 | Provider protocol; four providers behind one seam |
+| FR2 (rev), NFR29 | Epic 17 | 17.2 | Per-row AES-GCM key custody; plaintext column dropped |
+| FR1, FR9, FR66 | Epic 17 | 17.4 | Provider choice and per-provider key management |
+| FR11, FR12, FR13 (rev) | Epic 17 | 17.5 | Unified error contract, retry, schema validation |
+| FR73 | Epic 17 | 17.6 | Provider status served from the account |
+| FR68, FR48–FR52 | Epic 18 | 18.1–18.3 | Review queue and feedback move server-side |
+| FR67 | Epic 19 | 19.1 | Journey reflections and voice-journal notes unified |
+| FR69, NFR8 (rev) | Epic 19 | 19.2 | Recording delete and replace |
+| FR70 | Epic 19 | 19.3 | Offline pack from memory, no local table |
+| NFR9 (rev) | Epic 19 | 19.4 | Collection source metadata from server |
+| FR21, NFR14, NFR17 (retired) | Epic 20 | 20.5–20.7 | Retired with named successors recorded in 20.7 |
+| NFR32, NFR5 (rev), NFR10 (rev) | Epic 20 | 20.2–20.6 | Single storage path; local persistence removed |
+| FR65 | Epic 21 | 21.1 | Self-service registration |
+| FR72 | — | — | Deferred; see Deferred Scope |
+
+## v3 Requirements Delta — Retire Client-Only Mode
+
+Scope: remove the v1 client-only storage path (Dexie, `localStorage`, browser-direct LLM) so the app runs on a single server-backed code path. Driven by the decision to retire ADR 0003's `NEXT_PUBLIC_STORAGE_BACKEND` strangler flag and open the app to non-owner users for demonstration purposes.
+
+Existing local data is discarded rather than migrated — there is no import path in scope.
+
+### Retired Requirements
+
+| ID | Original intent | Reason for retirement |
+|---|---|---|
+| **FR21** | Retain most recent paragraph in IndexedDB | Superseded by the `paragraph_cache` table shipped in Epic 10 |
+| **NFR14** | API keys in `localStorage` only; public deployment forbidden until a backend proxy exists | The proxy exists. Keys move to Postgres. The prohibition's premise no longer holds. |
+| **NFR17** | No data exfiltration paths | Server-side storage is off-device by definition; replaced by NFR29–NFR31 |
+
+### Revised Requirements
+
+| ID | Revision |
+|---|---|
+| **FR2** | User can enter and save an LLM API key per provider; the key persists server-side against the user's account, encrypted at rest, and is never returned in plaintext. |
+| **FR10** | The provider abstraction layer lives in the FastAPI service. No provider-specific code exists outside it, and none exists in the browser. |
+| **FR11** | Provider-specific error responses are parsed server-side into a unified error contract consumed by the web client. |
+| **FR12** | Retry-twice-before-surfacing is enforced server-side. |
+| **FR13** | Structured JSON output is validated server-side against the fixed schema for every provider. |
+| **NFR5** | Collection of ≤100 words renders in <500ms from screen open, measured as a round trip rather than an IndexedDB read. |
+| **NFR8** | Every successful stop-recording results in a durably persisted R2 object plus its Postgres metadata row. Zero silent recording loss. |
+| **NFR9** | Every word save persists to Postgres immediately. Zero silent collection loss. |
+| **NFR10** | The app remains functional for collection, Daily Review, Voice Journal playback, calendar and Settings when the active LLM provider is unreachable. Availability now additionally depends on the API service. |
+| **NFR19** | Users retain ownership of their recordings: audio is stored in R2, reachable only through short-lived presigned URLs scoped to the owning user, with in-app export and delete available on demand. |
+| **NFR26** | Dependency parsimony applies per runtime. The API service takes on provider SDKs for all five supported providers; the web client sheds Dexie and the browser LLM stack. |
+| **NFR27** | Provider-swap reversibility is preserved — swapping providers remains a Settings interaction with no code change. |
+
+### New Functional Requirements
+
+- **FR65:** A visitor can register an account without owner intervention.
+- **FR66:** User can manage API keys for all five supported providers from Settings, with each key stored against their own account.
+- **FR67:** Journey reflections and Voice Journal notes are served by a single per-day notes model rather than two separate client-side stores.
+- **FR68:** Review feedback persists server-side, updating `reviewCount`, `lastReviewedAt` and `difficultyRating` on the owning user's collection word.
+- **FR69:** User can delete or replace a recording, removing both the R2 object and its metadata row.
+- **FR70:** The offline paragraph pack loads into memory from the static asset at request time; no client-side database table backs it.
+- **FR71:** User can export their own recordings and collection on demand.
+- **FR72:** Ollama is reachable only where the API process can address the Ollama host, configured by `OLLAMA_BASE_URL`, and is hidden as an option where unavailable.
+- **FR73:** The provider status indicator derives its state from the server rather than from persisted browser state.
+
+### New Non-Functional Requirements
+
+- **NFR29 — Credential protection:** Provider API keys are encrypted at rest and never returned in plaintext by any endpoint or log.
+- **NFR30 — Tenant isolation:** Every data access path is scoped by `user_id`, with cross-user access proven impossible by test.
+- **NFR31 — Voice data handling:** Recordings are treated as personally identifiable data. Retention period and deletion rights are stated to the user before first recording.
+- **NFR32 — Single storage path:** No domain state persists in the browser. `localStorage` and IndexedDB hold no application data, and no code branches on a storage-backend flag.
+
+### Architecture and Documentation Requirements
+
+- ADR 0003 (`strangler-storage-backend-flag`) is superseded; the flag it introduced is the subject of removal.
+- `NEXT_PUBLIC_STORAGE_BACKEND` and `isApiStorageBackend()` are deleted, along with every branch that consumes them.
+- Mandatory rule 4 in `AGENTS.md` and `CLAUDE.md` — requiring namespaced `audiblytics.*` `localStorage` keys via `useLocalStorage` — must be rewritten, as it will otherwise mandate a pattern the codebase no longer contains.
+- `architecture.md` ceases to describe a live runtime mode and is marked historical; `architecture-v2-fastapi-backend.md` becomes solely authoritative.
+- A new ADR records the retirement decision and the discard-rather-than-migrate choice for existing local data.
+
+### Open Conflict
+
+**NFR16 forbids all analytics, telemetry and error reporting.** Project notes propose adding Umami analytics. These cannot both hold. Out of scope for this delta, but requires a decision before any public deployment.
+
 ## Epic List
 
 ### Epic 1: Onboarding & First Paragraph Generation
@@ -480,6 +568,66 @@ Close gaps discovered after Epics 9–14 shipped: calendar/streak/journey must h
 
 **BVRs covered:** BVR16, BVR17, BVR18, BVR19, BVR20 · **FRs covered (server path):** FR19, FR53–FR58, FR38 (Day-14 days-of-use)
 
+### Epic 16: My Data Is Mine Alone
+
+Every record in the system belongs to exactly one account, and that account holder can see what is kept, take a copy, and have it destroyed. Establishes tenant scoping as an enforced mechanism rather than a coding convention, and defines the full data lifecycle across Postgres and R2 before any additional data is created.
+
+Placed first because `user_id` scoping and deletion cascades are schema properties. Building Epics 17–19 on top of them costs nothing; retrofitting them afterwards means migrating every table this work is about to create.
+
+**FRs covered:** FR71 · **NFRs covered:** NFR19 (revised), NFR30, NFR31
+
+### Epic 17: Bring Your Own Provider, Served Securely
+
+I can choose an LLM provider and supply my own key, held safely against my account rather than pasted into my browser.
+
+Split into two distinct concerns: the provider port (mechanical, low risk) and key custody (a design problem — encryption method, key material location, decrypt-failure behaviour). Gemini already exists server-side; OpenAI, Anthropic and OpenRouter share one HTTP adapter shape. Ollama is deferred — see Deferred Scope below.
+
+**FRs covered:** FR1, FR2 (revised), FR9, FR10–FR13 (revised), FR66, FR73 · **NFRs covered:** NFR26 (revised), NFR27, NFR29
+
+### Epic 18: Review That Remembers
+
+My review progress follows my account, so the words I've rated stay rated wherever I practise.
+
+Separated from the general parity work because it is not a parity gap — it is net-new feature work. Review has no server implementation at all today: `use-review-queue.ts` and `lib/review/apply-feedback.ts` are IndexedDB-only. Requires queue-ordering semantics (server-ordered or client-sorted), an update endpoint, and idempotency when a word is rated from two tabs.
+
+**FRs covered:** FR68 · **FRs preserved:** FR48–FR52
+
+### Epic 19: My Whole Practice Lives in My Account
+
+Day notes, saved words and recordings all persist to my account, so no part of my practice is stranded in one browser.
+
+The remaining parity backlog, all small: day-notes unification (journey reflections and voice-journal notes collapse into one model), recording delete and replace, offline pack served from memory instead of a local table, collection source metadata.
+
+**FRs covered:** FR67, FR69, FR70 · **NFRs covered:** NFR8 (revised), NFR9 (revised)
+
+### Epic 20: One Audiblytics, Any Browser
+
+I can open Audiblytics in a different browser or a clean profile and find my practice exactly as I left it, because nothing is kept locally any more.
+
+The teardown. Story order is load-bearing and must keep the test suite green at every commit: feature hooks first (each Dexie branch dies independently under its own vitest), then gate components, then page shells, then `storage-backend.ts`, then `db.ts`. The last two are the only commits that cannot be partial. Includes a one-time export of existing local data to disk before deletion, and an explicit teardown of the orphaned IndexedDB database. Carries the ADR 0003 supersession and the rewrite of mandatory rule 4.
+
+**Retires:** FR21, NFR14, NFR17 (each requires a named successor requirement before the epic closes) · **NFRs covered:** NFR32, NFR5 (revised), NFR10 (revised)
+
+### Epic 21: Anyone Can Try Audiblytics
+
+A visitor can reach a working daily loop without me handing over a key or intervening.
+
+Scope depends on an unresolved decision — see Open Decisions. Also owns the Day-14 visibility problem: the app's emotional climax fires on the fourteenth distinct day of use, so a brand-new account cannot reach it, and discarding existing local history resets the owner to day zero as well.
+
+**FRs covered:** FR65 · **Depends on:** the demo-access decision below
+
+### Open Decisions Blocking Story Creation
+
+1. **Demo access model.** Persistent accounts, session-scoped keys with no account, or a keyless demo running on the offline pack? This determines whether Epic 21 is a signup flow or a session boundary, and whether parts of Epic 16 are needed at all.
+2. **Key encryption method.** A single application secret performing per-row AES-GCM, or envelope encryption with a managed key service. Roughly an afternoon versus roughly a week, and it changes the settings endpoints.
+3. **Successor requirements for NFR14 and NFR17.** Both are being retired with nothing named in their place.
+4. **Post-demo intent.** Whether this returns to single-user operation after interviews, which determines how much of Epics 16 and 21 is permanent versus temporary.
+
+### Deferred Scope
+
+- **Ollama as a served provider (FR72).** A hosted API reaches its own localhost, not the visitor's machine. A user-supplied base URL is a server-side request forgery surface. Ollama remains available only where the API process and the Ollama host coincide, gated behind an operator-set `OLLAMA_BASE_URL` that is never user-supplied, and is hidden where absent. The provider abstraction stays extensible enough to admit it.
+- **Analytics (NFR16 conflict).** NFR16 forbids analytics and telemetry outright. Adding Umami requires retiring or amending NFR16 with a stated successor; out of scope here.
+
 ## Inter-Epic Dependencies
 
 | Epic | Depends on | Standalone delivery |
@@ -499,6 +647,12 @@ Close gaps discovered after Epics 9–14 shipped: calendar/streak/journey must h
 | Epic 13 | Epics 9–11 minimum | Deployable demo URL |
 | Epic 14 | Epics 1–8 features exist | New UI shell; can run parallel to Epic 11 after 14.1 |
 | Epic 15 | Epics 10, 11, 12, 14 | Honest API-mode calendar/journey + close-out |
+| Epic 16 | Epic 9 (user model exists) | Scoped ownership + retention, export and deletion across Postgres and R2 |
+| Epic 17 | Epic 16 (scoping), Epic 10 (Gemini path) | Provider choice and key custody served from the API |
+| Epic 18 | Epic 16, Epic 12 (collection API) | Review queue and feedback persist server-side |
+| Epic 19 | Epic 16, Epic 11 (recordings), Epic 12 | Day notes, recording delete/replace, offline pack without a local table |
+| Epic 20 | Epics 17, 18, 19 (all local-only behaviour must have a server home first) | Single storage path; local persistence removed |
+| Epic 21 | Epic 20 | A visitor reaches a working daily loop unaided |
 
 ## MVP-Slip Hierarchy Mapping
 
@@ -2536,5 +2690,511 @@ So that the repo is interview-ready and agents see accurate epic state (BVR20).
 **Given** Epics 9–10
 **When** traceability desired
 **Then** story files exist in `implementation-artifacts/` matching 9.1–10.5 (retroactive, copy ACs from `epics.md`)
+
+---
+
+## Epic 16: My Data Is Mine Alone
+
+Every record in the system belongs to exactly one account, and that account holder can see what is kept, take a copy, and have it destroyed. Placed first because tenant scoping and deletion cascades are schema properties — building Epics 17–20 on top of them is free, while retrofitting them later means migrating every table this work creates.
+
+Every user-owned table already carries `user_id` and routes filter through `CurrentUser`. The gap is that scoping is a convention repeated per route rather than an enforced mechanism.
+
+### Story 16.1: Data Unreachable by Any Other Account
+
+As a user,
+I want my recordings, words and notes to be structurally unreachable by any other account,
+So that opening the app to signups does not put my practice in someone else's hands.
+
+**Acceptance Criteria:**
+
+**Given** a request authenticated as user A
+**When** any query executes against a user-owned table
+**Then** the owning-user predicate is applied by a shared access layer rather than by per-route code
+**And** a query written without an explicit user filter cannot return another user's rows
+
+**Given** two seeded accounts each holding recordings, words, notes and completions
+**When** user A requests any resource by an identifier belonging to user B
+**Then** the response is 404 rather than 403, so identifiers are not confirmed to non-owners
+**And** an automated test asserts this for every user-owned route
+
+### Story 16.2: Told What Happens to My Voice Before I Record
+
+As a first-time user,
+I want to be told where my recording goes and how long it is kept before I press record,
+So that I am not handing over my voice on blind trust.
+
+**Acceptance Criteria:**
+
+**Given** an account that has never completed a recording
+**When** the record control is first presented
+**Then** an inline disclosure states where audio is stored, the active retention period, and that deletion is available on demand
+**And** the disclosure renders inline, never as a modal, toast or alert
+
+**Given** a user who has already seen the disclosure
+**When** they return on a later day
+**Then** the disclosure does not reappear
+**And** the same information remains reachable from Settings
+
+### Story 16.3: Take a Copy of Everything I Have Made
+
+As a user,
+I want to download my recordings, saved words, day notes and paragraph history,
+So that my practice is not hostage to this app continuing to exist.
+
+**Acceptance Criteria:**
+
+**Given** an authenticated user with recordings and collection words
+**When** they request an export
+**Then** the response contains their audio files plus a machine-readable manifest of words, notes, completions and paragraph history
+**And** the export contains no data belonging to any other account
+
+**Given** a user with no data
+**When** the export runs
+**Then** it succeeds with an empty manifest rather than erroring
+
+### Story 16.4: Delete My Account and Everything In It
+
+As a user,
+I want to permanently delete my account and all its data,
+So that leaving means actually leaving.
+
+**Acceptance Criteria:**
+
+**Given** an authenticated user with recordings in R2 and rows across every user-owned table
+**When** they confirm account deletion
+**Then** every owned row is removed by cascade and every owned R2 object is deleted
+**And** the session is invalidated
+
+**Given** an R2 deletion that fails partway
+**When** the deletion resolves
+**Then** the failure is logged with the orphaned object key rather than silently swallowed
+**And** the operation is safely repeatable
+
+**Given** a deleted account's email address
+**When** someone registers with it afterwards
+**Then** registration succeeds and the new account starts empty
+
+---
+
+## Epic 17: Bring Your Own Provider, Served Securely
+
+A user can choose an LLM provider and supply their own key, held safely against their account rather than pasted into a browser. Split deliberately into the provider port (mechanical, low risk) and key custody (a design problem with real consequences).
+
+Gemini already generates server-side. OpenAI, Anthropic and OpenRouter share one HTTP adapter shape. Ollama is deferred — a hosted API reaches its own localhost, not the visitor's, and a user-supplied base URL is a server-side request forgery surface.
+
+### Story 17.1: One Seam for Every Provider
+
+As a maintainer,
+I want all model access to pass through a single provider protocol with Gemini as its first implementation,
+So that adding a provider is a new file rather than a new branch through the generation path.
+
+**Acceptance Criteria:**
+
+**Given** the existing server-side Gemini generation path
+**When** it is refactored behind a provider protocol
+**Then** paragraph generation behaviour is unchanged and existing paragraph tests pass untouched
+**And** no provider-specific code remains outside the provider package
+
+### Story 17.2: My Provider Key Held Safely
+
+As a user,
+I want my API key encrypted where it is stored and never echoed back to me,
+So that handing it to this app is not a worse risk than keeping it myself.
+
+**Acceptance Criteria:**
+
+**Given** a user submitting a provider API key
+**When** it is persisted
+**Then** it is encrypted per-row with AES-GCM using an application secret sourced from the environment
+**And** no endpoint, log line or error message ever emits the plaintext value
+
+**Given** a stored key that fails to decrypt
+**When** generation is attempted
+**Then** an inline error asks the user to re-enter the key rather than failing opaquely
+
+**Given** the existing plaintext `user_settings.gemini_api_key` column
+**When** the migration runs
+**Then** existing values are encrypted in place and the plaintext column is dropped
+
+### Story 17.3: Three More Providers Behind the Same Seam
+
+As a user,
+I want OpenAI, Anthropic and OpenRouter available alongside Gemini,
+So that I can use whichever provider I already pay for.
+
+**Acceptance Criteria:**
+
+**Given** the provider protocol from Story 17.1
+**When** each of the three HTTP providers is implemented
+**Then** each satisfies the same protocol and passes a shared conformance test fixture
+**And** each returns paragraph output matching the fixed schema
+
+### Story 17.4: Choose My Provider and Manage My Keys
+
+As a user,
+I want to pick my active provider and manage a key for each one from Settings,
+So that switching providers takes no code change.
+
+**Acceptance Criteria:**
+
+**Given** an authenticated user on the Settings provider page
+**When** they enter a key for a provider and save
+**Then** the key is stored against their account and the field displays a masked placeholder thereafter
+
+**Given** a user with keys saved for several providers
+**When** they switch the active provider
+**Then** keys for the other providers are preserved rather than cleared
+**And** the change takes effect on the next generation, not retroactively
+
+**Given** a provider with no key configured
+**When** the user selects it
+**Then** an inline prompt requests a key before generation is attempted
+
+### Story 17.5: One Error Language Across Providers
+
+As a user,
+I want provider failures explained the same way regardless of which provider I use,
+So that I know whether to retry, fix my key, or wait.
+
+**Acceptance Criteria:**
+
+**Given** a provider returning a rate-limit, quota, authentication, network or malformed response
+**When** the error reaches the client
+**Then** it arrives as a unified error contract distinguishing those cases
+**And** the surface renders inline with the appropriate recovery action
+
+**Given** a transient provider failure
+**When** generation is attempted
+**Then** the server retries up to twice before surfacing the error
+
+**Given** a provider response failing schema validation
+**When** it is parsed
+**Then** incomplete hard-word entries are dropped rather than rendered partially
+
+### Story 17.6: Provider Status Without Local State
+
+As a user,
+I want the provider indicator to reflect the real state of my last generation,
+So that the dot in the header means something after a page reload.
+
+**Acceptance Criteria:**
+
+**Given** a completed generation attempt
+**When** the client requests provider status
+**Then** the outcome and active provider are served from the account rather than read from browser storage
+
+**Given** a failure caused by the user's own key versus a server-side fault
+**When** status is displayed
+**Then** the two cases are distinguishable and carry different recovery actions
+
+---
+
+## Epic 18: Review That Remembers
+
+Review progress follows the account, so words rated on one machine stay rated everywhere. Separated from general parity work because it is not a gap — it is net-new feature work. Review has no server implementation today; `use-review-queue.ts` and `lib/review/apply-feedback.ts` are IndexedDB-only.
+
+The `collection_words` table already carries `review_count`, `last_reviewed_at` and `difficulty_rating`. No endpoint updates them.
+
+### Story 18.1: My Review Queue Comes From My Account
+
+As a user,
+I want today's review batch built from the words in my account,
+So that the queue is the same wherever I open the app.
+
+**Acceptance Criteria:**
+
+**Given** an account holding collection words with mixed review history
+**When** the review queue is requested
+**Then** never-reviewed words come first ordered by save date, then the remainder by oldest review date
+**And** the batch is capped at the established batch size
+
+**Given** an account with no saved words
+**When** the review queue is requested
+**Then** an empty queue is returned and the empty state renders rather than an error
+
+### Story 18.2: Rating a Word Sticks
+
+As a user,
+I want my rating of a word recorded against my account,
+So that tomorrow's queue reflects what I actually found hard.
+
+**Acceptance Criteria:**
+
+**Given** a word in the user's collection
+**When** feedback is submitted
+**Then** `reviewCount`, `lastReviewedAt` and `difficultyRating` are updated on that word
+**And** a word belonging to another account cannot be updated
+
+**Given** the same rating submitted twice from two tabs
+**When** both requests arrive
+**Then** the result is consistent and the review count does not double-increment beyond the intended semantics
+
+### Story 18.3: Review Session Runs Without a Local Database
+
+As a user,
+I want the review screen to work from my account,
+So that review is not the one feature that forgets me.
+
+**Acceptance Criteria:**
+
+**Given** the review route
+**When** it loads
+**Then** the queue and feedback both travel through the API with no IndexedDB read or write remaining in the review path
+
+**Given** a queue fetch that fails
+**When** the screen renders
+**Then** an inline error with a retry action is shown rather than a silently empty queue
+
+---
+
+## Epic 19: My Whole Practice Lives in My Account
+
+The remaining parity backlog, all individually small. Day notes unify, recordings become deletable, the offline pack sheds its local table, and collection metadata stops falling back to placeholder labels.
+
+### Story 19.1: One Home for My Day Notes
+
+As a user,
+I want the note I write about a day to be the same note wherever I look at that day,
+So that my reflections are not split across two separate stores.
+
+**Acceptance Criteria:**
+
+**Given** journey reflections and voice-journal notes, which share an identical per-date shape
+**When** the unified model ships
+**Then** both surfaces read and write a single per-day note owned by the account
+
+**Given** a note saved from the Journey screen
+**When** the same date is opened from Voice Journal
+**Then** the same text appears
+
+### Story 19.2: Delete or Replace a Recording
+
+As a user,
+I want to remove a recording I do not want to keep,
+So that a bad take is not preserved forever.
+
+**Acceptance Criteria:**
+
+**Given** a recording owned by the user
+**When** deletion is requested
+**Then** both the metadata row and the R2 object are removed
+**And** a recording owned by another account cannot be deleted
+
+**Given** a user re-recording over an existing take
+**When** the replacement completes
+**Then** the prior recording is removed rather than orphaned
+
+### Story 19.3: Offline Pack Without a Local Database
+
+As a user,
+I want the offline pack to keep working when generation fails,
+So that a bad key or an exhausted quota does not cost me the day.
+
+**Acceptance Criteria:**
+
+**Given** the static offline pack asset
+**When** the pack is needed
+**Then** it is fetched and held in memory for the session with no local database table involved
+
+**Given** an LLM failure with the pack available
+**When** the user chooses the offline fallback
+**Then** a paragraph is selected and the day is marked as an offline-pack session
+
+### Story 19.4: Honest Labels on Saved Words
+
+As a user,
+I want each saved word to show the theme and session it came from,
+So that my collection does not fill up with placeholder labels.
+
+**Acceptance Criteria:**
+
+**Given** a saved word whose source paragraph exists in the account's paragraph history
+**When** the collection is displayed
+**Then** the source theme and date are resolved from the server rather than showing an unknown placeholder
+
+**Given** a word whose source paragraph is no longer present
+**When** it is displayed
+**Then** the saved date is shown as a graceful fallback
+
+---
+
+## Epic 20: One Audiblytics, Any Browser
+
+The teardown. A user can open the app in a different browser or a clean profile and find their practice exactly as they left it, because nothing is kept locally any more.
+
+Story order is load-bearing and must keep the test suite green at every commit: local export first, then feature hooks, then gates, then page shells, then the flag, then the database itself. Only the last two commits cannot be partial.
+
+### Story 20.1: Rescue My Existing Local Data First
+
+As the current user,
+I want a copy of everything currently sitting in my browser before any of it is deleted,
+So that a refactor does not cost me my Day-1 recording.
+
+**Acceptance Criteria:**
+
+**Given** a browser holding the existing local database and settings
+**When** the export utility runs
+**Then** recordings are written to disk as audio files alongside a JSON dump of words, notes, completions and days of use
+
+**Given** the export has completed
+**When** the files are inspected
+**Then** every recording is playable and the manifest is valid JSON
+
+### Story 20.2: Feature Hooks Drop Their Local Branch
+
+As a maintainer,
+I want each feature hook to have exactly one data path,
+So that behaviour no longer depends on how the app was configured.
+
+**Acceptance Criteria:**
+
+**Given** each feature hook currently branching on the storage flag
+**When** the local branch is removed
+**Then** the hook reads and writes only through the API
+**And** that hook's unit tests pass after each individual change, keeping the suite green commit by commit
+
+### Story 20.3: One Gate, and It Is Authentication
+
+As a user,
+I want a single sign-in gate on first load,
+So that I am not asked for an API key before I have an account.
+
+**Acceptance Criteria:**
+
+**Given** the app shell
+**When** an unauthenticated visitor loads it
+**Then** the authentication gate is the only gate and the provider-keys gate no longer exists
+
+**Given** an authenticated user with no provider key configured
+**When** they reach the app
+**Then** they enter normally and are prompted for a key at the point of generation
+
+### Story 20.4: Page Shells Stop Asking Where Data Lives
+
+As a maintainer,
+I want the page-level components free of storage branching,
+So that the shells describe layout rather than configuration.
+
+**Acceptance Criteria:**
+
+**Given** the page shells that still branch on the storage flag
+**When** the branches are removed
+**Then** each renders one behaviour and its tests pass
+
+### Story 20.5: The Storage Flag Is Gone
+
+As a maintainer,
+I want the storage-backend flag deleted outright,
+So that the two-path era ends definitively rather than lingering as dead configuration.
+
+**Acceptance Criteria:**
+
+**Given** no remaining consumers after Stories 20.2 through 20.4
+**When** the flag module and its environment variable are deleted
+**Then** the project builds, type-checks and tests clean with no reference remaining in source, environment examples, compose files or deployment manifests
+
+### Story 20.6: The Local Database Is Removed and Cleaned Up
+
+As a user,
+I want the old local database cleared out of my browser,
+So that I am not carrying dead storage from a version of the app that no longer exists.
+
+**Acceptance Criteria:**
+
+**Given** no remaining consumers
+**When** the local database module, the local-storage hook and the browser LLM stack are deleted
+**Then** the project builds and tests clean, and no application data is written to browser storage by any code path
+
+**Given** a browser holding the legacy database from a prior version
+**When** the app loads after this change
+**Then** that database is deleted once and the teardown does not run again on subsequent loads
+
+### Story 20.7: The Documentation Matches the Code
+
+As a maintainer returning in six months,
+I want the architecture record to describe the system that exists,
+So that the documents do not mandate a pattern the codebase has removed.
+
+**Acceptance Criteria:**
+
+**Given** ADR 0003, which introduced the flag now deleted
+**When** documentation is reconciled
+**Then** it is marked superseded and a new ADR records both the retirement and the decision to discard rather than migrate local data
+
+**Given** mandatory rule 4 in the agent instruction files, requiring namespaced local-storage keys
+**When** it is rewritten
+**Then** it states that no application data persists in the browser
+
+**Given** the retirement of the API-key storage and data-exfiltration constraints
+**When** the requirements are updated
+**Then** each carries its named successor: provider keys never reach the browser and the API is the only egress to LLM providers; and user data leaves the system only through the user's own export
+
+**Given** the v1 client-only architecture document
+**When** documentation is reconciled
+**Then** it is marked historical and the v2 backend document becomes solely authoritative
+
+---
+
+## Epic 21: Anyone Can Try Audiblytics
+
+A visitor can create an account and reach a working daily loop unaided.
+
+Known and accepted trade-off: with bring-your-own-key as the only model, a visitor without an existing provider key must obtain one before they can generate a paragraph. This is a deliberate choice, recorded here so the drop-off is not mistaken for a defect.
+
+### Story 21.1: Sign Up and Reach My First Session
+
+As a visitor,
+I want to create an account and arrive at a usable app,
+So that I can try Audiblytics without anyone provisioning it for me.
+
+**Acceptance Criteria:**
+
+**Given** a visitor on the sign-in screen
+**When** they choose to register and submit valid credentials
+**Then** an account is created, a session is established, and they arrive at the app already signed in
+
+**Given** an email address already registered
+**When** registration is attempted
+**Then** an inline error explains the conflict without revealing whether that account has data
+
+**Given** a newly registered account
+**When** the first session begins
+**Then** default settings are present and the app is usable before any provider key is configured
+
+### Story 21.2: Hear My Progress Before Day Fourteen
+
+As a new user,
+I want to compare any two of my recordings as soon as I have two,
+So that the app's central promise is not locked behind a two-week wait.
+
+**Acceptance Criteria:**
+
+**Given** an account holding at least two recordings
+**When** the user opens the comparison surface
+**Then** they can select any two recordings and play them against each other
+
+**Given** an account with fewer than two recordings
+**When** the surface is reached
+**Then** an encouraging empty state explains what unlocks it, with no shame-inducing framing
+
+**Given** the fourteenth distinct day of use
+**When** the established takeover fires
+**Then** it still fires exactly once, unchanged by the presence of the earlier comparison path
+
+### Story 21.3: Open Signup Without Open Abuse
+
+As the operator,
+I want registration and generation rate-limited,
+So that opening the app to the public does not expose it to trivial abuse.
+
+**Acceptance Criteria:**
+
+**Given** repeated registration attempts from one origin
+**When** a threshold is exceeded
+**Then** further attempts are rejected with a retry-after response
+
+**Given** repeated generation requests from one account
+**When** a threshold is exceeded
+**Then** the request is rejected with an inline message distinguishing this from a provider-side quota error
 
 ---
