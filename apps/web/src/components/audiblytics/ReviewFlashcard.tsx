@@ -9,7 +9,7 @@ import { useReviewWordTts } from '@/features/review/use-review-word-tts';
 import { formatIpaDisplay } from '@/lib/collection/format-ipa-display';
 import { parseWordMeaning } from '@/lib/today/word-meaning';
 import type { CollectionWord } from '@/lib/schemas/collection.schema';
-import type { StorageError } from '@/lib/storage/db';
+import type { StorageError } from '@/lib/storage/types';
 import { cn } from '@/lib/utils';
 
 const focusRing =

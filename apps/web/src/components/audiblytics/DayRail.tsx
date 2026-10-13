@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 
-import { OfflineBadge } from '@/components/audiblytics/OfflineBadge';
 import type { DayRailCellModel, DayRailCellState } from '@/features/calendar/use-day-rail-cells';
 import { useDayRailCells } from '@/features/calendar/use-day-rail-cells';
 import { cn } from '@/lib/utils';
@@ -19,7 +18,6 @@ function DayCell({ day, state, utcDate, onCompletedActivate }: DayCellProps) {
   const screenReaderText: Record<DayRailCellState, string> = {
     future: `Day ${day}, upcoming`,
     completed: `Day ${day}, completed`,
-    'completed-offline': `Day ${day}, completed via offline pack`,
     missed: `Day ${day}, missed`,
     today: `Day ${day}, today`,
   };
@@ -27,13 +25,12 @@ function DayCell({ day, state, utcDate, onCompletedActivate }: DayCellProps) {
   const dotClass = {
     future: 'bg-ink-faint/60',
     completed: 'bg-primary',
-    'completed-offline': 'bg-primary',
     missed: 'border border-divider bg-transparent',
     today: 'bg-primary ring-2 ring-primary-soft',
   }[state];
 
   const interactiveCompleted =
-    (state === 'completed' || state === 'completed-offline') && onCompletedActivate;
+    state === 'completed' && onCompletedActivate;
 
   const rowClass = cn(
     'flex min-h-11 min-w-[44px] shrink-0 items-center gap-2 px-2 py-1',
@@ -54,9 +51,6 @@ function DayCell({ day, state, utcDate, onCompletedActivate }: DayCellProps) {
       </span>
       <span className="relative inline-flex shrink-0">
         <span className={cn('h-1.5 w-1.5 rounded-sm', dotClass)} aria-hidden="true" />
-        {state === 'completed-offline' ? (
-          <OfflineBadge className="absolute -right-1 -top-1" />
-        ) : null}
       </span>
       <span className="sr-only">{screenReaderText[state]}</span>
     </>
@@ -130,7 +124,7 @@ export function DayRail() {
           state={cell.state}
           utcDate={cell.utcDate}
           onCompletedActivate={
-            cell.state === 'completed' || cell.state === 'completed-offline'
+            cell.state === 'completed'
               ? () => handleCompleted(cell.utcDate)
               : undefined
           }

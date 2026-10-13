@@ -2,7 +2,7 @@ import type { Completions } from '@/lib/schemas/completions.schema';
 
 /**
  * FR53: day is “complete” when a paragraph exists for that UTC calendar day (caller supplies
- * `hasParagraphForDate` from Dexie cache and/or `usedOfflinePack` on the completion row) and the
+ * `hasParagraphForDate` from the server paragraph dates) and the
  * user engaged via read or recording.
  */
 export function evaluateCompletion(params: {

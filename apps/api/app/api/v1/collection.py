@@ -7,7 +7,12 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.deps import CurrentUser, DbSession
 from app.models.collection_word import CollectionWord
-from app.schemas.collection import CollectionWordCreate, CollectionWordResponse, datetime_from_iso
+from app.schemas.collection import (
+    CollectionWordCreate,
+    CollectionWordResponse,
+    CollectionWordReviewUpdate,
+    datetime_from_iso,
+)
 
 router = APIRouter(prefix="/collection", tags=["collection"])
 
@@ -155,6 +160,27 @@ async def save_collection_word(
 
     await db.refresh(row)
     response.status_code = status.HTTP_201_CREATED
+    return CollectionWordResponse.from_row(row)
+
+
+@router.patch("/{word_id}", response_model=CollectionWordResponse)
+async def update_collection_word_review(
+    word_id: UUID,
+    body: CollectionWordReviewUpdate,
+    user: CurrentUser,
+    db: DbSession,
+) -> CollectionWordResponse:
+    row = await _get_user_word(word_id, user.id, db)
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": {"kind": "not_found", "message": "Collection word not found."}},
+        )
+    row.review_count = body.reviewCount
+    row.last_reviewed_at = datetime_from_iso(body.lastReviewedAt)
+    row.difficulty_rating = body.difficultyRating
+    await db.commit()
+    await db.refresh(row)
     return CollectionWordResponse.from_row(row)
 
 

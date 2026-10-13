@@ -148,3 +148,33 @@ async def test_collection_user_isolation(client: AsyncClient) -> None:
     rows_a = (await client.get("/api/v1/collection")).json()
     assert len(rows_a) == 1
     assert rows_a[0]["word"] == "isolated"
+
+
+@pytest.mark.asyncio
+async def test_patch_collection_word_review(auth_client: AsyncClient) -> None:
+    payload = _word_payload()
+    await auth_client.post("/api/v1/collection", json=payload)
+    update = {"reviewCount": 1, "lastReviewedAt": "2026-06-01T09:00:00.000Z", "difficultyRating": 0}
+    response = await auth_client.patch(f"/api/v1/collection/{payload['id']}", json=update)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["reviewCount"] == 1
+    assert body["lastReviewedAt"] == "2026-06-01T09:00:00.000Z"
+    assert body["difficultyRating"] == 0
+    assert body["word"] == payload["word"]
+
+
+@pytest.mark.asyncio
+async def test_patch_collection_word_not_found(auth_client: AsyncClient) -> None:
+    update = {"reviewCount": 1, "lastReviewedAt": "2026-06-01T09:00:00.000Z", "difficultyRating": 1}
+    response = await auth_client.patch(f"/api/v1/collection/{uuid4()}", json=update)
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_patch_collection_word_rejects_bad_rating(auth_client: AsyncClient) -> None:
+    payload = _word_payload()
+    await auth_client.post("/api/v1/collection", json=payload)
+    update = {"reviewCount": 1, "lastReviewedAt": "2026-06-01T09:00:00.000Z", "difficultyRating": 5}
+    response = await auth_client.patch(f"/api/v1/collection/{payload['id']}", json=update)
+    assert response.status_code == 422

@@ -44,7 +44,6 @@ uvicorn app.main:app --reload --port 8000
 In `apps/web/.env.local`:
 
 ```env
-NEXT_PUBLIC_STORAGE_BACKEND=api
 API_URL=http://localhost:8000
 ```
 
@@ -80,4 +79,4 @@ Requires `OFFLINE_PACK_PROVIDER_KEY` in `apps/web/.env.local`.
 
 ## Deploy
 
-Vercel — set **Root Directory** to `apps/web`. In API mode, set `NEXT_PUBLIC_STORAGE_BACKEND=api` and point `API_URL` at your deployed API origin.
+Vercel — set **Root Directory** to `apps/web`. Point `API_URL` at your deployed API origin.

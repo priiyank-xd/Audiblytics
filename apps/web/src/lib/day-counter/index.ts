@@ -4,25 +4,14 @@ import {
   appendServerDaysOfUseCache,
   getCachedServerDaysOfUse,
 } from '@/lib/day-counter/days-of-use-server-cache';
-import { distinctDaysFromMerged } from '@/lib/day-counter/merge-days-of-use';
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 import { stampDayOfUse as stampDayOfUseApi } from '@/lib/api/days-of-use';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
-import { readDaysOfUse, writeDaysOfUse } from '@/lib/storage/use-local-storage';
 
-/** Append today’s UTC date to `audiblytics.daysOfUse` if not already present (idempotent per UTC day). */
+/** Stamps today's UTC date on the server (idempotent per UTC day). */
 export function recordDayOfUse(now: Date = new Date()): void {
   if (typeof window === 'undefined') return;
 
-  const utcDate = formatUtcDate(now);
-  const existing = readDaysOfUse();
-  if (!existing.includes(utcDate)) {
-    writeDaysOfUse([...existing, utcDate]);
-  }
-
-  if (!isApiStorageBackend()) return;
-
-  void stampDayOfUseApi(utcDate)
+  void stampDayOfUseApi(formatUtcDate(now))
     .then((stamped) => {
       appendServerDaysOfUseCache(stamped);
       notifyDaysOfUseMutated();
@@ -32,13 +21,9 @@ export function recordDayOfUse(now: Date = new Date()): void {
     });
 }
 
-/** Count of distinct UTC dates (server ∪ local in API mode). */
+/** Count of distinct UTC dates known from the server cache. */
 export function distinctDaysOfUse(): number {
-  const local = readDaysOfUse();
-  if (!isApiStorageBackend()) {
-    return new Set(local).size;
-  }
-  return distinctDaysFromMerged(local, getCachedServerDaysOfUse());
+  return new Set(getCachedServerDaysOfUse()).size;
 }
 
 /**
@@ -46,9 +31,8 @@ export function distinctDaysOfUse(): number {
  * Aligns with Today header `Math.max(1, distinctDaysOfUse())` when today is not yet recorded.
  */
 export function dayOfUseAtRecordingSave(now: Date = new Date()): number {
-  const todayUtc = formatUtcDate(now);
   const distinct = distinctDaysOfUse();
-  if (readDaysOfUse().includes(todayUtc) || getCachedServerDaysOfUse().includes(todayUtc)) {
+  if (getCachedServerDaysOfUse().includes(formatUtcDate(now))) {
     return Math.max(1, distinct);
   }
   return Math.max(1, distinct + 1);

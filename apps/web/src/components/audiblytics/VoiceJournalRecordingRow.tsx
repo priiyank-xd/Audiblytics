@@ -2,7 +2,6 @@
 
 import { MoreVertical, Pause, Play } from 'lucide-react';
 
-import { OfflineBadge } from '@/components/audiblytics/OfflineBadge';
 import { RecordingWaveformPlaceholder } from '@/components/audiblytics/RecordingWaveformPlaceholder';
 import type { RecordingWithTheme } from '@/features/voice-journal/use-recordings';
 import { deriveRecordingRowLabels } from '@/lib/voice-journal/recording-row-labels';
@@ -26,7 +25,6 @@ export type VoiceJournalRecordingRowProps = {
   comparePhaseIdle: boolean;
   showCompareCheckbox: boolean;
   showUnavailable: boolean;
-  showOfflineBadge: boolean;
   onTogglePlay: () => void;
   onToggleCompareSelection: () => void;
 };
@@ -40,7 +38,6 @@ export function VoiceJournalRecordingRow({
   comparePhaseIdle,
   showCompareCheckbox,
   showUnavailable,
-  showOfflineBadge,
   onTogglePlay,
   onToggleCompareSelection,
 }: VoiceJournalRecordingRowProps) {
@@ -93,7 +90,6 @@ export function VoiceJournalRecordingRow({
                   </span>
                 ) : null}
                 <p className="text-ui font-semibold text-foreground">{title}</p>
-                {showOfflineBadge ? <OfflineBadge /> : null}
               </div>
               <p className="text-caption text-secondary">
                 {formatRecordingDateTime(row.recordingDate)}

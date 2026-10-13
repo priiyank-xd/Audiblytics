@@ -3,18 +3,9 @@
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import type { StorageError } from '@/lib/storage/db';
-import type { ActiveProvider } from '@/lib/schemas/provider-keys.schema';
+import type { StorageError } from '@/lib/storage/types';
 import type { LlmError } from '@/lib/llm/types';
 import { cn } from '@/lib/utils';
-
-const PROVIDER_LABEL: Record<ActiveProvider, string> = {
-  gemini: 'Gemini',
-  openai: 'OpenAI',
-  anthropic: 'Anthropic',
-  openrouter: 'OpenRouter',
-  ollama: 'Ollama',
-};
 
 function failureSummary(err: LlmError): string {
   switch (err.kind) {
@@ -43,13 +34,9 @@ export type InlineErrorSurfaceProps = {
   | {
       variant?: 'llm';
       error: LlmError;
-      activeProvider: ActiveProvider;
       isRetrying: boolean;
-      isUsingOfflinePack?: boolean;
-      hasOfflinePack?: boolean;
       onRetry: () => void;
       onOpenSettings: () => void;
-      onUseOfflinePack?: () => void | Promise<void>;
     }
   | {
       variant: 'storage';
@@ -110,26 +97,10 @@ export function InlineErrorSurface({
   }
 
   const llm = error as LlmError;
-  const {
-    activeProvider,
-    isRetrying,
-    isUsingOfflinePack = false,
-    hasOfflinePack = false,
-    onRetry,
-    onUseOfflinePack,
-  } = rest as {
-    activeProvider: ActiveProvider;
-    isRetrying: boolean;
-    isUsingOfflinePack?: boolean;
-    hasOfflinePack?: boolean;
-    onRetry: () => void;
-    onUseOfflinePack?: () => void | Promise<void>;
-  };
-  const providerName = PROVIDER_LABEL[activeProvider];
-  const headline = `${providerName} · ${failureSummary(llm)}`;
+  const { isRetrying, onRetry } = rest as { isRetrying: boolean; onRetry: () => void };
+  const headline = `Gemini · ${failureSummary(llm)}`;
   const codePart = llm.providerCode ? ` Code: ${llm.providerCode}.` : '';
-  const showUseOfflinePack = hasOfflinePack && onUseOfflinePack !== undefined;
-  const actionsLocked = isRetrying || isUsingOfflinePack;
+  const actionsLocked = isRetrying;
 
   return (
     <div
@@ -173,24 +144,6 @@ export function InlineErrorSurface({
         >
           Open Settings
         </Button>
-        {showUseOfflinePack ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="default"
-            disabled={actionsLocked}
-            onClick={() => void onUseOfflinePack()}
-          >
-            {isUsingOfflinePack ? (
-              <>
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-                Loading pack…
-              </>
-            ) : (
-              'Use Offline Pack'
-            )}
-          </Button>
-        ) : null}
       </div>
     </div>
   );

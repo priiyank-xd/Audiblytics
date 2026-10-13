@@ -2,7 +2,6 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, Sparkles } from 'lucide-react';
@@ -18,15 +17,9 @@ import {
   type RecordingAnalysis,
 } from '@/components/audiblytics/RecordPanel';
 import { Button } from '@/components/ui/button';
-import {
-  selectFromOfflinePack,
-  type OfflinePackError,
-} from '@/features/offline-pack/select-from-offline-pack';
-import { resolveTodayDisplayParagraph } from '@/features/offline-pack/resolve-today-display-paragraph';
 import type { ParagraphGeneratePayload } from '@/features/paragraph/paragraph-generate-payload';
 import { useGenerateParagraph } from '@/features/paragraph/use-generate-paragraph';
 import { useParagraphOfTheDay } from '@/features/paragraph/use-paragraph-of-the-day';
-import { useDay14Trigger } from '@/features/day14/use-day-14-trigger';
 import { useStatStreakSurface } from '@/features/calendar/stat-streak-surface-context';
 import { useCollection } from '@/features/collection/use-collection';
 import { useSaveWord } from '@/features/collection/use-save-word';
@@ -37,17 +30,9 @@ import {
 } from '@/lib/llm/schemas/paragraph.schema';
 import { speak } from '@/lib/audio/tts';
 import type { LlmError } from '@/lib/llm/types';
-import { ok, type Result } from '@/lib/result';
 import { fetchApiSettings, patchApiSettings, type ApiSettings } from '@/lib/api/settings';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import { isStretchUiEnabled } from '@/lib/config/stretch-ui';
 import { useDistinctDayOfUse } from '@/lib/day-counter/use-distinct-day-of-use';
-import {
-  activeProviderSchema,
-  providerKeysSchema,
-  type ActiveProvider,
-  type ProviderKeys,
-} from '@/lib/schemas/provider-keys.schema';
 import {
   settingsSchema,
   type Persona,
@@ -59,8 +44,7 @@ import {
   applyLastUsedPractice,
   shouldApplyLastUsedOverlay,
 } from '@/lib/settings/apply-last-used-practice';
-import { LIVE_QUERY_EMPTY_DEPS } from '@/lib/hooks/live-query-empty-deps';
-import { db, type StorageError } from '@/lib/storage/db';
+import type { StorageError } from '@/lib/storage/types';
 import {
   findHardWordForToken,
   hardWordRowId,
@@ -131,13 +115,9 @@ type TodayProps = {
   recycledWordKeys: ReadonlySet<string>;
   cachePersistError: StorageError | null;
   applyParagraphGenerateSuccess: (payload: ParagraphGeneratePayload) => void;
-  applyOfflinePackParagraph: () => Promise<Result<void, OfflinePackError>>;
   paragraphId: string;
   onParagraphIdChange: (id: string) => void;
-  activeProvider: ActiveProvider;
-  providerKeys: ProviderKeys;
   paragraphCacheLoading: boolean;
-  usedOfflinePackThisSession: boolean;
 };
 
 function TodayRouteBody({
@@ -148,20 +128,12 @@ function TodayRouteBody({
   recycledWordKeys,
   cachePersistError,
   applyParagraphGenerateSuccess,
-  applyOfflinePackParagraph,
   paragraphId,
   onParagraphIdChange,
-  activeProvider,
-  providerKeys,
   paragraphCacheLoading,
-  usedOfflinePackThisSession,
 }: TodayProps) {
   const router = useRouter();
-  const day14Trigger = useDay14Trigger();
-  const recordPanelAnchorRef = useRef<HTMLDivElement>(null);
   const [llmError, setLlmError] = useState<LlmError | null>(null);
-  const [offlinePackError, setOfflinePackError] = useState<OfflinePackError | null>(null);
-  const [isApplyingOfflinePack, setIsApplyingOfflinePack] = useState(false);
   const [warmUpOpen, setWarmUpOpen] = useState(false);
   const [paragraphSpeaking, setParagraphSpeaking] = useState(false);
   const [activeWordId, setActiveWordId] = useState<string | null>(null);
@@ -174,8 +146,6 @@ function TodayRouteBody({
   const hardWords = paragraph ? filterValidHardWords(paragraph.hardWords) : [];
   const [recordingAnalysis, setRecordingAnalysis] = useState<RecordingAnalysis | null>(null);
   const warmUpLauncherRef = useRef<HTMLButtonElement>(null);
-  const offlinePackCount = useLiveQuery(() => db.offlinePack.count(), LIVE_QUERY_EMPTY_DEPS, undefined);
-  const hasOfflinePack = (offlinePackCount ?? 0) > 0;
 
   const exitWarmUpToToday = useCallback(() => {
     setWarmUpOpen(false);
@@ -183,30 +153,11 @@ function TodayRouteBody({
       warmUpLauncherRef.current?.focus();
     });
   }, []);
-  const { generate, isGenerating } = useGenerateParagraph({
-    activeProvider,
-    providerKeys,
-    settings,
-    paragraphId,
-  });
+  const { generate, isGenerating } = useGenerateParagraph({ paragraphId });
 
   const { markReadIt, hasReadIt } = useMarkReadIt({
     paragraphOnScreen: paragraph !== null,
-    usedOfflinePackThisSession,
   });
-
-  const handleApplyOfflinePack = useCallback(async () => {
-    if (isApplyingOfflinePack || isGenerating) return;
-    setOfflinePackError(null);
-    setIsApplyingOfflinePack(true);
-    const result = await applyOfflinePackParagraph();
-    setIsApplyingOfflinePack(false);
-    if (!result.ok) {
-      setOfflinePackError(result.error);
-      return;
-    }
-    setLlmError(null);
-  }, [applyOfflinePackParagraph, isApplyingOfflinePack, isGenerating]);
 
   const toggleParagraphListen = useCallback(() => {
     if (typeof window === 'undefined' || paragraph === null) return;
@@ -274,7 +225,6 @@ function TodayRouteBody({
       }
       setParagraphSpeaking(false);
       setLlmError(null);
-      setOfflinePackError(null);
       const targetId = opts?.nextParagraph ? crypto.randomUUID() : paragraphId;
       if (opts?.nextParagraph) {
         onParagraphIdChange(targetId);
@@ -295,10 +245,8 @@ function TodayRouteBody({
   const personaLabel = PERSONA_LABEL[settings.persona];
   const showParagraphSkeleton =
     llmError === null &&
-    offlinePackError === null &&
     ((paragraphCacheLoading && paragraph === null) || isGenerating);
-  const canGenerate =
-    llmError === null && offlinePackError === null && !paragraphCacheLoading;
+  const canGenerate = llmError === null && !paragraphCacheLoading;
   const showParagraphControls = canGenerate;
   const selectedWord =
     selectedToken && paragraph
@@ -362,20 +310,10 @@ function TodayRouteBody({
         {llmError ? (
           <InlineErrorSurface
             error={llmError}
-            activeProvider={activeProvider}
             isRetrying={isGenerating}
-            isUsingOfflinePack={isApplyingOfflinePack}
-            hasOfflinePack={hasOfflinePack}
             onRetry={() => void handleGenerate()}
             onOpenSettings={() => router.push('/settings/advanced')}
-            onUseOfflinePack={() => void handleApplyOfflinePack()}
           />
-        ) : null}
-
-        {offlinePackError ? (
-          <p className="text-body text-brick" role="alert">
-            {offlinePackError.message}
-          </p>
         ) : null}
 
         {showParagraphSkeleton ? <ParagraphZoneSkeleton /> : null}
@@ -388,32 +326,6 @@ function TodayRouteBody({
                 error={cachePersistError}
                 onOpenSettings={() => router.push('/settings')}
               />
-            ) : null}
-            {paragraph && day14Trigger === 'no-recording' ? (
-              <div
-                className="mb-6 rounded-lg border border-divider px-4 py-3"
-                role="region"
-                aria-label="Day 14 recording reminder"
-              >
-                <p className="text-body text-secondary italic">
-                  You haven&apos;t recorded yet. Try a recording today — your future self wants to hear
-                  it.
-                </p>
-                <Button
-                  type="button"
-                  variant="link"
-                  className="mt-2 h-auto p-0 text-body underline underline-offset-4"
-                  onClick={() => {
-                    recordPanelAnchorRef.current?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'start',
-                    });
-                    recordPanelAnchorRef.current?.focus();
-                  }}
-                >
-                  Show me how
-                </Button>
-              </div>
             ) : null}
             <article
               className="rounded-lg border border-divider bg-surface px-6 py-7 md:px-8"
@@ -500,7 +412,7 @@ function TodayRouteBody({
           </>
         ) : null}
 
-        {!showParagraphSkeleton && !paragraph && !llmError && !offlinePackError && !showParagraphControls ? (
+        {!showParagraphSkeleton && !paragraph && !llmError && !showParagraphControls ? (
           <p className="py-6 text-body text-secondary">
             Generate today&apos;s paragraph when you&apos;re ready. Nothing runs until you tap the button.
           </p>
@@ -510,7 +422,6 @@ function TodayRouteBody({
 
         <aside className="min-w-0 space-y-5 xl:sticky xl:top-6 xl:self-start" aria-label="Today studio">
           <section
-            ref={recordPanelAnchorRef}
             id="record-panel-region"
             tabIndex={-1}
             className="scroll-mt-4 rounded-lg border border-divider bg-surface outline-none"
@@ -639,29 +550,13 @@ function TodayRouteBody({
 }
 
 export function TodayApp() {
-  const apiMode = isApiStorageBackend();
-  const [providerKeys] = useLocalStorage(
-    'audiblytics.providerKeys',
-    providerKeysSchema.parse({}),
-    providerKeysSchema,
-  );
-  const [localActiveProvider] = useLocalStorage(
-    'audiblytics.activeProvider',
-    'gemini',
-    activeProviderSchema,
-  );
-  const [localSettings, setLocalSettings] = useLocalStorage(
-    'audiblytics.settings',
-    settingsSchema.parse({}),
-    settingsSchema,
-  );
   const [practicePrefs] = useLocalStorage(
     'audiblytics.practicePrefs',
     practicePrefsSchema.parse({}),
     practicePrefsSchema,
   );
   const [apiSettings, setApiSettings] = useState<ApiSettings | null>(null);
-  const [settingsReady, setSettingsReady] = useState(!apiMode);
+  const [settingsReady, setSettingsReady] = useState(false);
   const lastUsedAppliedRef = useRef(false);
   const [practiceOverlay, setPracticeOverlay] = useState<Pick<
     Settings,
@@ -669,7 +564,6 @@ export function TodayApp() {
   > | null>(null);
 
   useEffect(() => {
-    if (!apiMode) return;
     void (async () => {
       try {
         const remote = await fetchApiSettings();
@@ -680,101 +574,59 @@ export function TodayApp() {
         setSettingsReady(true);
       }
     })();
-  }, [apiMode]);
+  }, []);
 
-  const baseSettings = apiMode
-    ? (apiSettings ?? settingsSchema.parse({}))
-    : localSettings;
+  const baseSettings = apiSettings ?? settingsSchema.parse({});
   const settings =
     practiceOverlay !== null ? { ...baseSettings, ...practiceOverlay } : baseSettings;
-  const activeProvider = apiMode ? (apiSettings?.activeProvider ?? 'gemini') : localActiveProvider;
 
-  const handleSettingsChange = useCallback(
-    (next: Settings) => {
-      setPracticeOverlay({
-        theme: next.theme,
-        persona: next.persona,
-        length: next.length,
-      });
-      if (!apiMode) {
-        setLocalSettings(next);
-        return;
+  const handleSettingsChange = useCallback((next: Settings) => {
+    setPracticeOverlay({
+      theme: next.theme,
+      persona: next.persona,
+      length: next.length,
+    });
+    void (async () => {
+      try {
+        const patched = await patchApiSettings(next);
+        setApiSettings(patched);
+      } catch (e) {
+        console.warn('[today] failed to save API settings', e);
       }
-      void (async () => {
-        try {
-          const patched = await patchApiSettings(next);
-          setApiSettings(patched);
-        } catch (e) {
-          console.warn('[today] failed to save API settings', e);
-        }
-      })();
-    },
-    [apiMode, setLocalSettings],
-  );
+    })();
+  }, []);
 
   useEffect(() => {
     if (!settingsReady || lastUsedAppliedRef.current) return;
     lastUsedAppliedRef.current = true;
     if (!shouldApplyLastUsedOverlay(baseSettings, practicePrefs)) return;
     const merged = applyLastUsedPractice(baseSettings, practicePrefs);
-    if (apiMode) {
-      setPracticeOverlay({
-        theme: merged.theme,
-        persona: merged.persona,
-        length: merged.length,
-      });
-      return;
-    }
-    setLocalSettings(merged);
-  }, [settingsReady, apiMode, baseSettings, practicePrefs, setLocalSettings]);
+    setPracticeOverlay({
+      theme: merged.theme,
+      persona: merged.persona,
+      length: merged.length,
+    });
+  }, [settingsReady, baseSettings, practicePrefs]);
   const distinctDays = useDistinctDayOfUse();
   const paragraphOfTheDay = useParagraphOfTheDay();
   const cacheHit = paragraphOfTheDay.status === 'hit';
 
   const [paragraph, setParagraph] = useState<ParagraphResult | null>(null);
   const [paragraphId, setParagraphId] = useState<string>(() => crypto.randomUUID());
-  const [offlinePackParagraphId, setOfflinePackParagraphId] = useState<string | null>(null);
-  const [usedOfflinePackThisSession, setUsedOfflinePackThisSession] = useState(false);
   const [recycledWordKeys, setRecycledWordKeys] = useState<ReadonlySet<string>>(new Set());
   const [cachePersistError, setCachePersistError] = useState<StorageError | null>(null);
   const applyParagraphGenerateSuccess = useCallback((payload: ParagraphGeneratePayload) => {
     setParagraph(payload.result);
     setRecycledWordKeys(recycleTextsToKeySet(payload.recycleWordTexts));
     setCachePersistError(payload.cachePersist.ok ? null : payload.cachePersist.error);
-    setUsedOfflinePackThisSession(false);
-    setOfflinePackParagraphId(null);
-  }, []);
-
-  const applyOfflinePackParagraph = useCallback(async (): Promise<Result<void, OfflinePackError>> => {
-    const result = await selectFromOfflinePack();
-    if (!result.ok) {
-      return result;
-    }
-    setParagraph(result.value.paragraph);
-    setOfflinePackParagraphId(result.value.id);
-    setRecycledWordKeys(new Set());
-    setCachePersistError(null);
-    setUsedOfflinePackThisSession(true);
-    return ok(undefined);
   }, []);
 
   const dayNumber = Math.max(1, distinctDays);
 
-  const displayParagraph = resolveTodayDisplayParagraph({
-    usedOfflinePackThisSession,
-    sessionParagraph: paragraph,
-    cacheHit,
-    cachedParagraph: cacheHit ? paragraphOfTheDay.result : null,
-  });
+  const displayParagraph = paragraph ?? (cacheHit ? paragraphOfTheDay.result : null);
   const displayParagraphId =
-    usedOfflinePackThisSession && offlinePackParagraphId !== null
-      ? offlinePackParagraphId
-      : paragraph !== null
-        ? paragraphId
-        : cacheHit
-          ? paragraphOfTheDay.cached.id
-          : paragraphId;
-  const displayRecycleKeys = usedOfflinePackThisSession || !cacheHit ? recycledWordKeys : recycleTextsToKeySet([]);
+    paragraph !== null ? paragraphId : cacheHit ? paragraphOfTheDay.cached.id : paragraphId;
+  const displayRecycleKeys = !cacheHit ? recycledWordKeys : recycleTextsToKeySet([]);
   const paragraphCacheLoading =
     !settingsReady || paragraphOfTheDay.status === 'loading';
 
@@ -784,7 +636,7 @@ export function TodayApp() {
     return () => setHasParagraphForTodayOnScreen(false);
   }, [displayParagraph, setHasParagraphForTodayOnScreen]);
 
-  if (apiMode && !settingsReady) {
+  if (!settingsReady) {
     return <ParagraphZoneSkeleton />;
   }
 
@@ -797,13 +649,9 @@ export function TodayApp() {
       recycledWordKeys={displayRecycleKeys}
       cachePersistError={cacheHit ? null : cachePersistError}
       applyParagraphGenerateSuccess={applyParagraphGenerateSuccess}
-      applyOfflinePackParagraph={applyOfflinePackParagraph}
       paragraphId={displayParagraphId}
       onParagraphIdChange={setParagraphId}
-      activeProvider={activeProvider}
-      providerKeys={providerKeys}
       paragraphCacheLoading={paragraphCacheLoading}
-      usedOfflinePackThisSession={usedOfflinePackThisSession}
     />
   );
 }

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/features/auth/auth-context';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,20 +38,12 @@ export default function LoginPage() {
     [email, password, mode, login, register, router],
   );
 
-  if (!isApiStorageBackend()) {
-    return (
-      <p className="text-body text-secondary">
-        API storage is disabled. Set <code className="text-ui-sm">NEXT_PUBLIC_STORAGE_BACKEND=api</code> to use login.
-      </p>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-md space-y-8 py-8">
       <header className="space-y-2">
         <h1 className="text-headline-2 text-foreground">Sign in to Audiblytics</h1>
         <p className="text-body text-secondary">
-          Settings and progress are stored in Postgres when API mode is enabled.
+          Settings and progress are stored in Postgres.
         </p>
       </header>
 

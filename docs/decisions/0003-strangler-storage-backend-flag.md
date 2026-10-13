@@ -1,6 +1,6 @@
 # ADR 0003: Strangler migration via `STORAGE_BACKEND` flag
 
-**Status:** Accepted  
+**Status:** Completed — local mode removed; the flag and all local code paths no longer exist  
 **Date:** 2026-05-31  
 **Decision IDs:** BV0 (Scope transition), BV9 (Frontend integration)
 

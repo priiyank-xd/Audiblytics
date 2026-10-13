@@ -4,7 +4,6 @@ import Link from 'next/link';
 
 import { ArchivedDayPanel } from '@/components/audiblytics/ArchivedDayPanel';
 import { useArchivedDay } from '@/features/calendar/use-archived-day';
-import { useJourneyReflection } from '@/features/journey/use-journey-reflection';
 import { cn } from '@/lib/utils';
 
 export type JourneyDayDetailPanelProps = {
@@ -21,7 +20,6 @@ export function JourneyDayDetailPanel({
   const archivedData = useArchivedDay(
     utcDate !== null && isComplete === true ? utcDate : null,
   );
-  const { note, setNote } = useJourneyReflection(utcDate);
 
   if (!utcDate) {
     return (
@@ -74,18 +72,6 @@ export function JourneyDayDetailPanel({
       ) : (
         <ArchivedDayPanel utcDate={utcDate} data={archivedData} />
       )}
-
-      <section aria-label="Reflection note" className="space-y-2 border-t border-divider pt-6">
-        <h3 className="text-ui-sm font-medium text-foreground">Reflection</h3>
-        <p className="text-caption text-secondary">Private notes for this day.</p>
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          rows={4}
-          placeholder="What did you notice about your practice?"
-          className="mt-2 w-full resize-y rounded-lg border border-divider bg-surface px-3 py-3 text-ui-sm text-foreground placeholder:text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
-        />
-      </section>
 
       <p>
         <Link

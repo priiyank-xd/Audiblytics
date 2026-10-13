@@ -4,11 +4,10 @@ import { useCallback, useState } from 'react';
 
 import { notifyCollectionMutated } from '@/features/collection/collection-mutated';
 import { saveCollectionWord } from '@/lib/api/collection';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import { collectionWordSchema, type CollectionWord } from '@/lib/schemas/collection.schema';
 import type { HardWord } from '@/lib/schemas/paragraph-cache.schema';
-import { ok, type Result } from '@/lib/result';
-import { db, safeWrite, type StorageError } from '@/lib/storage/db';
+import type { Result } from '@/lib/result';
+import type { StorageError } from '@/lib/storage/types';
 
 export type UseSaveWordResult = {
   isSaving: boolean;
@@ -19,7 +18,6 @@ export type UseSaveWordResult = {
 export function useSaveWord(): UseSaveWordResult {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<StorageError | null>(null);
-  const apiMode = isApiStorageBackend();
 
   const saveWord = useCallback(
     async ({
@@ -46,30 +44,18 @@ export function useSaveWord(): UseSaveWordResult {
           difficultyRating: 1,
         });
 
-        if (apiMode) {
-          const result = await saveCollectionWord(draft);
-          if (!result.ok) {
-            setError(result.error);
-            return result;
-          }
-          notifyCollectionMutated();
+        const result = await saveCollectionWord(draft);
+        if (!result.ok) {
+          setError(result.error);
           return result;
         }
-
-        const existing = await db.collection.where('word').equals(entry.word).first();
-        if (existing) return ok(existing);
-
-        const write = await safeWrite(async () => {
-          await db.collection.add(draft);
-          return draft;
-        });
-        if (!write.ok) setError(write.error);
-        return write;
+        notifyCollectionMutated();
+        return result;
       } finally {
         setIsSaving(false);
       }
     },
-    [apiMode],
+    [],
   );
 
   return { isSaving, error, saveWord };

@@ -2,13 +2,11 @@
 
 import { useMemo } from 'react';
 
-import { OfflineBadge } from '@/components/audiblytics/OfflineBadge';
 import { cn } from '@/lib/utils';
 
 export type CalendarDayCellProps = {
   utcDate: string;
   complete: boolean;
-  usedOfflinePack?: boolean;
   /** When set with `complete`, cell is a button that navigates to archived day. */
   onSelectComplete?: () => void;
   /** Month grid on Home omits the month prefix (shows day of month only). */
@@ -43,7 +41,6 @@ function utcYmdToDisplayParts(
 export function CalendarDayCell({
   utcDate,
   complete,
-  usedOfflinePack = false,
   onSelectComplete,
   labelStyle = 'month-day',
   isSelected = false,
@@ -52,11 +49,7 @@ export function CalendarDayCell({
     () => utcYmdToDisplayParts(utcDate, labelStyle),
     [utcDate, labelStyle],
   );
-  const statusLabel = complete
-    ? usedOfflinePack
-      ? 'completed via offline pack'
-      : 'completed'
-    : 'missed';
+  const statusLabel = complete ? 'completed' : 'missed';
 
   const inner = (
     <>
@@ -76,9 +69,6 @@ export function CalendarDayCell({
           )}
           aria-hidden
         />
-        {complete && usedOfflinePack ? (
-          <OfflineBadge className="absolute -right-1.5 -top-1.5" />
-        ) : null}
       </span>
     </>
   );

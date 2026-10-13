@@ -21,7 +21,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useAuth } from '@/features/auth/auth-context';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import {
   isSidebarNavActive,
   resolveSidebarNavItems,
@@ -97,7 +96,6 @@ type SidebarProfileFooterProps = {
   isExpanded: boolean;
   profileLabel: string;
   profileInitial: string;
-  apiMode: boolean;
   settingsActive: boolean;
   hideSettingsLink?: boolean;
   showLogoutButton?: boolean;
@@ -109,7 +107,6 @@ function SidebarProfileFooter({
   isExpanded,
   profileLabel,
   profileInitial,
-  apiMode,
   settingsActive,
   hideSettingsLink,
   showLogoutButton = true,
@@ -163,7 +160,7 @@ function SidebarProfileFooter({
             </span>
             <span className="truncate font-sans text-ui-sm text-foreground">{profileLabel}</span>
           </Link>
-          {apiMode && onLogout && showLogoutButton ? (
+          {onLogout && showLogoutButton ? (
             <button
               type="button"
               aria-label="Log out"
@@ -186,16 +183,14 @@ function SidebarProfileFooter({
 }
 
 function useSidebarProfile() {
-  const apiMode = isApiStorageBackend();
   const { user, loading, logout } = useAuth();
   const profileLabel = resolveSidebarProfileLabel({
-    apiMode,
     userEmail: user?.email,
-    loading: apiMode && loading,
+    loading,
   });
   const profileInitial = resolveSidebarProfileInitial(profileLabel);
 
-  return { apiMode, profileLabel, profileInitial, logout };
+  return { profileLabel, profileInitial, logout };
 }
 
 export function AppSidebar() {
@@ -205,7 +200,7 @@ export function AppSidebar() {
   const [isPinnedOpen, setIsPinnedOpen] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const isExpanded = isHome || isPinnedOpen || isHovering;
-  const { apiMode, profileLabel, profileInitial, logout } = useSidebarProfile();
+  const { profileLabel, profileInitial, logout } = useSidebarProfile();
 
   const handleLogout = () => {
     void logout();
@@ -281,7 +276,6 @@ export function AppSidebar() {
         isExpanded={isExpanded}
         profileLabel={profileLabel}
         profileInitial={profileInitial}
-        apiMode={apiMode}
         settingsActive={settingsActive}
         hideSettingsLink={isHome}
         showLogoutButton={!isHome}
@@ -297,7 +291,7 @@ export function MobileAppNav({ children }: { children?: ReactNode }) {
   const isHome = pathname === '/';
   const settingsActive = pathname.startsWith('/settings');
   const [open, setOpen] = useState(false);
-  const { apiMode, profileLabel, profileInitial, logout } = useSidebarProfile();
+  const { profileLabel, profileInitial, logout } = useSidebarProfile();
 
   const close = () => setOpen(false);
 
@@ -336,8 +330,7 @@ export function MobileAppNav({ children }: { children?: ReactNode }) {
             isExpanded
             profileLabel={profileLabel}
             profileInitial={profileInitial}
-            apiMode={apiMode}
-            settingsActive={settingsActive}
+                settingsActive={settingsActive}
             hideSettingsLink={isHome}
             showLogoutButton={!isHome}
             onLogout={() => {

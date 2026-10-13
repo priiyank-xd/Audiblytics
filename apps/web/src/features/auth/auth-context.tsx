@@ -11,7 +11,6 @@ import {
 } from 'react';
 
 import { fetchMe, login as apiLogin, logout as apiLogout, register as apiRegister, type AuthUser } from '@/lib/api/auth';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -26,17 +25,11 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const apiMode = isApiStorageBackend();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(apiMode);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!apiMode) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
@@ -47,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [apiMode]);
+  }, []);
 
   useEffect(() => {
     void refresh();

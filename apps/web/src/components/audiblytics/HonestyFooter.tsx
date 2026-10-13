@@ -2,7 +2,6 @@
 
 import { usePathname } from 'next/navigation';
 
-import { ProviderChip } from '@/components/audiblytics/ProviderChip';
 import { cn } from '@/lib/utils';
 
 const APP_VERSION = "v0.1.0";
@@ -23,7 +22,7 @@ export function HonestyFooter() {
       <span aria-hidden="true">·</span>
       <span>$0 today</span>
       <span aria-hidden="true">·</span>
-      <ProviderChip />
+      <span>Gemini</span>
       <span aria-hidden="true">·</span>
       <span>{APP_VERSION}</span>
     </footer>

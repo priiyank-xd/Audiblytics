@@ -1,29 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useEffect, useState } from 'react';
 
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
-import { LIVE_QUERY_EMPTY_DEPS } from '@/lib/hooks/live-query-empty-deps';
-
-import {
-  loadDexieParagraphCacheUtcDateSet,
-  mergeParagraphUtcDateSets,
-} from './load-paragraph-cache-utc-date-set';
 import { PARAGRAPH_DATES_MUTATED_EVENT } from './paragraph-dates-mutated';
 import { loadServerParagraphUtcDates } from './paragraph-dates-server-cache';
 
-/** Reactive paragraph UTC dates for calendar/streak/journey (Dexie + deduped API cache). */
+/** Reactive paragraph UTC dates for calendar/streak/journey (deduped API cache). */
 export function useParagraphCacheUtcDateSet(): ReadonlySet<string> | undefined {
-  const apiMode = isApiStorageBackend();
-  const localDates = useLiveQuery(() => loadDexieParagraphCacheUtcDateSet(), LIVE_QUERY_EMPTY_DEPS);
-  const [serverDates, setServerDates] = useState<ReadonlySet<string> | undefined>(
-    apiMode ? undefined : new Set(),
-  );
+  const [dates, setDates] = useState<ReadonlySet<string> | undefined>(undefined);
 
   useEffect(() => {
-    if (!apiMode) return;
-
     let cancelled = false;
     let generation = 0;
 
@@ -31,14 +17,10 @@ export function useParagraphCacheUtcDateSet(): ReadonlySet<string> | undefined {
       const id = ++generation;
       try {
         const value = await loadServerParagraphUtcDates();
-        if (!cancelled && id === generation) {
-          setServerDates(value);
-        }
+        if (!cancelled && id === generation) setDates(value);
       } catch (e) {
         console.warn('[calendar] paragraph dates API load failed', e);
-        if (!cancelled && id === generation) {
-          setServerDates(new Set());
-        }
+        if (!cancelled && id === generation) setDates((prev) => prev ?? new Set());
       }
     };
 
@@ -53,12 +35,7 @@ export function useParagraphCacheUtcDateSet(): ReadonlySet<string> | undefined {
       cancelled = true;
       window.removeEventListener(PARAGRAPH_DATES_MUTATED_EVENT, onReload);
     };
-  }, [apiMode]);
+  }, []);
 
-  return useMemo(() => {
-    if (localDates === undefined) return undefined;
-    if (!apiMode) return localDates;
-    if (serverDates === undefined) return undefined;
-    return mergeParagraphUtcDateSets(localDates, serverDates);
-  }, [apiMode, localDates, serverDates]);
+  return dates;
 }

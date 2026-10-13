@@ -9,7 +9,7 @@ import { useStatStreakSurface } from '@/features/calendar/stat-streak-surface-co
 import { useCompletions } from '@/features/calendar/use-completions';
 import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 
-export type DayRailCellState = 'future' | 'completed' | 'completed-offline' | 'missed' | 'today';
+export type DayRailCellState = 'future' | 'completed' | 'missed' | 'today';
 
 export type DayRailCellModel = {
   railDay: number;
@@ -33,7 +33,6 @@ export function useDayRailCells(): DayRailCellModel[] | undefined {
       const railDay = idx + 1;
       const hasParagraphForDate =
         paragraphDates.has(utcDate) ||
-        completions[utcDate]?.usedOfflinePack === true ||
         (utcDate === todayUtc && hasParagraphForTodayOnScreen);
 
       const complete = evaluateCompletion({
@@ -41,13 +40,10 @@ export function useDayRailCells(): DayRailCellModel[] | undefined {
         completions,
         hasParagraphForDate,
       });
-      const usedOffline = completions[utcDate]?.usedOfflinePack === true;
 
       let state: DayRailCellState;
       if (utcDate === todayUtc) {
         state = 'today';
-      } else if (complete && usedOffline) {
-        state = 'completed-offline';
       } else if (complete) {
         state = 'completed';
       } else {

@@ -1,42 +1,34 @@
 import type { RecordingWithTheme } from '@/features/voice-journal/use-recordings';
 import type { CachedParagraph } from '@/lib/schemas/paragraph-cache.schema';
 import type { RecordingListItem } from '@/lib/schemas/recording.schema';
-import { db } from '@/lib/storage/db';
+import { fetchParagraphByUtcDate } from '@/lib/api/paragraphs';
+import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 import { themeKeyToLabel } from '@/lib/ui/theme-key-label';
 import { isWarmupRecordingParagraphId } from '@/lib/warmup-recording-id';
 
+/** Resolves theme labels per recording by fetching the paragraph for each distinct recording UTC date. */
 export async function enrichRecordingsWithTheme(
   rows: RecordingListItem[],
 ): Promise<RecordingWithTheme[]> {
-  const paragraphIds = [...new Set(rows.map((r) => r.paragraphId))].filter(
-    (id) => !isWarmupRecordingParagraphId(id),
-  );
-  const cacheById = new Map<string, { theme: string; ttsFallbackWord: string | null }>();
+  const dates = [...new Set(rows.map((r) => formatUtcDate(new Date(r.recordingDate))))];
+  const byDate = new Map<string, CachedParagraph | null>();
   await Promise.all(
-    paragraphIds.map(async (id) => {
-      const row = await db.paragraphCache.get(id);
-      if (row) {
-        const w = row.hardWords[0]?.word;
-        cacheById.set(id, {
-          theme: row.theme,
-          ttsFallbackWord: typeof w === 'string' && w.length > 0 ? w : null,
-        });
+    dates.map(async (d) => {
+      try {
+        byDate.set(d, await fetchParagraphByUtcDate(d));
+      } catch (e) {
+        console.warn('[voice-journal] paragraph lookup failed', d, e);
+        byDate.set(d, null);
       }
     }),
   );
 
-  return rows.map((r) => {
-    if (isWarmupRecordingParagraphId(r.paragraphId)) {
-      return { ...r, themeLabel: 'Warm-up', ttsFallbackWord: null };
-    }
-    const cached = cacheById.get(r.paragraphId);
-    const themeLabel = cached ? themeKeyToLabel(cached.theme) : 'Unknown';
-    const ttsFallbackWord = cached?.ttsFallbackWord ?? null;
-    return { ...r, themeLabel, ttsFallbackWord };
-  });
+  return rows.flatMap((r) =>
+    enrichRecordingsForArchivedDay([r], byDate.get(formatUtcDate(new Date(r.recordingDate))) ?? null),
+  );
 }
 
-/** Theme labels from a single archived-day paragraph (API mode). */
+/** Theme labels from a single archived-day paragraph. */
 export function enrichRecordingsForArchivedDay(
   rows: RecordingListItem[],
   cached: CachedParagraph | null,

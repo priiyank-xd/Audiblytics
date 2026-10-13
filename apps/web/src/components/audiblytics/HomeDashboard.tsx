@@ -18,7 +18,6 @@ import { useAuth } from '@/features/auth/auth-context';
 import { useCollection } from '@/features/collection/use-collection';
 import { REVIEW_BATCH_SIZE, useReviewQueue } from '@/features/review/use-review-queue';
 import { useRecordings } from '@/features/voice-journal/use-recordings';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import {
   formatHomeGreeting,
   resolveTimeOfDayGreeting,
@@ -79,21 +78,19 @@ function HomeContinueCard({
 }
 
 export function HomeDashboard() {
-  const apiMode = isApiStorageBackend();
   const { user, loading } = useAuth();
   const { queue, isLoading: queueLoading, collectionCount } = useReviewQueue();
   const entries = useCollection();
   const recordings = useRecordings();
 
   const displayName = resolveSidebarProfileLabel({
-    apiMode,
     userEmail: user?.email,
-    loading: apiMode && loading,
+    loading,
   });
   const greeting = formatHomeGreeting(
     resolveTimeOfDayGreeting(new Date().getHours()),
     displayName,
-    apiMode && loading,
+    loading,
   );
 
   const wordCount = entries?.length;

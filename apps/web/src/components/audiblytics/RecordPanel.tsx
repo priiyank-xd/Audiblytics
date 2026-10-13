@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { Mic, Pause, Play, Square } from 'lucide-react';
 
 import { CompositePlayer } from '@/components/audiblytics/CompositePlayer';
@@ -11,12 +10,10 @@ import { Button } from '@/components/ui/button';
 import { saveRecording } from '@/features/voice-journal/use-save-recording';
 import { RECORDINGS_MUTATED_EVENT } from '@/features/voice-journal/recordings-mutated';
 import { fetchRecordingPlaybackUrl, fetchRecordings } from '@/lib/api/recordings';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import { playRecordingItem } from '@/lib/audio/play-recording';
 import { createRecorder, type RecorderError } from '@/lib/audio/recorder';
 import type { RecordingListItem } from '@/lib/schemas/recording.schema';
-import type { StorageError } from '@/lib/storage/db';
-import { db } from '@/lib/storage/db';
+import type { StorageError } from '@/lib/storage/types';
 import { cn } from '@/lib/utils';
 
 const MIC_DENIED_COPY =
@@ -126,7 +123,6 @@ export function RecordPanel({
   const [saveRetrying, setSaveRetrying] = useState(false);
 
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [replacement, setReplacement] = useState<PendingSave | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const revokeObjectUrlRef = useRef(false);
@@ -137,24 +133,11 @@ export function RecordPanel({
     setRecState(recorder.state);
   }, [recorder]);
 
-  const apiMode = isApiStorageBackend();
   const [apiTodaysRecordings, setApiTodaysRecordings] = useState<RecordingListItem[] | undefined>(
-    apiMode ? undefined : [],
-  );
-
-  const dexieTodaysRecordings = useLiveQuery(
-    async () => {
-      const rows = await db.recordings.where('paragraphId').equals(paragraphId).toArray();
-      const todayRows = rows.filter((r) => isSameLocalCalendarDay(r.recordingDate));
-      todayRows.sort((a, b) => new Date(b.recordingDate).getTime() - new Date(a.recordingDate).getTime());
-      return todayRows;
-    },
-    [paragraphId],
-    [],
+    undefined,
   );
 
   useEffect(() => {
-    if (!apiMode) return;
     let cancelled = false;
 
     const load = async () => {
@@ -176,9 +159,9 @@ export function RecordPanel({
       cancelled = true;
       window.removeEventListener(RECORDINGS_MUTATED_EVENT, load);
     };
-  }, [apiMode, paragraphId]);
+  }, [paragraphId]);
 
-  const todaysRecordings = apiMode ? (apiTodaysRecordings ?? []) : (dexieTodaysRecordings ?? []);
+  const todaysRecordings = apiTodaysRecordings ?? [];
 
   useEffect(() => {
     if (recState !== 'recording') return;
@@ -252,14 +235,6 @@ export function RecordPanel({
           transcript: transcriptRef.current,
           durationMs: result.value.durationMs,
         }));
-      }
-
-      const existingRows = apiMode
-        ? []
-        : await db.recordings.where('paragraphId').equals(paragraphId).toArray();
-      if (existingRows.length > 0 && pendingSave === null) {
-        setReplacement(candidate);
-        return;
       }
 
       const saveResult = await saveRecording({
@@ -339,34 +314,7 @@ export function RecordPanel({
 
     recordingStartedAtRef.current = Date.now();
     setElapsedMs(0);
-  }, [onAnalysis, paragraphId, paragraphText, pendingSave, recState, recorder, syncRecorder, apiMode]);
-
-  const handleKeepPrevious = useCallback(() => {
-    setReplacement(null);
-  }, []);
-
-  const handleReplacePrevious = useCallback(async () => {
-    if (!replacement) return;
-    setStorageError(null);
-    const deleteResult = await safeDeleteParagraphRecordings(paragraphId);
-    if (!deleteResult.ok) {
-      setStorageError(deleteResult.error);
-      return;
-    }
-    const saveResult = await saveRecording({
-      rowId: replacement.rowId,
-      blob: replacement.blob,
-      mimeType: replacement.mimeType,
-      durationMs: replacement.durationMs,
-      paragraphId: replacement.paragraphId,
-    });
-    if (!saveResult.ok) {
-      setStorageError(saveResult.error);
-      setPendingSave(replacement);
-      return;
-    }
-    setReplacement(null);
-  }, [paragraphId, replacement]);
+  }, [onAnalysis, paragraphId, paragraphText, pendingSave, recState, recorder, syncRecorder]);
 
   const handleRetrySave = useCallback(async () => {
     if (!pendingSave) return;
@@ -634,21 +582,6 @@ export function RecordPanel({
         </div>
       ) : null}
 
-      {replacement ? (
-        <div className="mt-4 rounded-lg border border-divider bg-surface-elevated px-4 py-3" role="status">
-          <p className="text-caption text-secondary">
-            This paragraph already has a recording. Keep the previous take or replace it with this one?
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={handleKeepPrevious}>
-              Keep previous
-            </Button>
-            <Button type="button" size="sm" onClick={() => void handleReplacePrevious()}>
-              Replace with this one
-            </Button>
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -703,14 +636,4 @@ function analyzeTranscript(input: {
     accuracyPercent,
     missedWords,
   };
-}
-
-async function safeDeleteParagraphRecordings(paragraphId: string) {
-  try {
-    await db.recordings.where('paragraphId').equals(paragraphId).delete();
-    return { ok: true, value: undefined } as const;
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
-    return { ok: false, error: { kind: 'unknown', message } } as const;
-  }
 }

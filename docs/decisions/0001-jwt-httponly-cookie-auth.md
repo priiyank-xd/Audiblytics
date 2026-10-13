@@ -14,7 +14,7 @@ Audiblytics v1 stored LLM keys in `localStorage` and had no server account. v2 a
 - Transport the token in an **httpOnly, Secure (production), SameSite=Lax** cookie named `audiblytics_session` (configurable via `COOKIE_NAME`).
 - Hash passwords with **bcrypt**; never return password hashes or JWT secrets in API responses.
 - **Authorize** every tenant query with `user_id` from the validated session — no global reads on user-owned tables.
-- Frontend: **`AuthGate`** redirects unauthenticated users to `/login` when `NEXT_PUBLIC_STORAGE_BACKEND=api`.
+- Frontend: **`AuthGate`** redirects unauthenticated users to `/login`.
 
 ## Consequences
 

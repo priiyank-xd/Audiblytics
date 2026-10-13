@@ -1,36 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 
 import { fetchParagraphToday } from '@/lib/api/paragraphs';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
-import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
-import { LIVE_QUERY_EMPTY_DEPS } from '@/lib/hooks/live-query-empty-deps';
 import { paragraphSchema, type ParagraphResult } from '@/lib/llm/schemas/paragraph.schema';
 import type { CachedParagraph } from '@/lib/schemas/paragraph-cache.schema';
-import { db } from '@/lib/storage/db';
 
 export type ParagraphOfTheDayStatus =
   | { status: 'loading' }
   | { status: 'hit'; cached: CachedParagraph; result: ParagraphResult }
   | { status: 'miss' };
-
-async function queryMostRecentCachedParagraphForUtcToday(): Promise<CachedParagraph | null> {
-  if (typeof indexedDB === 'undefined') {
-    return null;
-  }
-
-  const today = formatUtcDate(new Date());
-  const lower = `${today}T00:00:00.000Z`;
-  const upper = `${today}T23:59:59.999Z`;
-
-  const rows = await db.paragraphCache.where('generatedAt').between(lower, upper, true, true).toArray();
-  if (rows.length === 0) return null;
-
-  rows.sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
-  return rows[0];
-}
 
 function toParagraphStatus(row: CachedParagraph | null): ParagraphOfTheDayStatus {
   if (row === null) {
@@ -44,16 +23,7 @@ function toParagraphStatus(row: CachedParagraph | null): ParagraphOfTheDayStatus
   return { status: 'hit', cached: row, result: parsed.data };
 }
 
-function useLocalParagraphOfTheDay(): ParagraphOfTheDayStatus {
-  const row = useLiveQuery(() => queryMostRecentCachedParagraphForUtcToday(), LIVE_QUERY_EMPTY_DEPS);
-
-  if (row === undefined) {
-    return { status: 'loading' };
-  }
-  return toParagraphStatus(row);
-}
-
-function useApiParagraphOfTheDay(): ParagraphOfTheDayStatus {
+export function useParagraphOfTheDay(): ParagraphOfTheDayStatus {
   const [status, setStatus] = useState<ParagraphOfTheDayStatus>({ status: 'loading' });
 
   const refresh = useCallback(async () => {
@@ -72,14 +42,4 @@ function useApiParagraphOfTheDay(): ParagraphOfTheDayStatus {
   }, [refresh]);
 
   return status;
-}
-
-/**
- * Reactive same-UTC-day paragraph cache read (FR19, AR10). Does not trigger generation.
- */
-export function useParagraphOfTheDay(): ParagraphOfTheDayStatus {
-  const apiMode = isApiStorageBackend();
-  const local = useLocalParagraphOfTheDay();
-  const api = useApiParagraphOfTheDay();
-  return apiMode ? api : local;
 }

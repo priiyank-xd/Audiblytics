@@ -1,7 +1,6 @@
 'use client';
 
 import { Archive, Download, Trash2 } from 'lucide-react';
-import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { InlineErrorSurface } from '@/components/audiblytics/InlineErrorSurface';
 import { SettingsCardRow } from '@/features/settings/settings-card-row';
 import { RETENTION_LABEL } from '@/features/settings/settings-constants';
 import { useSettingsHub } from '@/features/settings/settings-hub-context';
@@ -23,10 +21,6 @@ export function SettingsDataPage() {
     retentionDraft,
     setRetentionDraft,
     setError,
-    offlinePackCount,
-    isLoadingPack,
-    packError,
-    handleDownloadPack,
     saveData,
   } = useSettingsHub();
 
@@ -35,7 +29,7 @@ export function SettingsDataPage() {
       <SettingsCardRow
         icon={Archive}
         title="Voice journal retention"
-        description="How long recordings are kept locally."
+        description="How long recordings are kept on the server."
       >
         <Select
           value={retentionDraft}
@@ -64,8 +58,7 @@ export function SettingsDataPage() {
       <div className="space-y-2 text-caption text-secondary">
         {retentionDraft === '90-day-rolling' ? (
           <p>
-            Recordings older than 90 days are deleted when you open the app (UTC clock). This keeps
-            local storage within budget.
+            Recordings older than 90 days are deleted by the server when you sign in (UTC clock).
           </p>
         ) : (
           <p>Nothing is removed automatically while this option is selected.</p>
@@ -75,45 +68,6 @@ export function SettingsDataPage() {
           restored.
         </p>
       </div>
-
-      <SettingsCardRow
-        icon={Download}
-        title="Offline pack"
-        description="Pre-generated paragraphs for offline use."
-      >
-        <div className="flex flex-col items-end gap-3">
-          <p className="text-body text-secondary" aria-live="polite">
-            {offlinePackCount !== undefined && offlinePackCount > 0
-              ? `Loaded — ${offlinePackCount} paragraphs`
-              : 'Not loaded'}
-          </p>
-          <Button
-            type="button"
-            onClick={handleDownloadPack}
-            disabled={isLoadingPack}
-            aria-disabled={isLoadingPack}
-          >
-            {isLoadingPack ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" aria-hidden />
-                Loading pack…
-              </>
-            ) : (
-              'Download Pack'
-            )}
-          </Button>
-        </div>
-      </SettingsCardRow>
-
-      {packError ? (
-        <InlineErrorSurface
-          variant="storage"
-          error={packError}
-          onOpenSettings={() => {}}
-          onRetry={handleDownloadPack}
-          isRetrying={isLoadingPack}
-        />
-      ) : null}
 
       <SettingsCardRow
         icon={Download}

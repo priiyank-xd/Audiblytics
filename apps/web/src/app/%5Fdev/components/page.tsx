@@ -3,7 +3,6 @@
 import { notFound } from "next/navigation";
 import { DayRail } from "@/components/audiblytics/DayRail";
 import { HonestyFooter } from "@/components/audiblytics/HonestyFooter";
-import { OfflineBadge } from "@/components/audiblytics/OfflineBadge";
 import { StatRail } from "@/components/audiblytics/StatRail";
 import { StatRailCalendar } from "@/components/audiblytics/StatRailCalendar";
 import { StatRailCards } from "@/components/audiblytics/StatRailCards";
@@ -30,17 +29,6 @@ export default function DevComponentsPage() {
         </p>
         <div className="rounded-sm border border-divider">
           <TopNav />
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="text-headline-3">OfflineBadge</h2>
-        <p className="text-caption text-tertiary">
-          8×8px pack glyph with tooltip — used on completed-offline day cells.
-        </p>
-        <div className="flex items-center gap-4 rounded-sm border border-divider p-4">
-          <OfflineBadge />
-          <span className="text-caption text-secondary">Hover for tooltip</span>
         </div>
       </section>
 

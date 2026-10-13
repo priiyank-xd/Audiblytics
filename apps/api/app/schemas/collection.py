@@ -140,3 +140,18 @@ class CollectionWordCreate(BaseModel):
             return None
         UUID(value)
         return value
+
+
+class CollectionWordReviewUpdate(BaseModel):
+    """PATCH /collection/{id} body — review progress fields only."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    reviewCount: int = Field(ge=0)
+    lastReviewedAt: str
+    difficultyRating: int = Field(ge=0, le=2)
+
+    @field_validator("lastReviewedAt")
+    @classmethod
+    def validate_last_reviewed_at(cls, value: str) -> str:
+        return _validate_iso_datetime(value, "lastReviewedAt")

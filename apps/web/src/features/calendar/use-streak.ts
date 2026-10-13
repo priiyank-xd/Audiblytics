@@ -29,7 +29,6 @@ export function useStreak(): number {
     const isUtcDayComplete = (utcDate: string): boolean => {
       const hasParagraphForDate =
         paragraphDates.has(utcDate) ||
-        completions[utcDate]?.usedOfflinePack === true ||
         (utcDate === todayUtc && hasParagraphForTodayOnScreen);
 
       return isUtcDayCompleteFromInputs({

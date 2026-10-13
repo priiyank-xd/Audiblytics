@@ -74,7 +74,6 @@ apps/api/.mypy_cache/
 apps/api/.ruff_cache/
 
 # large generated artifacts (Story 8.1)
-apps/web/public/offline-pack.json
 
 # legacy root artifacts (pre-monorepo)
 /.next/

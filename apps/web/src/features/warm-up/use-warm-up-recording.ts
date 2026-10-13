@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { WarmUpPhase } from '@/features/warm-up/use-warm-up-state-machine';
 import { saveRecording } from '@/features/voice-journal/use-save-recording';
 import { createRecorder, type RecorderError } from '@/lib/audio/recorder';
-import type { StorageError } from '@/lib/storage/db';
+import type { StorageError } from '@/lib/storage/types';
 import { buildWarmupRecordingParagraphId } from '@/lib/warmup-recording-id';
 
 type PendingSave = {
