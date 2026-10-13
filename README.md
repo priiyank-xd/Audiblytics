@@ -34,11 +34,7 @@ If you change `WEB_PORT`, set `CORS_ORIGINS` to match (e.g. `http://localhost:30
 
 ### Path 1 — `./ax`
 
-From repo root. Installs web deps on first run. Set in `apps/web/.env.local`:
-
-```env
-NEXT_PUBLIC_STORAGE_BACKEND=api
-```
+From repo root. Installs web deps on first run.
 
 ```bash
 ./ax start   # Postgres + API (:8000) + web → http://localhost:3000/login
@@ -84,7 +80,7 @@ Run each service yourself — useful when debugging one layer.
 | Web | `apps/web` | `pnpm install` | `pnpm dev` → http://localhost:3000 |
 | API | `apps/api` | `pip install -e ".[dev]"` | `uvicorn app.main:app --reload --port 8000` |
 
-Start Postgres from repo root (`docker compose up -d postgres`), run the API from `apps/api`, set `NEXT_PUBLIC_STORAGE_BACKEND=api` and `API_URL` in `apps/web/.env.local`, then `pnpm dev`. Step-by-step: **[apps/web/README.md](apps/web/README.md)** · **[apps/api/README.md](apps/api/README.md)**.
+Start Postgres from repo root (`docker compose up -d postgres`), run the API from `apps/api`, set `API_URL` in `apps/web/.env.local`, then `pnpm dev`. Step-by-step: **[apps/web/README.md](apps/web/README.md)** · **[apps/api/README.md](apps/api/README.md)**.
 
 ## Architecture
 

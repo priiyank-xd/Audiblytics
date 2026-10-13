@@ -31,7 +31,6 @@ export function hasParagraphForUtcDate(params: {
 }): boolean {
   return (
     params.paragraphDates.has(params.utcDate) ||
-    params.completions[params.utcDate]?.usedOfflinePack === true ||
     (params.utcDate === params.todayUtc && params.hasParagraphForTodayOnScreen)
   );
 }

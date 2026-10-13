@@ -6,7 +6,7 @@ import { InlineErrorSurface } from '@/components/audiblytics/InlineErrorSurface'
 import { Button } from '@/components/ui/button';
 import { parseWordMeaning } from '@/lib/today/word-meaning';
 import type { HardWord } from '@/lib/schemas/paragraph-cache.schema';
-import type { StorageError } from '@/lib/storage/db';
+import type { StorageError } from '@/lib/storage/types';
 import { cn } from '@/lib/utils';
 
 export type TodayWordDetailCardProps = {

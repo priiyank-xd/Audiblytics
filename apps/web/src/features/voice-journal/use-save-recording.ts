@@ -3,12 +3,9 @@ import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 import { saveRecordingViaApi } from '@/lib/api/recordings';
 import { notifyCompletionsMutated } from '@/features/calendar/completions-mutated';
 import { upsertDayCompletion } from '@/lib/api/completions';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
 import { err, ok, type Result } from '@/lib/result';
-import { dayCompletionSchema } from '@/lib/schemas/completions.schema';
 import { recordingSchema, type VoiceRecording } from '@/lib/schemas/recording.schema';
-import { db, safeWrite, type StorageError } from '@/lib/storage/db';
-import { readCompletions, writeCompletions } from '@/lib/storage/use-local-storage';
+import type { StorageError } from '@/lib/storage/types';
 
 import { notifyRecordingsMutated } from '@/features/voice-journal/recordings-mutated';
 
@@ -23,19 +20,9 @@ export type SaveRecordingInput = {
 
 async function stampCompletionsAndDayOfUse(): Promise<void> {
   const todayUtc = formatUtcDate();
-  if (isApiStorageBackend()) {
-    const result = await upsertDayCompletion(todayUtc, { hasRecording: true });
-    if (result.ok) {
-      notifyCompletionsMutated();
-    }
-  } else {
-    const completions = readCompletions();
-    const prev = completions[todayUtc] ?? dayCompletionSchema.parse({});
-    const merged = dayCompletionSchema.parse({
-      ...prev,
-      hasRecording: true,
-    });
-    writeCompletions({ ...completions, [todayUtc]: merged });
+  const result = await upsertDayCompletion(todayUtc, { hasRecording: true });
+  if (result.ok) {
+    notifyCompletionsMutated();
   }
   recordDayOfUse();
 }
@@ -65,30 +52,19 @@ export async function saveRecording(input: SaveRecordingInput): Promise<Result<V
     return err({ kind: 'unknown', message: 'Recording could not be validated for storage.' });
   }
 
-  if (isApiStorageBackend()) {
-    const apiResult = await saveRecordingViaApi({
-      rowId: input.rowId,
-      blob: input.blob,
-      mimeType: input.mimeType,
-      durationMs: input.durationMs,
-      paragraphId: input.paragraphId,
-      recordingDate,
-      dayOfUse: dayOfUseSnapshot,
-    });
-    if (!apiResult.ok) {
-      return err(apiResult.error);
-    }
-    await stampCompletionsAndDayOfUse();
-    notifyRecordingsMutated();
-    return ok(parsed.data);
+  const apiResult = await saveRecordingViaApi({
+    rowId: input.rowId,
+    blob: input.blob,
+    mimeType: input.mimeType,
+    durationMs: input.durationMs,
+    paragraphId: input.paragraphId,
+    recordingDate,
+    dayOfUse: dayOfUseSnapshot,
+  });
+  if (!apiResult.ok) {
+    return err(apiResult.error);
   }
-
-  const write = await safeWrite(() => db.recordings.put(parsed.data));
-  if (!write.ok) {
-    return write;
-  }
-
   await stampCompletionsAndDayOfUse();
-
+  notifyRecordingsMutated();
   return ok(parsed.data);
 }

@@ -2,11 +2,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import localFont from "next/font/local";
-import { Day14Gate } from "@/app/_internal/Day14Gate";
 import { AppSidebar, MobileAppNav } from "@/components/audiblytics/AppSidebar";
 import { AppColumn, MainArea } from "@/components/audiblytics/MainArea";
 import { HonestyFooter } from "@/components/audiblytics/HonestyFooter";
-import { RetentionPruneOnMount } from "@/components/audiblytics/RetentionPruneOnMount";
 import { AppShell } from "@/components/audiblytics/AppShell";
 import { StatStreakSurfaceProvider } from "@/features/calendar/stat-streak-surface-context";
 import { AppProviders } from "@/app/providers";
@@ -57,7 +55,6 @@ export default function RootLayout({
     >
       <body className="flex h-dvh flex-col overflow-hidden bg-surface text-foreground">
         <AppProviders>
-          <Day14Gate>
             <div className="flex h-dvh min-h-0 min-w-0 overflow-hidden">
               <AppSidebar />
               <AppColumn>
@@ -65,7 +62,6 @@ export default function RootLayout({
                 <StatStreakSurfaceProvider>
                   <MainArea>
                     <AppShell>
-                      <RetentionPruneOnMount />
                       <AppGate>{children}</AppGate>
                     </AppShell>
                   </MainArea>
@@ -73,7 +69,6 @@ export default function RootLayout({
                 <HonestyFooter />
               </AppColumn>
             </div>
-          </Day14Gate>
         </AppProviders>
       </body>
     </html>

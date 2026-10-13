@@ -20,7 +20,6 @@ export function useIsUtcDayComplete(utcDate: string | null): boolean | undefined
     const todayUtc = formatUtcDate(new Date());
     const hasParagraphForDate =
       paragraphDates.has(utcDate) ||
-      completions[utcDate]?.usedOfflinePack === true ||
       (utcDate === todayUtc && hasParagraphForTodayOnScreen);
 
     return evaluateCompletion({

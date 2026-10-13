@@ -4,7 +4,7 @@ import { MoreVertical, Pause, Play, Trash2 } from 'lucide-react';
 
 import { InlineErrorSurface } from '@/components/audiblytics/InlineErrorSurface';
 import type { CollectionWord } from '@/lib/schemas/collection.schema';
-import type { StorageError } from '@/lib/storage/db';
+import type { StorageError } from '@/lib/storage/types';
 import { formatIpaDisplay } from '@/lib/collection/format-ipa-display';
 import { formatLastPracticedLabel } from '@/lib/collection/format-last-practiced';
 import { cn } from '@/lib/utils';

@@ -5,7 +5,7 @@ import {
   type RecordingListItem,
 } from '@/lib/schemas/recording.schema';
 import { err, ok, type Result } from '@/lib/result';
-import type { StorageError } from '@/lib/storage/db';
+import type { StorageError } from '@/lib/storage/types';
 
 type ApiErrorDetail = {
   kind?: string;

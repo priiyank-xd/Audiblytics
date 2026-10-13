@@ -4,21 +4,12 @@ import { useEffect, useState } from 'react';
 
 import { DAYS_OF_USE_MUTATED_EVENT } from '@/lib/day-counter/days-of-use-mutated';
 import { loadServerDaysOfUse } from '@/lib/day-counter/days-of-use-server-cache';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
 
-/**
- * Server-backed UTC days-of-use list for API mode (undefined while loading).
- * Local mode returns an empty array without fetching.
- */
+/** Server-backed UTC days-of-use list (undefined while loading). */
 export function useServerDaysOfUse(): readonly string[] | undefined {
-  const apiMode = isApiStorageBackend();
-  const [serverDays, setServerDays] = useState<readonly string[] | undefined>(
-    apiMode ? undefined : [],
-  );
+  const [serverDays, setServerDays] = useState<readonly string[] | undefined>(undefined);
 
   useEffect(() => {
-    if (!apiMode) return;
-
     let cancelled = false;
     let generation = 0;
 
@@ -48,7 +39,7 @@ export function useServerDaysOfUse(): readonly string[] | undefined {
       cancelled = true;
       window.removeEventListener(DAYS_OF_USE_MUTATED_EVENT, onReload);
     };
-  }, [apiMode]);
+  }, []);
 
   return serverDays;
 }

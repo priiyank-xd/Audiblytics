@@ -1,11 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
 
-import { LIVE_QUERY_EMPTY_DEPS } from '@/lib/hooks/live-query-empty-deps';
+import { useCollection } from '@/features/collection/use-collection';
 import type { CollectionWord } from '@/lib/schemas/collection.schema';
-import { db } from '@/lib/storage/db';
 
 /** PRD open decision Q3: default daily review batch size (FR48–FR49). */
 export const REVIEW_BATCH_SIZE = 7;
@@ -35,12 +33,12 @@ export function selectReviewQueueBatch(collection: CollectionWord[]): Collection
 export type UseReviewQueueResult = {
   queue: CollectionWord[];
   isLoading: boolean;
-  /** Rows in `collection` (Dexie); used to show UX-DR34 only when truly empty). */
+  /** Rows in `collection` ; used to show UX-DR34 only when truly empty). */
   collectionCount: number;
 };
 
 export function useReviewQueue(): UseReviewQueueResult {
-  const collection = useLiveQuery(async () => db.collection.toArray(), LIVE_QUERY_EMPTY_DEPS, undefined);
+  const collection = useCollection();
 
   return useMemo(() => {
     if (collection === undefined) {

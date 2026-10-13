@@ -4,8 +4,7 @@ import { utcDateSchema } from '@/lib/schemas/days-of-use.schema';
 
 /**
  * FR53 completion for a UTC calendar day — delegates to {@link evaluateCompletion} so rules stay
- * single-sourced (Story 4.2). Callers supply `hasParagraphForDate` from Dexie cache and/or
- * `usedOfflinePack` on the completion row.
+ * single-sourced (Story 4.2). Callers supply `hasParagraphForDate` from server paragraph dates.
  */
 export function isUtcDayCompleteFromInputs(params: {
   utcDate: string;

@@ -1,7 +1,7 @@
 import { getApiBaseUrl } from '@/lib/api/client';
 import { collectionWordSchema, type CollectionWord } from '@/lib/schemas/collection.schema';
 import { err, ok, type Result } from '@/lib/result';
-import type { StorageError } from '@/lib/storage/db';
+import type { StorageError } from '@/lib/storage/types';
 
 type ApiErrorDetail = {
   kind?: string;
@@ -95,6 +95,28 @@ export async function deleteCollectionWord(id: string): Promise<Result<void, Sto
     }
     const body = await readJson(response);
     return err(mapHttpToStorageError(response, body));
+  } catch (error) {
+    return err(mapNetworkError(error));
+  }
+}
+
+export async function updateCollectionWordReview(
+  id: string,
+  update: Pick<CollectionWord, 'reviewCount' | 'lastReviewedAt' | 'difficultyRating'>,
+): Promise<Result<CollectionWord, StorageError>> {
+  try {
+    const base = getApiBaseUrl();
+    const response = await fetch(`${base}/api/v1/collection/${id}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(update),
+    });
+    const body = await readJson(response);
+    if (!response.ok) {
+      return err(mapHttpToStorageError(response, body));
+    }
+    return mapCollectionWordResult(body);
   } catch (error) {
     return err(mapNetworkError(error));
   }

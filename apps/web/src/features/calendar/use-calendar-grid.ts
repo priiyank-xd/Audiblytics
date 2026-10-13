@@ -12,7 +12,6 @@ import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
 export type CalendarGridCell = {
   utcDate: string;
   complete: boolean;
-  usedOfflinePack: boolean;
 };
 
 export type UseCalendarGridOptions = {
@@ -47,7 +46,6 @@ export function useCalendarGrid(
     return utcDates.map((utcDate) => {
       const hasParagraphForDate =
         paragraphDates.has(utcDate) ||
-        completions[utcDate]?.usedOfflinePack === true ||
         (utcDate === todayUtc &&
           includeEphemeralParagraphOnToday &&
           hasParagraphForTodayOnScreen);
@@ -58,10 +56,7 @@ export function useCalendarGrid(
         hasParagraphForDate,
       });
 
-      const usedOfflinePack =
-        complete && completions[utcDate]?.usedOfflinePack === true;
-
-      return { utcDate, complete, usedOfflinePack };
+      return { utcDate, complete };
     });
   }, [
     completions,

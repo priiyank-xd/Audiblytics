@@ -1,7 +1,8 @@
 import type { ReviewFeedbackOutcome } from '@/lib/review/feedback-outcome';
 import { collectionWordSchema, type CollectionWord } from '@/lib/schemas/collection.schema';
-import { err, ok, type Result } from '@/lib/result';
-import { db, safeWrite, type StorageError } from '@/lib/storage/db';
+import { ok, type Result } from '@/lib/result';
+import { updateCollectionWordReview } from '@/lib/api/collection';
+import type { StorageError } from '@/lib/storage/types';
 
 export type { ReviewFeedbackOutcome } from '@/lib/review/feedback-outcome';
 
@@ -30,18 +31,14 @@ export function applyFeedbackToWord(
 }
 
 export async function applyReviewFeedback(
-  wordId: string,
+  row: CollectionWord,
   outcome: ReviewFeedbackOutcome,
 ): Promise<Result<void, StorageError>> {
-  const row = await db.collection.get(wordId);
-  if (!row) {
-    return err({ kind: 'unknown', message: 'Collection entry not found.' });
-  }
-
   const next = applyFeedbackToWord(row, outcome, new Date().toISOString());
-  const write = await safeWrite(() => db.collection.put(next));
-  if (!write.ok) {
-    return write;
-  }
-  return ok(undefined);
+  const result = await updateCollectionWordReview(row.id, {
+    reviewCount: next.reviewCount,
+    lastReviewedAt: next.lastReviewedAt,
+    difficultyRating: next.difficultyRating,
+  });
+  return result.ok ? ok(undefined) : result;
 }

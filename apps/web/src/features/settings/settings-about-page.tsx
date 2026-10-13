@@ -7,12 +7,10 @@ import { ExternalLink, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SettingsCardRow } from '@/features/settings/settings-card-row';
 import { useAuth } from '@/features/auth/auth-context';
-import { isApiStorageBackend } from '@/lib/config/storage-backend';
 
 const APP_VERSION = '0.1.0';
 
 export function SettingsAboutPage() {
-  const apiMode = isApiStorageBackend();
   const { user, logout } = useAuth();
 
   return (
@@ -53,7 +51,7 @@ export function SettingsAboutPage() {
         </Link>
       </SettingsCardRow>
 
-      {apiMode && user ? (
+      {user ? (
         <SettingsCardRow
           icon={LogOut}
           title="Log out"

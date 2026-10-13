@@ -97,7 +97,6 @@ export function JourneyCalendar({
                   <CalendarDayCell
                     utcDate={slot.utcDate}
                     complete={slot.complete}
-                    usedOfflinePack={slot.usedOfflinePack}
                     labelStyle="day-only"
                     isSelected={selectedUtcDate === slot.utcDate}
                     onSelectComplete={

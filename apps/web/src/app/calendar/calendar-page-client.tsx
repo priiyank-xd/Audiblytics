@@ -94,7 +94,6 @@ export function CalendarPageClient() {
             <CalendarDayCell
               utcDate={cell.utcDate}
               complete={cell.complete}
-              usedOfflinePack={cell.usedOfflinePack}
               onSelectComplete={cell.complete ? () => openDay(cell.utcDate) : undefined}
             />
           </li>

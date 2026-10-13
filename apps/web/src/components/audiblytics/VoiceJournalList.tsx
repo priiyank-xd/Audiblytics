@@ -8,8 +8,6 @@ import { fetchRecordingPlaybackUrl } from '@/lib/api/recordings';
 import { playRecordingItem } from '@/lib/audio/play-recording';
 import type { UseCompareRecordingsResult } from '@/features/voice-journal/use-compare-recordings';
 import type { RecordingWithTheme } from '@/features/voice-journal/use-recordings';
-import { formatUtcDate } from '@/lib/day-counter/format-utc-date';
-import { useCompletions } from '@/features/calendar/use-completions';
 import { cn } from '@/lib/utils';
 
 export type VoiceJournalListProps = {
@@ -33,7 +31,6 @@ export function VoiceJournalList({
   comparePhase = 'idle',
   compareUnavailableIds,
 }: VoiceJournalListProps) {
-  const completions = useCompletions() ?? {};
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -133,8 +130,6 @@ export function VoiceJournalList({
             compare !== undefined &&
             (row.id === compare.selectedIdA || row.id === compare.selectedIdB);
           const showUnavailable = compareUnavailableIds?.has(row.id) ?? false;
-          const recordingUtcDate = formatUtcDate(new Date(row.recordingDate));
-          const showOfflineBadge = completions[recordingUtcDate]?.usedOfflinePack === true;
 
           return (
             <li key={row.id}>
@@ -147,7 +142,6 @@ export function VoiceJournalList({
                 comparePhaseIdle={comparePhase === 'idle'}
                 showCompareCheckbox={isCompareMode}
                 showUnavailable={showUnavailable}
-                showOfflineBadge={showOfflineBadge}
                 onTogglePlay={() => togglePlay(row)}
                 onToggleCompareSelection={() => compare?.toggleRowSelection(row.id)}
               />

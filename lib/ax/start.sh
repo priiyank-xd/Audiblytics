@@ -27,12 +27,9 @@ ax_start() {
   fi
 
   echo "Starting Audiblytics web at http://localhost:${AX_WEB_PORT}"
-  if ax_is_api_mode; then
-    echo "API mode detected (NEXT_PUBLIC_STORAGE_BACKEND=api)."
-    ax_sync_web_env
-    ax_start_postgres
-    ax_start_api
-  fi
+  ax_sync_web_env
+  ax_start_postgres
+  ax_start_api
   echo "Press Ctrl+C to stop, or run: ./ax stop"
   echo
 

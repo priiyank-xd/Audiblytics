@@ -1,5 +1,4 @@
 export type SidebarProfileInput = {
-  apiMode: boolean;
   userEmail: string | null | undefined;
   loading: boolean;
 };
@@ -51,10 +50,6 @@ export function formatEmailLocalAsDisplayName(localPart: string): string {
 }
 
 export function resolveSidebarProfileLabel(input: SidebarProfileInput): string {
-  if (!input.apiMode) {
-    return 'Personal use';
-  }
-
   if (input.loading) {
     return '…';
   }

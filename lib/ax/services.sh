@@ -109,15 +109,6 @@ ax_stop_web() {
   echo "Stopped."
 }
 
-# ---------------------------------------------------------------------------
-# Mode detection
-# ---------------------------------------------------------------------------
-
-# API mode when web env opts into FastAPI backend (see apps/web/.env.local).
-ax_is_api_mode() {
-  [[ -f "$AX_WEB/.env.local" ]] && grep -q '^NEXT_PUBLIC_STORAGE_BACKEND=api' "$AX_WEB/.env.local"
-}
-
 ax_port_in_use() {
   local port="$1"
   lsof -ti :"$port" >/dev/null 2>&1

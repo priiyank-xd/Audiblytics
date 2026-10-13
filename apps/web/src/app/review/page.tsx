@@ -45,7 +45,7 @@ export default function ReviewPage() {
     async (button: ReviewFeedbackButton) => {
       if (!currentWord || !isRevealed || isSubmitting) return;
       clearError();
-      const result = await submitFeedback(currentWord.id, button);
+      const result = await submitFeedback(currentWord, button);
       if (result.ok) {
         advance();
       }

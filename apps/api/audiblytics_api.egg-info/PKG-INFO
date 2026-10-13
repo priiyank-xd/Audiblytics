@@ -78,7 +78,6 @@ python scripts/seed_user.py --email you@example.com --password your-password
 In `apps/web/.env.local`:
 
 ```env
-NEXT_PUBLIC_STORAGE_BACKEND=api
 API_URL=http://localhost:8000
 ```
 

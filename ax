@@ -19,7 +19,7 @@ ax_usage() {
   cat <<EOF
 Usage: ./ax [start|stop|help]
 
-  ./ax              Start the web app (and API + Postgres when NEXT_PUBLIC_STORAGE_BACKEND=api)
+  ./ax              Start the web app, API and Postgres
   ./ax start        Same as ./ax
   ./ax stop         Stop the web dev server (and API when started by ./ax start)
   ./ax help         Show this help

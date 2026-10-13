@@ -1,13 +1,4 @@
-import type { ActiveProvider } from '@/lib/schemas/provider-keys.schema';
 import type { Persona, RetentionPolicy, Theme } from '@/lib/schemas/settings.schema';
-
-export const PROVIDER_OPTIONS: { value: ActiveProvider; label: string }[] = [
-  { value: 'gemini', label: 'Gemini' },
-  { value: 'openai', label: 'OpenAI' },
-  { value: 'anthropic', label: 'Anthropic' },
-  { value: 'openrouter', label: 'OpenRouter' },
-  { value: 'ollama', label: 'Ollama' },
-];
 
 export const LENGTH_OPTIONS = [100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200] as const;
 

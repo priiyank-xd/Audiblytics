@@ -3,7 +3,6 @@
 import { Check } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { OfflineBadge } from '@/components/audiblytics/OfflineBadge';
 import { useCalendarGrid } from '@/features/calendar/use-calendar-grid';
 import { buildTimelineEntries } from '@/lib/journey/build-timeline-entries';
 import { cn } from '@/lib/utils';
@@ -58,16 +57,13 @@ export function JourneyTimeline({ selectedUtcDate, onSelectUtcDate }: JourneyTim
             >
               <span className="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
                 <Check className="size-4" strokeWidth={2} aria-hidden />
-                {entry.usedOfflinePack ? (
-                  <OfflineBadge className="absolute -right-0.5 -top-0.5" />
-                ) : null}
               </span>
               <span className="min-w-0">
                 <span className="block text-ui-sm font-medium text-foreground">
                   {entry.dateLabel}
                 </span>
                 <span className="block text-caption text-secondary">
-                  {entry.usedOfflinePack ? 'Completed via offline pack' : 'Session completed'}
+                  Session completed
                 </span>
               </span>
             </button>

@@ -48,7 +48,6 @@ export function useMonthCalendarCells(anchorMonth: Date = new Date()): {
       const utcDate = item.utcDate;
       const hasParagraphForDate =
         paragraphDates.has(utcDate) ||
-        completions[utcDate]?.usedOfflinePack === true ||
         (utcDate === todayUtc && hasParagraphForTodayOnScreen);
 
       const complete = evaluateCompletion({
@@ -56,9 +55,7 @@ export function useMonthCalendarCells(anchorMonth: Date = new Date()): {
         completions,
         hasParagraphForDate,
       });
-      const usedOfflinePack = complete && completions[utcDate]?.usedOfflinePack === true;
-
-      return { kind: 'day', utcDate, complete, usedOfflinePack };
+      return { kind: 'day', utcDate, complete };
     });
   }, [completions, hasParagraphForTodayOnScreen, items, paragraphDates]);
 
