@@ -83,3 +83,8 @@ apps/api/.ruff_cache/
 
 # k8s — local secrets (copy structure from .env; never commit)
 k8s/secrets.yaml
+
+# graphify machine-local files
+graphify-out/cache/
+graphify-out/.graphify_python
+graphify-out/.graphify_root
